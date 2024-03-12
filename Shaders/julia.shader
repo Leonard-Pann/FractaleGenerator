@@ -8,7 +8,8 @@ layout(location = 0) out vec4 color;
 uniform vec2 seed;
 uniform vec4 window;
 uniform int maxIter;
-uniform vec3 fadeColor;
+uniform vec3 inColor;
+uniform vec3 outColor;
 
 float pow8(float x)
 {
@@ -23,6 +24,35 @@ float pow16(float x)
     x = tmp * tmp;
     tmp = x * x;
     return tmp * tmp;
+}
+
+float pow32(float x)
+{
+    float tmp = x * x;
+    x = tmp * tmp;
+    tmp = x * x;
+    x = tmp * tmp;
+    return x * x;
+}
+
+float pow64(float x)
+{
+    float tmp = x * x;
+    x = tmp * tmp;
+    tmp = x * x;
+    x = tmp * tmp;
+    tmp = x * x;
+    return tmp * tmp;
+}
+
+float smoothStep(float x)
+{
+    return -2.0 * x * x * x + 3.0 * x * x;
+}
+
+vec3 LerpColor(vec3 startCol, vec3 endCol, float t)
+{
+    return (endCol.xyz - startCol.xyz) * t + startCol.xyz;
 }
 
 vec4 isPointInMandelbrotSet(float cx, float cy)
@@ -41,9 +71,13 @@ vec4 isPointInMandelbrotSet(float cx, float cy)
         nbIter++;
     }
 
-    float fade = 1.0 - (nbIter >= maxIter ? 1.0 : float(nbIter) / float(maxIter));
+    if(nbIter >= maxIter)
+    {
+        return vec4(inColor.xyz, 1.0);
+    }
 
-    return vec4(fade * fadeColor.x, fade * fadeColor.y, fade * fadeColor.z, 1.0);
+    float fade = pow32(1.0 - (float(nbIter) / float(maxIter)));
+    return vec4(LerpColor(inColor, outColor, fade), 1.0);
 }
 
 vec4 isPointInJuliaSet(float zx, float zy, float cx, float cy)
@@ -62,9 +96,13 @@ vec4 isPointInJuliaSet(float zx, float zy, float cx, float cy)
         nbIter++;
     }
 
-    float fade = nbIter >= maxIter ? 0.0 : pow16(1.0 - (float(nbIter) / float(maxIter)));
+    if(nbIter >= maxIter)
+    {
+        return vec4(inColor.xyz, 1.0);
+    }
 
-    return vec4(fade * fadeColor.x, fade * fadeColor.y, fade * fadeColor.z, 1.0);
+    float fade = pow32(1.0 - (float(nbIter) / float(maxIter)));
+    return vec4(LerpColor(inColor, outColor, fade), 1.0);
 }
         
 void main()
@@ -86,7 +124,8 @@ out vec2 vert_pos;
 uniform vec2 seed;
 uniform vec4 window;
 uniform int maxIter;
-uniform vec3 fadeColor;
+uniform vec3 inColor;
+uniform vec3 outColor;
         
 void main()
 {

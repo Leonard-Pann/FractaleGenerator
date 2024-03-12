@@ -7,6 +7,8 @@
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
 #include "FractalUpdater.hpp"
+#include "Random.hpp"
+#include "HermiteSpline.hpp"
 
 struct ShaderProgrammSource
 {
@@ -120,6 +122,8 @@ void onMouseScroll(GLFWwindow* window, double deltaX, double deltaY)
 
 int main(void)
 {
+    Random::SetRandomSeed();
+
     GLFWwindow* window;
 
     /* Initialize the library */
@@ -146,7 +150,7 @@ int main(void)
     glfwSetScrollCallback(window, onMouseScroll);
     glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
     glfwSetCursorPosCallback(window, onMouseMove);
-    //glfwSwapInterval(0); // Désactiver la VSync
+    glfwSwapInterval(0); // Désactiver la VSync
 
     GLfloat vertices_positions[] =
     {
@@ -190,24 +194,65 @@ int main(void)
     GLint seedLocation = glGetUniformLocation(juliaShader, "seed");
     GLint windowLocation = glGetUniformLocation(juliaShader, "window");
     GLint maxIterLocation = glGetUniformLocation(juliaShader, "maxIter");
-    GLint fadeColorLocation = glGetUniformLocation(juliaShader, "fadeColor");
+    GLint inColorLocation = glGetUniformLocation(juliaShader, "inColor");
+    GLint outColorLocation = glGetUniformLocation(juliaShader, "outColor");
 
-    /* Loop until the user closes the window */
+    float duration = 3.0f;
+    float time = 0.0f;
+
     while (!glfwWindowShouldClose(window))
     {
-        /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
+
+        //draw bezier point
+        //glPointSize(1.0f);
+        //glBegin(GL_POINTS);
+
+        //int nbPoints = 1000;
+        //std::vector<Vector2> points = std::vector<Vector2>(nbPoints);
+        //float t = 0.0f;
+        //float step = 1.0f / (float)(nbPoints - 1);
+        //float x, y;
+        //HermiteSpline& curve = fractalUpdater.getSpline();
+
+        //for (int i = 0; i < nbPoints; i++)
+        //{
+        //    Vector2 point = curve.Evaluate(t);
+        //    x = (((point.x - fractalUpdater.getFractaleParam().xMin) / (fractalUpdater.getFractaleParam().xMax - fractalUpdater.getFractaleParam().xMin)) * 2.0) - 1.0;
+        //    y = (((point.y - fractalUpdater.getFractaleParam().yMin) / (fractalUpdater.getFractaleParam().yMax - fractalUpdater.getFractaleParam().yMin)) * 2.0) - 1.0;
+
+        //    glVertex3f(x, y, 0.0f);
+
+        //    t += step;
+        //}
+
+        //glEnd();
+
+        //glPointSize(15.0f);
+        //glBegin(GL_POINTS);
+
+        //Vector2 center = curve.EvaluateDistance(time / duration);
+        //x = (((center.x - fractalUpdater.getFractaleParam().xMin) / (fractalUpdater.getFractaleParam().xMax - fractalUpdater.getFractaleParam().xMin)) * 2.0) - 1.0;
+        //y = (((center.y - fractalUpdater.getFractaleParam().yMin) / (fractalUpdater.getFractaleParam().yMax - fractalUpdater.getFractaleParam().yMin)) * 2.0) - 1.0;
+
+        //glVertex3f(x, y, 0.0f);
+
+        //time += getDeltaTime();
+
+        //glEnd();
+
 
         float dt = getDeltaTime();
         fractalUpdater.update(dt);
 
         glUseProgram(juliaShader);
 
-        FractaleParam& param = fractalUpdater.getFractaleParam();
+        const FractaleParam& param = fractalUpdater.getFractaleParam();
         glUniform2f(seedLocation, param.seed.x, param.seed.y);
         glUniform4f(windowLocation, param.xMin, param.xMax, param.yMin, param.yMax);
         glUniform1i(maxIterLocation, param.maxIter);
-        glUniform3f(fadeColorLocation, param.fadeColor.x, param.fadeColor.y, param.fadeColor.z);
+        glUniform3f(inColorLocation, param.inColor.x, param.inColor.y, param.inColor.z);
+        glUniform3f(outColorLocation, param.outColor.x, param.outColor.y, param.outColor.z);
 
         glBindVertexArray(vao);
 
@@ -215,10 +260,8 @@ int main(void)
 
         glBindVertexArray(0);
 
-        /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
-        /* Poll for and process events */
         glfwPollEvents();
     }
 

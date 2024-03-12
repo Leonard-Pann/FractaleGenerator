@@ -134,11 +134,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FractalUpdater.cpp" />
+    <ClCompile Include="HermiteSpline.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BezierUtils.hpp" />
     <ClInclude Include="FractaleParam.hpp" />
     <ClInclude Include="FractalUpdater.hpp" />
+    <ClInclude Include="HermiteSpline.hpp" />
+    <ClInclude Include="LUT.hpp" />
     <ClInclude Include="Random.hpp" />
     <ClInclude Include="Vector.hpp" />
   </ItemGroup>

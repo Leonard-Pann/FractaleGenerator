@@ -2,18 +2,27 @@
 #define __FRACTAL_UPDATER_HPP
 
 #include "FractaleParam.hpp"
+#include "Vector.hpp"
+#include "HermiteSpline.hpp"
 
 class FractalUpdater
 {
 private:
 	FractaleParam params;
+	HermiteSpline seedCurve;
+	float tSeed;
+	float seedSpeed;
+
+	Vector2 RandomPoint();
 
 public:
 	FractalUpdater();
 
-	FractaleParam& getFractaleParam();
+	const FractaleParam& getFractaleParam();
 
 	void init();
+
+	HermiteSpline& getSpline() { return seedCurve; };
 
 	void update(float dt);
 };
