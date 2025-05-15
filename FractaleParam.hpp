@@ -1,36 +1,38 @@
 #ifndef __FRACTAL_PARAM_HPP
 #define __FRACTAL_PARAM_HPP
 
+#include<vector>
 #include "Vector.hpp"
 
 struct FractaleParam
 {
-    Vector2 seed;
+    Vector2 origin; // the c constant in the formula Zn+1 = Zn² + c
     float xMin, xMax, yMin, yMax;
-    Vector3 inColor, outColor;
+    Vector3 inColor;
+    std::vector<Vector3> colorPalette;
     int maxIter;
 
     FractaleParam()
     {
-        this->seed = Vector2(0.0, 0.0);
+        this->origin = Vector2(0.0, 0.0);
         this->xMin = 0.0;
         this->xMax = 0.0;
         this->yMin = 0.0;
         this->yMax = 0.0;
         this->inColor = Vector3(0.0, 0.0, 0.0);
-        this->outColor = Vector3(0.0, 0.0, 0.0);
+        this->colorPalette = std::vector<Vector3>();
         this->maxIter = 0;
     }
 
-    FractaleParam(Vector2 seed, float xMin, float xMax, float yMin, float yMax, Vector3 inColor, Vector3 outColor, int maxIter)
+    FractaleParam(Vector2 origin, float xMin, float xMax, float yMin, float yMax, Vector3 inColor, std::vector<Vector3> colorPalette, int maxIter)
     {
-        this->seed = seed;
+        this->origin = origin;
         this->xMin = xMin;
         this->xMax = xMax;
         this->yMin = yMin;
         this->yMax = yMax;
         this->inColor = inColor;
-        this->outColor = outColor;
+        this->colorPalette = colorPalette;
         this->maxIter = maxIter;
     }
 };

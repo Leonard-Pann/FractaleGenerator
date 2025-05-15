@@ -1,46 +1,49 @@
 #ifndef __RANDOM_HPP
 #define __RANDOM_HPP
 
-#include <cmath>
 #include <iostream>
-#include <math.h>
+
+static int c_rand()
+{
+    return rand();
+}
 
 class Random
 {
 public:
-    static void SetRandomSeed()
+    static inline void set_random_seed()
     {
         srand(time(0));
     }
 
-    static float Rand()
+    static inline float rand()
     {
-        return ((float)rand()) / RAND_MAX;
+        return ((float)c_rand()) / RAND_MAX;
     }
 
-    static float RandExclude()
+    static inline float randExclude()
     {
-        return ((float)rand()) / (RAND_MAX + 1);
+        return ((float)c_rand()) / (RAND_MAX + 1);
     }
 
-    static int Rand(int a, int b)
+    static inline int rand(int a, int b)
     {
-        return (int)(RandExclude() * (abs(b - a) + 1)) + a;
+        return (int)(randExclude() * (abs(b - a) + 1)) + a;
     }
 
-    static float Rand(float a, float b)
+    static inline  float rand(float a, float b)
     {
-        return Rand() * abs(b - a) + a;
+        return c_rand() * abs(b - a) + a;
     }
 
-    static int RandExclude(int a, int b)
+    static inline int randExclude(int a, int b)
     {
-        return Rand(a, b - 1);
+        return rand(a, b - 1);
     }
 
-    static float RandExclude(float a, float b)
+    static inline float randExclude(float a, float b)
     {
-        return RandExclude() * abs(b - a) + a;
+        return randExclude() * abs(b - a) + a;
     }
 };
 

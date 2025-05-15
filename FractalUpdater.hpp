@@ -1,6 +1,8 @@
 #ifndef __FRACTAL_UPDATER_HPP
 #define __FRACTAL_UPDATER_HPP
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
 #include "HermiteSpline.hpp"
@@ -8,22 +10,35 @@
 class FractalUpdater
 {
 private:
-	FractaleParam params;
-	HermiteSpline seedCurve;
-	float tSeed;
-	float seedSpeed;
 
-	Vector2 RandomPoint();
+	static std::vector<std::vector<Vector3>> colorPallets;
+
+	// fractal update param
+	FractaleParam params;
+	float xMin, xMax, yMin, yMax;
+	Vector2 minSize;
+	float juliaOriginThreshold;
+	float juliaCentroidPointBlackThreshold, juliaCentroidPointNeighborhoodThreshold;
+	float centroidNeighborhoodRadius; // in %age of screen width
+
+	float zoomMinDuration, zoomMaxDuration;
+	float minZoom, maxZoom; // 0 => display julia of size (xMax - xMin, yMax - yMin), 1 => display of size minSize
+
+	float dezoomMinDuration, dezoomMaxDuration;
+
+	//internal members
+	int grayTextureWidth, grayTextureHeight;
+	GLuint fbo, tex, juliaGrayShader;
+
+	Vector2 currentJuliaOrigin;
+	Vector2 random_point();
+	Vector2 find_julia_origin();
 
 public:
+
 	FractalUpdater();
-
-	const FractaleParam& getFractaleParam();
-
+	FractaleParam& getFractaleParam();
 	void init();
-
-	HermiteSpline& getSpline() { return seedCurve; };
-
 	void update(float dt);
 };
 

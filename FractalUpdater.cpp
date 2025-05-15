@@ -1,61 +1,130 @@
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
 
+std::vector<std::vector<Vector3>> FractalUpdater::colorPallets =
+{
+	// Original
+	{
+		Vector3(0.0f / 255.0f,   7.f / 255.0f, 100.0f / 255.0f),
+		Vector3(32.f / 255.0f, 107.f / 255.0f, 203.f / 255.0f),
+		Vector3(237.f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 170.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(0.0f / 255.0f,   2.f / 255.0f,   0.0f / 255.0f),
+		Vector3(0.0f / 255.0f,   7.f / 255.0f, 100.0f / 255.0f)
+	},
+
+	//// Fire
+	{
+		Vector3(20.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(255.0f / 255.0f,  20.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 200.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(255.0f / 255.0f,  20.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(20.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f)
+	},
+
+	// Electric
+	{
+		Vector3(0.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(0.0f / 255.0f,   0.0f / 255.0f, 200.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f),
+		Vector3(0.0f / 255.0f,   0.0f / 255.0f, 200.0f / 255.0f),
+		Vector3(0.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f)
+	},
+
+	// Gold
+	{
+		Vector3(85.f / 255.0f,  47.f / 255.0f,   0.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 171.f / 255.0f,  12.f / 255.0f),
+		Vector3(255.0f / 255.0f, 247.f / 255.0f, 127.f / 255.0f),
+		Vector3(255.0f / 255.0f, 171.f / 255.0f,  12.f / 255.0f),
+		Vector3(85.f / 255.0f,  47.f / 255.0f,   0.0f / 255.0f)
+	},
+
+	// Black and white gradient
+	{
+		Vector3(0.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f),
+		Vector3(0.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f)
+	}
+};
+
 FractalUpdater::FractalUpdater()
 {
 	
 }
 
-const FractaleParam& FractalUpdater::getFractaleParam()
+FractaleParam& FractalUpdater::getFractaleParam()
 {
 	return params;
 }
 
-Vector2 FractalUpdater::RandomPoint()
+Vector2 FractalUpdater::random_point()
 {
-	return Vector2(Random::Rand(params.xMin, params.xMax), Random::Rand(params.yMin, params.yMax));
+	return Vector2(Random::rand(xMin, xMax), Random::rand(yMin, yMax));
 }
 
 void FractalUpdater::init()
 {
-	params = FractaleParam(Vector2(), -1.7f, 1.7f, -1.7f, 1.7f, Vector3(0.937f, 1.0f, 0.541f), Vector3(0.6f, 0.176f, 0.0f), 1000);
-	
-	Vector2 startSeed = RandomPoint();
-	std::vector<Vector2> points = std::vector<Vector2>(7);
-	points[0] = startSeed;
-	points[1] = RandomPoint();
-	points[2] = RandomPoint();
-	points[3] = RandomPoint();
-	points[4] = RandomPoint();
-	points[5] = RandomPoint();
-	points[6] = RandomPoint();
-	seedCurve = HermiteSpline(points);
-	tSeed = 0.0f;
-	seedSpeed = 0.025f;
+	//params
+	xMin = -1.7f;
+	xMax = 1.7f;
+	yMin = -1.7f;
+	yMax = 1.7f;
 
-	params.seed = startSeed;
+	minSize = Vector2(4.0f / 5000.0f, 4.0f / 5000.0f);
+
+	juliaOriginThreshold = 0.05f;
+	juliaCentroidPointBlackThreshold = 0.05f;
+	juliaCentroidPointNeighborhoodThreshold = 0.15f;
+	centroidNeighborhoodRadius = 0.015f;
+
+	zoomMinDuration = 3.0f;
+	zoomMaxDuration = 5.0f;
+	minZoom = 0.2f;
+	maxZoom = 1.0f;
+
+	dezoomMinDuration = 3.0f;
+	dezoomMaxDuration = 5.0f;
+
+	Vector3 colorIn = Vector3(0.0f, 0.0f, 0.0f);
+	params = FractaleParam(random_point(), xMin, xMax, yMin, yMax, colorIn, colorPallets[0], 1000);
+
+	// For find_julia_origin method
+	//grayTextureWidth = 1920;
+	//grayTextureHeight = 1080;
+
+	//glGenTextures(1, &tex); // Create an texture
+	//glBindTexture(GL_TEXTURE_2D, tex); // Set the texture as texture 2D
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, grayTextureWidth, grayTextureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr); // allocate memory in the VRAM
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	//// Create and attach the frameBuffer
+	//glGenFramebuffers(1, &fbo);
+	//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+
+	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	//	std::cerr << "Erreur FBO\n";
 }
 
 void FractalUpdater::update(float dt)
 {
-	tSeed += dt * seedSpeed;
+	/* New algo :
+	* Search a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold (use gradient descent) *1
+	* Find a random z € |C such that Julia(c)(z) <= threshold && meanSum(Julia(c)(zi)) >= threshold2 where zi neighborhood
+	* Make a random zoom into z
+	* Search another random c like *1
+	* Dezoom a go to the new C using bezier curve
+	*/
 
-	if (tSeed > 1.0f)
-	{
-		params.seed = seedCurve.getEnd();
-		std::vector<Vector2> points = std::vector<Vector2>(7);
-		points[0] = params.seed;
-		points[1] = RandomPoint();
-		points[2] = RandomPoint();
-		points[3] = RandomPoint();
-		points[4] = RandomPoint();
-		points[5] = RandomPoint();
-		points[6] = RandomPoint();
-		seedCurve = HermiteSpline(points);
-		tSeed = 0.0f;
-	}
-	else
-	{
-		params.seed = seedCurve.EvaluateDistance(tSeed);
-	}
+}
+
+// return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold(use gradient descent)
+Vector2 FractalUpdater::find_julia_origin()
+{
+
+
+
+	return Vector2();
 }

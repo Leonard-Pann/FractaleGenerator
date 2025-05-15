@@ -135,15 +135,20 @@
   <ItemGroup>
     <ClCompile Include="FractalUpdater.cpp" />
     <ClCompile Include="HermiteSpline.cpp" />
+    <ClCompile Include="JuliaFractal.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BezierUtils.hpp" />
     <ClInclude Include="FractaleParam.hpp" />
     <ClInclude Include="FractalUpdater.hpp" />
     <ClInclude Include="HermiteSpline.hpp" />
+    <ClInclude Include="JuliaFractal.hpp" />
     <ClInclude Include="LUT.hpp" />
+    <ClInclude Include="math.hpp" />
     <ClInclude Include="Random.hpp" />
+    <ClInclude Include="Shader.hpp" />
     <ClInclude Include="Vector.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

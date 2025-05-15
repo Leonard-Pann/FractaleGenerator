@@ -9,22 +9,8 @@ uniform vec2 seed;
 uniform vec4 window;
 uniform int maxIter;
 uniform vec3 inColor;
-uniform vec3 outColor;
-
-float pow8(float x)
-{
-    float tmp = x * x;
-    x = tmp * tmp;
-    return x * x;
-}
-
-float pow16(float x)
-{
-    float tmp = x * x;
-    x = tmp * tmp;
-    tmp = x * x;
-    return tmp * tmp;
-}
+uniform vec3 colorPalette[7];
+uniform int nbColors;
 
 float pow32(float x)
 {
@@ -35,27 +21,12 @@ float pow32(float x)
     return x * x;
 }
 
-float pow64(float x)
-{
-    float tmp = x * x;
-    x = tmp * tmp;
-    tmp = x * x;
-    x = tmp * tmp;
-    tmp = x * x;
-    return tmp * tmp;
-}
-
-float smoothStep(float x)
-{
-    return -2.0 * x * x * x + 3.0 * x * x;
-}
-
 vec3 LerpColor(vec3 startCol, vec3 endCol, float t)
 {
-    return (endCol.xyz - startCol.xyz) * t + startCol.xyz;
+    return ((endCol.xyz - startCol.xyz) * t) + startCol.xyz;
 }
 
-vec4 isPointInMandelbrotSet(float cx, float cy)
+vec4 getMandelbrotColor(float cx, float cy)
 {
     float currentx = 0.0;
     float currenty = 0.0;
@@ -77,15 +48,49 @@ vec4 isPointInMandelbrotSet(float cx, float cy)
     }
 
     float fade = pow32(1.0 - (float(nbIter) / float(maxIter)));
-    return vec4(LerpColor(inColor, outColor, fade), 1.0);
+    return vec4(LerpColor(inColor, colorPalette[0], fade), 1.0);
 }
 
-vec4 isPointInJuliaSet(float zx, float zy, float cx, float cy)
+float length(float x, float y)
+{
+    return sqrt(x * x + (y * y));
+}
+
+vec4 getColor(float nbIter, float maxIter)
+{
+	float value = nbIter / maxIter;
+	vec3 color = vec3(1.0, 1.0, 1.0);
+
+	float minValue;
+	float maxValue;
+    float nbCols = float(nbColors);
+
+	for (int i = 0; i < nbColors - 1; i++)
+	{
+		minValue = float(i) / nbCols;
+		maxValue = float(i + 1) / nbCols;
+
+		if (value >= minValue && value <= maxValue)
+		{
+			color = mix(colorPalette[i], colorPalette[i + 1], (value - minValue) * nbCols);
+			break;
+		}
+	}
+
+	return vec4(color.xyz, 1.0);
+}
+
+vec4 getJuliaColor(float zx, float zy, float cx, float cy)
 {
     float currentx = zx;
     float currenty = zy;
 
     float xTmp;
+
+    float smoothValue = exp(-length(currentx, currenty));
+    float colorRange = 3.0;
+    float colorShift = 0.0;
+    float colorMod = float(maxIter) * 0.01 * colorRange;
 
     int nbIter = 0;
     while(currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
@@ -94,15 +99,21 @@ vec4 isPointInJuliaSet(float zx, float zy, float cx, float cy)
         currentx = (xTmp * xTmp - (currenty * currenty)) + cx;
         currenty = 2.0 * xTmp * currenty + cy;
         nbIter++;
+        smoothValue += exp(-length(currentx, currenty));
     }
 
-    if(nbIter >= maxIter)
+
+    int shiftedIter = int((nbIter + colorShift * int((float(maxIter) / colorMod)))) % maxIter;
+    float floorSV = floor(smoothValue);
+    int maxIterMod = int(float(maxIter) / colorMod);
+    float shiftedSmoothValue = int(floorSV + colorShift * maxIterMod) % maxIter + (smoothValue - floorSV);
+
+    if (nbIter >= maxIter)
     {
-        return vec4(inColor.xyz, 1.0);
+		return vec4(inColor.xyz, 1.0);
     }
 
-    float fade = pow32(1.0 - (float(nbIter) / float(maxIter)));
-    return vec4(LerpColor(inColor, outColor, fade), 1.0);
+    return getColor(mod(float(shiftedSmoothValue), float(maxIter) / colorMod), float(maxIter) / colorMod);
 }
         
 void main()
@@ -110,8 +121,8 @@ void main()
     float posX = (vert_pos.x + 1.0) * 0.5 * (window.y - window.x) + window.x;
     float posY = (vert_pos.y + 1.0) * 0.5 * (window.w - window.z) + window.z;
 
-    color = isPointInJuliaSet(posX, posY, seed.x, seed.y);
-    //color = isPointInMandelbrotSet(pos.x, pos.y);
+    color = getJuliaColor(posX, posY, seed.x, seed.y);
+    //color = getMandelbrotColor(pos.x, pos.y);
 };
 
 #shader vertex        
@@ -125,8 +136,9 @@ uniform vec2 seed;
 uniform vec4 window;
 uniform int maxIter;
 uniform vec3 inColor;
-uniform vec3 outColor;
-        
+uniform vec3 colorPalette[7];
+uniform int nbColors;
+
 void main()
 {
     vert_pos = position;
