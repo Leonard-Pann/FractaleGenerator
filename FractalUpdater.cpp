@@ -1,7 +1,9 @@
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
 
-std::vector<std::vector<Vector3>> FractalUpdater::colorPallets =
+using namespace std;
+
+vector<vector<Vector3>> FractalUpdater::colorPallets =
 {
 	// Original
 	{
@@ -48,9 +50,9 @@ std::vector<std::vector<Vector3>> FractalUpdater::colorPallets =
 	}
 };
 
-FractalUpdater::FractalUpdater()
+FractalUpdater::FractalUpdater(JuliaFractal* fractal)
 {
-	
+	this->fractal = fractal;
 }
 
 FractaleParam& FractalUpdater::getFractaleParam()
@@ -90,22 +92,22 @@ void FractalUpdater::init()
 	params = FractaleParam(random_point(), xMin, xMax, yMin, yMax, colorIn, colorPallets[0], 1000);
 
 	// For find_julia_origin method
-	//grayTextureWidth = 1920;
-	//grayTextureHeight = 1080;
+	grayTextureWidth = 1920;
+	grayTextureHeight = 1080;
 
-	//glGenTextures(1, &tex); // Create an texture
-	//glBindTexture(GL_TEXTURE_2D, tex); // Set the texture as texture 2D
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, grayTextureWidth, grayTextureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr); // allocate memory in the VRAM
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, grayTextureWidth, grayTextureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	//// Create and attach the frameBuffer
+	// Create and attach the frameBuffer
 	//glGenFramebuffers(1, &fbo);
 	//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
 
 	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	//	std::cerr << "Erreur FBO\n";
+	//	cerr << "Erreur FBO" << endl;
 }
 
 void FractalUpdater::update(float dt)
@@ -117,11 +119,11 @@ void FractalUpdater::update(float dt)
 	* Search another random c like *1
 	* Dezoom a go to the new C using bezier curve
 	*/
-
+	findJuliaOrigin();
 }
 
 // return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold(use gradient descent)
-Vector2 FractalUpdater::find_julia_origin()
+Vector2 FractalUpdater::findJuliaOrigin()
 {
 
 

@@ -9,6 +9,7 @@
 #include "Random.hpp"
 #include "math.hpp"
 #include "Shader.hpp"
+#include "JuliaFractal.hpp"
 
 using namespace std;
 
@@ -73,58 +74,17 @@ int main(void)
     glfwSetCursorPosCallback(window, onMouseMove);
     //glfwSwapInterval(0); // Désactiver la VSync
 
-    Shader juliaShader = Shader("Shaders/julia.shader");
-    juliaShader.load();
-
-    juliaShader.add_uniform("seed");
-    juliaShader.add_uniform("window");
-    juliaShader.add_uniform("maxIter");
-    juliaShader.add_uniform("inColor");
-    juliaShader.add_uniform("colorPalette");
-    juliaShader.add_uniform("nbColors");
+    JuliaFractal juliaFractal = JuliaFractal("Shaders/julia.shader");
 
     FractalUpdater fractalUpdater = FractalUpdater();
     fractalUpdater.init();
 
-    GLfloat vertices_positions[] =
-    {
-        -1.0f, 1.0f,
-        1.0f, 1.0f,
-        1.0f, -1.0f,
-        -1.0f, -1.0f,
-    };
-
-    GLuint vertices_indices[] =
-    {
-        0, 1, 2,
-        0, 2, 3,
-    };
-    GLuint positionBuffer;
-    GLuint vao;
-
     while (!glfwWindowShouldClose(window))
     {
-        glGenBuffers(1, &positionBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_positions), vertices_positions, GL_STATIC_DRAW);
-
-        glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
-
-        GLuint indicesBuffer;
-        glGenBuffers(1, &indicesBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertices_indices), vertices_indices, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
-        glEnableVertexAttribArray(0);
-
-
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
-        std::cout << 1 / dt << std::endl;
+        //std::cout << 1 / dt << std::endl;
         //fractalUpdater.update(dt);
 
         FractaleParam& param = fractalUpdater.getFractaleParam();
@@ -135,29 +95,15 @@ int main(void)
         param.origin = newOrigin;
         //std::cout << "x: " << newOrigin.x << " y: " << newOrigin.y << std::endl;
 
-        glUseProgram(juliaShader.shaderId);
-        juliaShader.set_uniform1i("maxIter", param.maxIter);
-        juliaShader.set_uniform1i("nbColors", (int)param.colorPalette.size());
-        juliaShader.set_uniform2f("seed", param.origin);
-        juliaShader.set_uniform3f("inColor", param.inColor);
-        juliaShader.set_uniform4f("window", Vector4(param.xMin, param.xMax, param.yMin, param.yMax));
-        juliaShader.set_uniform3fv("colorPalette", param.colorPalette);
-
-        glBindVertexArray(vao);
-
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-        glBindVertexArray(0);
+        juliaFractal.setGenerationParam(param);
+        juliaFractal.draw(window);
 
         glfwSwapBuffers(window);
 
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &positionBuffer);
-
-    glDeleteProgram(juliaShader.shaderId);
+    juliaFractal.deleteProgram();
 
     glfwTerminate();
     return 0;

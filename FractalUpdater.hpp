@@ -6,6 +6,7 @@
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
 #include "HermiteSpline.hpp"
+#include "JuliaFractal.hpp"
 
 class FractalUpdater
 {
@@ -29,14 +30,14 @@ private:
 	//internal members
 	int grayTextureWidth, grayTextureHeight;
 	GLuint fbo, tex, juliaGrayShader;
+	JuliaFractal* fractal;
 
 	Vector2 currentJuliaOrigin;
 	Vector2 random_point();
-	Vector2 find_julia_origin();
+	Vector2 findJuliaOrigin();
 
 public:
-
-	FractalUpdater();
+	FractalUpdater(JuliaFractal* fractal);
 	FractaleParam& getFractaleParam();
 	void init();
 	void update(float dt);

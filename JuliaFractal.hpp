@@ -5,15 +5,37 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include "Shader.hpp"
+#include "FractaleParam.hpp"
 
 class JuliaFractal
 {
 private:
-	Shader shader;
+    GLfloat const vertices_positions[8] =
+    {
+        -1.0f, 1.0f,
+        1.0f, 1.0f,
+        1.0f, -1.0f,
+        -1.0f, -1.0f,
+    };
+
+    GLuint const vertices_indices[6] =
+    {
+        0, 1, 2,
+        0, 2, 3,
+    };
+
+    GLuint positionBuffer;
+    GLuint vao;
+    GLuint indicesBuffer;
 
 public:
+	Shader shader;
+
 	JuliaFractal(const std::string& path);
-	void draw(GLFWwindow* window);
+    void setGenerationParam(const FractaleParam& params);
+    void draw(GLFWwindow* window);
+    void drawInTexture(GLuint textureID, int textWidth, int textHeight, GLuint fbo);
+    void deleteProgram();
 };
 
 
