@@ -34,8 +34,8 @@ public:
 	JuliaFractal(const std::string& path);
     void setGenerationParam(const FractaleParam& params);
     void draw(GLFWwindow* window);
-    void drawInTexture(GLuint textureID, int textWidth, int textHeight, GLuint fbo);
     void deleteProgram();
+    ~JuliaFractal();
 };
 
 

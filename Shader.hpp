@@ -43,6 +43,7 @@ public:
 	void set_uniform2fv(const std::string& name, std::vector<Vector2> values);
 	void set_uniform3fv(const std::string& name, std::vector<Vector3> values);
 	void set_uniform4fv(const std::string& name, std::vector<Vector4> values);
+	~Shader();
 };
 
 

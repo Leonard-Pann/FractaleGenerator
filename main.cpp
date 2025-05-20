@@ -49,12 +49,10 @@ int main(void)
 {
     Random::set_random_seed();
 
-    GLFWwindow* window;
-
-    if (!glfwInit())
+    if (glfwInit() == 0)
         return -1;
 
-    window = glfwCreateWindow(windowWidth, windowHeight, "FractalGenerator", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "FractalGenerator", NULL, NULL);
     if (window == nullptr)
     {
         glfwTerminate();
@@ -74,9 +72,10 @@ int main(void)
     glfwSetCursorPosCallback(window, onMouseMove);
     //glfwSwapInterval(0); // Désactiver la VSync
 
-    JuliaFractal juliaFractal = JuliaFractal("Shaders/julia.shader");
+    //JuliaFractal juliaFractal("Shaders/julia.shader");
+    JuliaFractal juliaFractal("Shaders/juliaGrey.shader");
 
-    FractalUpdater fractalUpdater = FractalUpdater();
+    FractalUpdater fractalUpdater;
     fractalUpdater.init();
 
     while (!glfwWindowShouldClose(window))
@@ -85,16 +84,16 @@ int main(void)
 
         float dt = getDeltaTime();
         //std::cout << 1 / dt << std::endl;
-        //fractalUpdater.update(dt);
-
-        FractaleParam& param = fractalUpdater.getFractaleParam();
 
         float xNorm = lerp(-2.0f, 2.0f, (normalizeMousePosition.x * 0.5f) + 0.5f);
         float yNorm = lerp(-2.0f, 2.0f, (normalizeMousePosition.y * 0.5f) + 0.5f);
         Vector2 newOrigin = Vector2(xNorm, yNorm);
-        param.origin = newOrigin;
         //std::cout << "x: " << newOrigin.x << " y: " << newOrigin.y << std::endl;
 
+        fractalUpdater.update(dt, newOrigin);
+
+        FractaleParam& param = fractalUpdater.getFractaleParam();
+        param.origin = newOrigin;
         juliaFractal.setGenerationParam(param);
         juliaFractal.draw(window);
 
@@ -102,8 +101,6 @@ int main(void)
 
         glfwPollEvents();
     }
-
-    juliaFractal.deleteProgram();
 
     glfwTerminate();
     return 0;

@@ -97,7 +97,7 @@ GLuint Shader::create_shader(const string& vertexShader, const string& fragmentS
 
 void Shader::load()
 {
-    ShaderProgrammSource source = parse_shader("Shaders/julia.shader");
+    ShaderProgrammSource source = parse_shader(path);
     shaderId = create_shader(source.vertexSource, source.fragmentSource);
 }
 
@@ -189,4 +189,9 @@ void Shader::set_uniform4fv(const string& name, vector<Vector4> values)
         floatValues.push_back(v.w);
     }
     glUniform4fv(uniformIds[name], (int)values.size(), floatValues.data());
+}
+
+Shader::~Shader()
+{
+    glDeleteProgram(shaderId);
 }

@@ -43,6 +43,8 @@ void JuliaFractal::setGenerationParam(const FractaleParam& params)
 
 void JuliaFractal::draw(GLFWwindow* window)
 {
+    glUseProgram(shader.shaderId);
+
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
 
@@ -53,21 +55,8 @@ void JuliaFractal::draw(GLFWwindow* window)
     glBindVertexArray(0);
 }
 
-void JuliaFractal::drawInTexture(GLuint textureID, int textWidth, int textHeight, GLuint fbo)
-{
-    glViewport(0, 0, textWidth, textHeight);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glUseProgram(shader.shaderId);
-
-    glBindVertexArray(NULL);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void JuliaFractal::deleteProgram()
+JuliaFractal::~JuliaFractal()
 {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &positionBuffer);
-
-    glDeleteProgram(shader.shaderId);
 }

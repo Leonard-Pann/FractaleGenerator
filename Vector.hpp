@@ -16,6 +16,12 @@ struct Vector2
         this->x = x;
         this->y = y;
     }
+
+    Vector2(const Vector2& vector)
+    {
+        this->x = vector.x;
+        this->y = vector.y;
+    }
 };
 
 struct Vector3
@@ -34,6 +40,13 @@ struct Vector3
         this->x = x;
         this->y = y;
         this->z = z;
+    }
+
+    Vector3(const Vector3& vector)
+    {
+        this->x = vector.x;
+        this->y = vector.y;
+        this->z = vector.z;
     }
 };
 
@@ -55,6 +68,14 @@ struct Vector4
         this->y = y;
         this->z = z;
         this->w = w;
+    }
+
+    Vector4(const Vector4& vector)
+    {
+        this->x = vector.x;
+        this->y = vector.y;
+        this->z = vector.z;
+        this->w = vector.w;
     }
 };
 

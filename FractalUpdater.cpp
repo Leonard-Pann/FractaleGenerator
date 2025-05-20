@@ -1,5 +1,6 @@
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
+#include <chrono> //tmp
 
 using namespace std;
 
@@ -50,9 +51,12 @@ vector<vector<Vector3>> FractalUpdater::colorPallets =
 	}
 };
 
-FractalUpdater::FractalUpdater(JuliaFractal* fractal)
+FractalUpdater::FractalUpdater() : juliaGreyShader("Shaders/juliaGreyCompute.shader")
 {
-	this->fractal = fractal;
+	juliaGreyShader.load();
+	//juliaGreyShader.add_uniform("seed");
+	//juliaGreyShader.add_uniform("window");
+	//juliaGreyShader.add_uniform("maxIter");
 }
 
 FractaleParam& FractalUpdater::getFractaleParam()
@@ -88,29 +92,19 @@ void FractalUpdater::init()
 	dezoomMinDuration = 3.0f;
 	dezoomMaxDuration = 5.0f;
 
-	Vector3 colorIn = Vector3(0.0f, 0.0f, 0.0f);
+	Vector3 colorIn(0.0f, 0.0f, 0.0f);
 	params = FractaleParam(random_point(), xMin, xMax, yMin, yMax, colorIn, colorPallets[0], 1000);
 
 	// For find_julia_origin method
-	grayTextureWidth = 1920;
-	grayTextureHeight = 1080;
+	greyTextureWidth = 1920;
+	greyTextureHeight = 1080;
+	juliaGreyShader.setTextureSize(greyTextureWidth, greyTextureHeight);
+	greyMaxIter = 500;
 
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, grayTextureWidth, grayTextureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	// Create and attach the frameBuffer
-	//glGenFramebuffers(1, &fbo);
-	//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
-
-	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	//	cerr << "Erreur FBO" << endl;
+	timer = 2.0f;
 }
 
-void FractalUpdater::update(float dt)
+void FractalUpdater::update(float dt, Vector2 origin)
 {
 	/* New algo :
 	* Search a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold (use gradient descent) *1
@@ -119,14 +113,62 @@ void FractalUpdater::update(float dt)
 	* Search another random c like *1
 	* Dezoom a go to the new C using bezier curve
 	*/
-	findJuliaOrigin();
+	if(timer > 2.0f)
+	{
+		params.origin = findJuliaOrigin(origin);
+		timer -= 2.0f;
+	}
+	timer += dt;
+}
+
+float FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
+{
+	vector<float>& pixels = *juliaGreyShader.computeTexture(maxIter, origin, window);
+
+	int widthEnd = greyTextureWidth - 1;
+	int heightEnd = greyTextureHeight - 1;
+	int currentIndex;
+	float currentGreyscale;
+	double totalSum = 0.0;
+	for (int i = 1; i < widthEnd; i++)
+	{
+		for (int j = 1; j < heightEnd; j++)
+		{
+			if ((greyTextureWidth * (i + 1)) + (j + 1) > pixels.size())
+			{
+				int a = 12;
+			}
+
+			currentIndex = (greyTextureWidth * j) + i;
+			currentGreyscale = pixels[currentIndex];
+			int sum = abs(currentGreyscale - pixels[(greyTextureWidth * (j - 1)) + (i - 1)]);
+			sum += abs(currentGreyscale - pixels[(greyTextureWidth * (j - 1)) + i]);
+			sum += abs(currentGreyscale - pixels[(greyTextureWidth * (j - 1)) + (i + 1)]);
+			sum += abs(currentGreyscale - pixels[(greyTextureWidth * j) + (i - 1)]);
+			sum += abs(currentGreyscale - pixels[(greyTextureWidth * j) + (i + 1)]);
+			sum += abs(currentGreyscale - pixels[(greyTextureWidth * (j + 1)) + (i - 1)]);
+			sum += abs(currentGreyscale - pixels[(greyTextureWidth * (j + 1)) + i]);
+			sum += abs(currentGreyscale - pixels[(greyTextureWidth * (j + 1)) + (i + 1)]);
+			totalSum += (double)sum / 8.0;
+		}
+	}
+
+	float mean = totalSum / (double)(greyTextureWidth * greyTextureHeight);
+
+	delete &pixels;
+	return mean;
 }
 
 // return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold(use gradient descent)
-Vector2 FractalUpdater::findJuliaOrigin()
+Vector2 FractalUpdater::findJuliaOrigin(Vector2 origin)
 {
+	Vector4 window(xMin, xMax, yMin, yMax);
 
+	auto start = std::chrono::high_resolution_clock::now();
+	float mean = getJuliaTotalGreyVariation(greyMaxIter, origin, window);
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> elapsed = end - start;
 
-
-	return Vector2();
+	cout << "mean : " << mean << " and takes " << elapsed.count() << " seconds" << endl;
+	return origin;
 }

@@ -136,6 +136,7 @@
     <ClCompile Include="FractalUpdater.cpp" />
     <ClCompile Include="HermiteSpline.cpp" />
     <ClCompile Include="JuliaFractal.cpp" />
+    <ClCompile Include="JuliaGreyComputeShader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>

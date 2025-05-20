@@ -3,10 +3,10 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <vector>
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
-#include "HermiteSpline.hpp"
-#include "JuliaFractal.hpp"
+#include "JuliaGreyComputeShader.hpp"
 
 class FractalUpdater
 {
@@ -28,19 +28,22 @@ private:
 	float dezoomMinDuration, dezoomMaxDuration;
 
 	//internal members
-	int grayTextureWidth, grayTextureHeight;
-	GLuint fbo, tex, juliaGrayShader;
-	JuliaFractal* fractal;
 
-	Vector2 currentJuliaOrigin;
+	int greyTextureWidth, greyTextureHeight, greyMaxIter;
+	JuliaGreyComputeShader juliaGreyShader;
+
 	Vector2 random_point();
-	Vector2 findJuliaOrigin();
+	Vector2 findJuliaOrigin(Vector2 origin);
+	float getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window);
 
 public:
-	FractalUpdater(JuliaFractal* fractal);
+	FractalUpdater();
 	FractaleParam& getFractaleParam();
 	void init();
-	void update(float dt);
+	void update(float dt, Vector2 origin);
+
+	//tmp
+	float timer;
 };
 
 #endif
