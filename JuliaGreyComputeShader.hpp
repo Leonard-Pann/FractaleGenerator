@@ -4,29 +4,18 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <string>
-#include <vector>
-#include <map>
-#include "Vector.hpp"
+#include "ComputeShader.hpp"
 
-class JuliaGreyComputeShader
+class JuliaGreyComputeShader : public ComputeShader
 {
 private:
-	std::string path;
 	GLuint ssbo;
-	std::map<std::string, GLint> uniformIds;
-	int width, height;
-
-	void compile();
 
 public:
-	GLuint shaderId;
-
-	JuliaGreyComputeShader(const std::string& path);
-	void load();
-	void setTextureSize(int width, int height);
-	std::vector<float>* computeTexture(int maxIter, Vector2 origin, const Vector4& window);
-
-	~JuliaGreyComputeShader();
+	JuliaGreyComputeShader();
+	void load() override;
+	std::vector<float>* computeTexture(int maxIter, Vector2 origin, const Vector4& window, int textWidth, int textHeight);
+	~JuliaGreyComputeShader() override;
 };
 
 #endif

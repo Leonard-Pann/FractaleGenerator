@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <string>
-#include "Shader.hpp"
+#include "FragmentShader.hpp"
 #include "FractaleParam.hpp"
 
 class JuliaFractal
@@ -29,12 +29,11 @@ private:
     GLuint indicesBuffer;
 
 public:
-	Shader shader;
+	FragmentShader shader;
 
 	JuliaFractal(const std::string& path);
     void setGenerationParam(const FractaleParam& params);
     void draw(GLFWwindow* window);
-    void deleteProgram();
     ~JuliaFractal();
 };
 

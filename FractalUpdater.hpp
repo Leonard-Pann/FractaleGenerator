@@ -7,6 +7,7 @@
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
 #include "JuliaGreyComputeShader.hpp"
+#include "TextureVariationShader.hpp"
 
 class FractalUpdater
 {
@@ -28,9 +29,9 @@ private:
 	float dezoomMinDuration, dezoomMaxDuration;
 
 	//internal members
-
 	int greyTextureWidth, greyTextureHeight, greyMaxIter;
 	JuliaGreyComputeShader juliaGreyShader;
+	TextureVariationShader textureVariationShader;
 
 	Vector2 random_point();
 	Vector2 findJuliaOrigin(Vector2 origin);
@@ -39,7 +40,6 @@ private:
 public:
 	FractalUpdater();
 	FractaleParam& getFractaleParam();
-	void init();
 	void update(float dt, Vector2 origin);
 
 	//tmp

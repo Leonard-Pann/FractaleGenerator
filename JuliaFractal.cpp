@@ -2,17 +2,16 @@
 
 using namespace std;
 
-JuliaFractal::JuliaFractal(const string& path)
+JuliaFractal::JuliaFractal(const string& path) : shader(path)
 {
-    shader = Shader(path);
     shader.load();
 
-    shader.add_uniform("seed");
-    shader.add_uniform("window");
-    shader.add_uniform("maxIter");
-    shader.add_uniform("inColor");
-    shader.add_uniform("colorPalette");
-    shader.add_uniform("nbColors");
+    shader.addUniform("seed");
+    shader.addUniform("window");
+    shader.addUniform("maxIter");
+    shader.addUniform("inColor");
+    shader.addUniform("colorPalette");
+    shader.addUniform("nbColors");
 
     glGenBuffers(1, &positionBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
@@ -32,18 +31,18 @@ JuliaFractal::JuliaFractal(const string& path)
 
 void JuliaFractal::setGenerationParam(const FractaleParam& params)
 {
-    glUseProgram(shader.shaderId);
-    shader.set_uniform1i("maxIter", params.maxIter);
-    shader.set_uniform1i("nbColors", (int)params.colorPalette.size());
-    shader.set_uniform2f("seed", params.origin);
-    shader.set_uniform3f("inColor", params.inColor);
-    shader.set_uniform4f("window", Vector4(params.xMin, params.xMax, params.yMin, params.yMax));
-    shader.set_uniform3fv("colorPalette", params.colorPalette);
+    glUseProgram(shader.shaderId());
+    shader.setUniform1i("maxIter", params.maxIter);
+    shader.setUniform1i("nbColors", (int)params.colorPalette.size());
+    shader.setUniform2f("seed", params.origin);
+    shader.setUniform3f("inColor", params.inColor);
+    shader.setUniform4f("window", Vector4(params.xMin, params.xMax, params.yMin, params.yMax));
+    shader.setUniform3fv("colorPalette", params.colorPalette);
 }
 
 void JuliaFractal::draw(GLFWwindow* window)
 {
-    glUseProgram(shader.shaderId);
+    glUseProgram(shader.shaderId());
 
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);

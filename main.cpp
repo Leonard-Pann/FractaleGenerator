@@ -76,7 +76,6 @@ int main(void)
     JuliaFractal juliaFractal("Shaders/juliaGrey.shader");
 
     FractalUpdater fractalUpdater;
-    fractalUpdater.init();
 
     while (!glfwWindowShouldClose(window))
     {
@@ -93,7 +92,6 @@ int main(void)
         fractalUpdater.update(dt, newOrigin);
 
         FractaleParam& param = fractalUpdater.getFractaleParam();
-        param.origin = newOrigin;
         juliaFractal.setGenerationParam(param);
         juliaFractal.draw(window);
 

@@ -5,22 +5,19 @@ struct Vector2
 {
     float x, y;
 
-    Vector2()
+    Vector2() : x(0.0f), y(0.0f)
     {
-        x = 0.0f;
-        y = 0.0f;
+
     }
 
-    Vector2(float x, float y)
+    Vector2(float x, float y) : x(x), y(y)
     {
-        this->x = x;
-        this->y = y;
+
     }
 
-    Vector2(const Vector2& vector)
+    Vector2(const Vector2& vector) : x(vector.x), y(vector.y)
     {
-        this->x = vector.x;
-        this->y = vector.y;
+;
     }
 };
 
@@ -28,25 +25,19 @@ struct Vector3
 {
     float x, y, z;
 
-    Vector3()
+    Vector3() : x(0.0f), y(0.0f), z(0.0f)
     {
-        x = 0.0f;
-        y = 0.0f;
-        z = 0.0f;
+
     }
 
-    Vector3(float x, float y, float z)
+    Vector3(float x, float y, float z) : x(x), y(y), z(z)
     {
-        this->x = x;
-        this->y = y;
-        this->z = z;
+
     }
 
-    Vector3(const Vector3& vector)
+    Vector3(const Vector3& vector) : x(vector.x), y(vector.y), z(vector.z)
     {
-        this->x = vector.x;
-        this->y = vector.y;
-        this->z = vector.z;
+
     }
 };
 
@@ -54,28 +45,19 @@ struct Vector4
 {
     float x, y, z, w;
 
-    Vector4()
+    Vector4() : x(0.0f), y(0.0f), z(0.0f), w(0)
     {
-        x = 0.0f;
-        y = 0.0f;
-        z = 0.0f;
-        w = 0.0f;
+
     }
 
-    Vector4(float x, float y, float z, float w)
+    Vector4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w)
     {
-        this->x = x;
-        this->y = y;
-        this->z = z;
-        this->w = w;
+
     }
 
-    Vector4(const Vector4& vector)
+    Vector4(const Vector4& vector) : x(vector.x), y(vector.y), z(vector.z), w(vector.w)
     {
-        this->x = vector.x;
-        this->y = vector.y;
-        this->z = vector.z;
-        this->w = vector.w;
+
     }
 };
 

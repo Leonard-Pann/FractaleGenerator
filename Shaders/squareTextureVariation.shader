@@ -1,0 +1,81 @@
+#version 430
+
+layout(local_size_x = 256) in;
+
+layout(std430, binding = 0) buffer Input
+{
+    float data[];
+};
+
+layout(std430, binding = 1) buffer Output
+{
+    uint result;
+};
+
+shared float partialSum[256]; // shared memory with thread in the same workgroup
+
+uniform int width;
+uniform int height;
+
+float getMeanDifference(int row, int col)
+{
+    float currentGreyscale = data[(width * row) + col];
+	float sum = abs(currentGreyscale - data[(width * (row - 1)) + (col - 1)]);
+	sum += abs(currentGreyscale - data[(width * (row - 1)) + col]);
+	sum += abs(currentGreyscale - data[(width * (row - 1)) + (col + 1)]);
+	sum += abs(currentGreyscale - data[(width * row) + (col - 1)]);
+	sum += abs(currentGreyscale - data[(width * row) + (col + 1)]);
+	sum += abs(currentGreyscale - data[(width * (row + 1)) + col - 1)]);
+	sum += abs(currentGreyscale - data[(width * (row + 1)) + col]);
+	sum += abs(currentGreyscale - data[(width * (row + 1)) + (col + 1)]);
+	return sum / 8.0;
+}
+
+void main()
+{
+    int gid = int(gl_GlobalInvocationID.x); // the id or nunber of the thread group (if gid = 784 its the thread 784)
+    int lid = int(gl_LocalInvocationID.x); // the id of the tread in the group (between 0 and local_size_x - 1 = 255 here)
+    int groupSize = int(gl_WorkGroupSize.x); // size of the workgroup (local_size_x = 256 here)
+
+    float val = 0.0;
+    if(gid < width * height)
+    {
+        int row = gid / width;
+        int col = gid % width;
+
+        if(row != 0 && row != height - 1 && col != 0 && col != width - 1)
+        {
+            val = getMeanDifference(row, col);
+        }
+    }
+
+    partialSum[lid] = val;
+
+    memoryBarrierShared(); // wait all write in the workgroup shared memory is visible
+    barrier(); // wait until all threads in the same workgroup reach this line
+
+    for (uint s = uint(groupSize) / 2; s > 0; s >>= 1)
+    {
+        if (lid < s)
+        {
+            partialSum[lid] += partialSum[lid + s];
+        }
+        memoryBarrierShared();
+        barrier();
+    }
+
+    memoryBarrierShared();
+    barrier();
+
+    if (lid == 0) 
+    {
+        // float sum = 0.0;
+        // for(int i = 0; i < 256; i++)
+        // {
+        //     sum += partialSum[i];
+        // }
+
+        uint partilSumUint = uint(partialSum[0] * 100.0);
+        atomicAdd(result, partilSumUint);
+    }
+}

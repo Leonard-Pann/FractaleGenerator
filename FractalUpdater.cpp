@@ -51,25 +51,7 @@ vector<vector<Vector3>> FractalUpdater::colorPallets =
 	}
 };
 
-FractalUpdater::FractalUpdater() : juliaGreyShader("Shaders/juliaGreyCompute.shader")
-{
-	juliaGreyShader.load();
-	//juliaGreyShader.add_uniform("seed");
-	//juliaGreyShader.add_uniform("window");
-	//juliaGreyShader.add_uniform("maxIter");
-}
-
-FractaleParam& FractalUpdater::getFractaleParam()
-{
-	return params;
-}
-
-Vector2 FractalUpdater::random_point()
-{
-	return Vector2(Random::rand(xMin, xMax), Random::rand(yMin, yMax));
-}
-
-void FractalUpdater::init()
+FractalUpdater::FractalUpdater() : juliaGreyShader()
 {
 	//params
 	xMin = -1.7f;
@@ -94,14 +76,27 @@ void FractalUpdater::init()
 
 	Vector3 colorIn(0.0f, 0.0f, 0.0f);
 	params = FractaleParam(random_point(), xMin, xMax, yMin, yMax, colorIn, colorPallets[0], 1000);
+	params.origin = Vector2();
 
-	// For find_julia_origin method
+	// For findJuliaOrigin method
 	greyTextureWidth = 1920;
 	greyTextureHeight = 1080;
-	juliaGreyShader.setTextureSize(greyTextureWidth, greyTextureHeight);
-	greyMaxIter = 500;
+	juliaGreyShader.load();
+	greyMaxIter = 1000;
+	juliaOriginThreshold = 0.0018f;
+	textureVariationShader.load();
 
 	timer = 2.0f;
+}
+
+FractaleParam& FractalUpdater::getFractaleParam()
+{
+	return params;
+}
+
+Vector2 FractalUpdater::random_point()
+{
+	return Vector2(Random::rand(xMin, xMax), Random::rand(yMin, yMax));
 }
 
 void FractalUpdater::update(float dt, Vector2 origin)
@@ -119,44 +114,80 @@ void FractalUpdater::update(float dt, Vector2 origin)
 		timer -= 2.0f;
 	}
 	timer += dt;
+
+	params.origin = origin; // tmp
 }
 
 float FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
 {
-	vector<float>& pixels = *juliaGreyShader.computeTexture(maxIter, origin, window);
+	vector<float>& pixels = *juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
 
 	int widthEnd = greyTextureWidth - 1;
 	int heightEnd = greyTextureHeight - 1;
-	int currentIndex;
 	float currentGreyscale;
-	double totalSum = 0.0;
-	for (int i = 1; i < widthEnd; i++)
+	double totalSum(0.0);
+
+	for (int i = 0; i < greyTextureWidth * greyTextureHeight; i++)
 	{
-		for (int j = 1; j < heightEnd; j++)
+		int row = i / greyTextureWidth;
+		int col = i % greyTextureWidth;
+
+		if (row != 0 && row != greyTextureHeight - 1 && col != 0 && col != greyTextureWidth - 1)
 		{
-			if ((greyTextureWidth * (i + 1)) + (j + 1) > pixels.size())
+			int width = greyTextureWidth;
+			if ((width * (row + 1)) + (col + 1) > greyTextureWidth * greyTextureHeight)
 			{
-				int a = 12;
+				int a = (width * (col + 1)) + (row + 1);
+				int b = 12;
 			}
 
-			currentIndex = (greyTextureWidth * j) + i;
-			currentGreyscale = pixels[currentIndex];
-			int sum = abs(currentGreyscale - pixels[(greyTextureWidth * (j - 1)) + (i - 1)]);
-			sum += abs(currentGreyscale - pixels[(greyTextureWidth * (j - 1)) + i]);
-			sum += abs(currentGreyscale - pixels[(greyTextureWidth * (j - 1)) + (i + 1)]);
-			sum += abs(currentGreyscale - pixels[(greyTextureWidth * j) + (i - 1)]);
-			sum += abs(currentGreyscale - pixels[(greyTextureWidth * j) + (i + 1)]);
-			sum += abs(currentGreyscale - pixels[(greyTextureWidth * (j + 1)) + (i - 1)]);
-			sum += abs(currentGreyscale - pixels[(greyTextureWidth * (j + 1)) + i]);
-			sum += abs(currentGreyscale - pixels[(greyTextureWidth * (j + 1)) + (i + 1)]);
-			totalSum += (double)sum / 8.0;
+			float currentGreyscale = pixels[(width * row) + col];
+			float sum = abs(currentGreyscale - pixels[(width * (row - 1)) + (col - 1)]);
+			sum += abs(currentGreyscale - pixels[(width * (row - 1)) + col]);
+			sum += abs(currentGreyscale - pixels[(width * (row - 1)) + (col + 1)]);
+			sum += abs(currentGreyscale - pixels[(width * row) + (col - 1)]);
+			sum += abs(currentGreyscale - pixels[(width * row) + (col + 1)]);
+			sum += abs(currentGreyscale - pixels[(width * (row + 1)) + (col - 1)]);
+			sum += abs(currentGreyscale - pixels[(width * (row + 1)) + col]);
+			sum += abs(currentGreyscale - pixels[(width * (row + 1)) + (col + 1)]);
+			totalSum += sum / 8.0;
 		}
 	}
 
-	float mean = totalSum / (double)(greyTextureWidth * greyTextureHeight);
+	//for (int col = 1; col < widthEnd; col++)
+	//{
+	//	for (int row = 1; row < heightEnd; row++)
+	//	{
+	//		currentGreyscale = pixels[(greyTextureWidth * row) + col];
+	//		float sum = abs(currentGreyscale - pixels[(greyTextureWidth * (row - 1)) + (col - 1)]);
+	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * (row - 1)) + col]);
+	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * (row - 1)) + (col + 1)]);
+	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * row) + (col - 1)]);
+	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * row) + (col + 1)]);
+	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * (row + 1)) + (col - 1)]);
+	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * (row + 1)) + col]);
+	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * (row + 1)) + (col + 1)]);
+	//		totalSum += (double)(sum / 8.0f);
+	//	}
+	//}
+
+	float meanCPU = totalSum / (double)(greyTextureWidth * greyTextureHeight);
+
+	//float sum = 0.0;
+	//for (float value : pixels)
+	//{
+	//	sum += value;
+	//}
+	//float meanCPU = sum / (float)(greyTextureWidth * greyTextureHeight);
+
+	float meanGPU(0.0f);
+	meanGPU = textureVariationShader.computeMeanTextureVariation(pixels, greyTextureWidth, greyTextureHeight);
+
+	cout << "CPU : " << meanCPU << endl;
+	cout << "GPU : " << meanGPU << endl;
 
 	delete &pixels;
-	return mean;
+	return meanCPU;
 }
 
 // return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold(use gradient descent)
@@ -169,6 +200,6 @@ Vector2 FractalUpdater::findJuliaOrigin(Vector2 origin)
 	auto end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> elapsed = end - start;
 
-	cout << "mean : " << mean << " and takes " << elapsed.count() << " seconds" << endl;
+	//cout << "mean : " << mean << " and takes " << elapsed.count() << " seconds" << endl;
 	return origin;
 }
