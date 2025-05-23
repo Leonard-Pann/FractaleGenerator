@@ -45,8 +45,12 @@ float TextureVariationShader::computeMeanTextureVariation(const std::vector<floa
     uint32_t* result = (uint32_t*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
     if (result != nullptr)
     {
-        float res = (float)(((double)(*result)) / 100.0);
-        res /= (float)(width * height);
+        double nbWorkingGroup = double(width * height) / double(localSize);
+        double maxSumFloat = 256.0;
+        double factor = 4000000000.0 / (maxSumFloat * nbWorkingGroup);
+
+        float res = (float)((double)*result / factor);
+        res /= width * height;
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
         return res;
     }

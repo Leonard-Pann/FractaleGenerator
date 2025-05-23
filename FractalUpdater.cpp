@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
 #include <chrono> //tmp
@@ -75,7 +76,7 @@ FractalUpdater::FractalUpdater() : juliaGreyShader()
 	dezoomMaxDuration = 5.0f;
 
 	Vector3 colorIn(0.0f, 0.0f, 0.0f);
-	params = FractaleParam(random_point(), xMin, xMax, yMin, yMax, colorIn, colorPallets[0], 1000);
+	params = FractaleParam(randomPoint(), xMin, xMax, yMin, yMax, colorIn, colorPallets[0], 1000);
 	params.origin = Vector2();
 
 	// For findJuliaOrigin method
@@ -86,6 +87,12 @@ FractalUpdater::FractalUpdater() : juliaGreyShader()
 	juliaOriginThreshold = 0.0018f;
 	textureVariationShader.load();
 
+	// for findRandomPointToZoomInJulia
+	juliaCentroidPointBlackThreshold = 0.1f;
+	juliaCentroidPointNeighborhoodThreshold = 0.3f;
+	centroidNeighborhoodRadius = 0.01f;
+
+
 	timer = 2.0f;
 }
 
@@ -94,7 +101,7 @@ FractaleParam& FractalUpdater::getFractaleParam()
 	return params;
 }
 
-Vector2 FractalUpdater::random_point()
+Vector2 FractalUpdater::randomPoint()
 {
 	return Vector2(Random::rand(xMin, xMax), Random::rand(yMin, yMax));
 }
@@ -108,98 +115,131 @@ void FractalUpdater::update(float dt, Vector2 origin)
 	* Search another random c like *1
 	* Dezoom a go to the new C using bezier curve
 	*/
+
+	Vector2 c = Vector2(0.373287f, 0.349525f);
+
 	if(timer > 2.0f)
 	{
-		params.origin = findJuliaOrigin(origin);
+		params.origin = findRandomPointToZoomInJulia();
 		timer -= 2.0f;
 	}
 	timer += dt;
 
-	params.origin = origin; // tmp
+	params.origin = c;//tmp
 }
 
-float FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
+//tuple<float, vector<float>*>  FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
+tuple<float, vector<float>*> FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
 {
 	vector<float>& pixels = *juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
 
-	int widthEnd = greyTextureWidth - 1;
-	int heightEnd = greyTextureHeight - 1;
-	float currentGreyscale;
-	double totalSum(0.0);
+	//int widthEnd = greyTextureWidth - 1;
+	//int heightEnd = greyTextureHeight - 1;
+	//float currentGreyscale;
+	//float totalSum(0.0);
 
-	for (int i = 0; i < greyTextureWidth * greyTextureHeight; i++)
-	{
-		int row = i / greyTextureWidth;
-		int col = i % greyTextureWidth;
-
-		if (row != 0 && row != greyTextureHeight - 1 && col != 0 && col != greyTextureWidth - 1)
-		{
-			int width = greyTextureWidth;
-			if ((width * (row + 1)) + (col + 1) > greyTextureWidth * greyTextureHeight)
-			{
-				int a = (width * (col + 1)) + (row + 1);
-				int b = 12;
-			}
-
-			float currentGreyscale = pixels[(width * row) + col];
-			float sum = abs(currentGreyscale - pixels[(width * (row - 1)) + (col - 1)]);
-			sum += abs(currentGreyscale - pixels[(width * (row - 1)) + col]);
-			sum += abs(currentGreyscale - pixels[(width * (row - 1)) + (col + 1)]);
-			sum += abs(currentGreyscale - pixels[(width * row) + (col - 1)]);
-			sum += abs(currentGreyscale - pixels[(width * row) + (col + 1)]);
-			sum += abs(currentGreyscale - pixels[(width * (row + 1)) + (col - 1)]);
-			sum += abs(currentGreyscale - pixels[(width * (row + 1)) + col]);
-			sum += abs(currentGreyscale - pixels[(width * (row + 1)) + (col + 1)]);
-			totalSum += sum / 8.0;
-		}
-	}
-
-	//for (int col = 1; col < widthEnd; col++)
+	//for (int i = 0; i < greyTextureWidth * greyTextureHeight; i++)
 	//{
-	//	for (int row = 1; row < heightEnd; row++)
+	//	int row = i / greyTextureWidth;
+	//	int col = i % greyTextureWidth;
+
+	//	if (row != 0 && row != greyTextureHeight - 1 && col != 0 && col != greyTextureWidth - 1)
 	//	{
-	//		currentGreyscale = pixels[(greyTextureWidth * row) + col];
-	//		float sum = abs(currentGreyscale - pixels[(greyTextureWidth * (row - 1)) + (col - 1)]);
-	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * (row - 1)) + col]);
-	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * (row - 1)) + (col + 1)]);
-	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * row) + (col - 1)]);
-	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * row) + (col + 1)]);
-	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * (row + 1)) + (col - 1)]);
-	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * (row + 1)) + col]);
-	//		sum += abs(currentGreyscale - pixels[(greyTextureWidth * (row + 1)) + (col + 1)]);
-	//		totalSum += (double)(sum / 8.0f);
+	//		int width = greyTextureWidth;
+	//		float currentGreyscale = pixels[(width * row) + col];
+	//		float sum = abs(currentGreyscale - pixels[(width * (row - 1)) + (col - 1)]);
+	//		sum += abs(currentGreyscale - pixels[(width * (row - 1)) + col]);
+	//		sum += abs(currentGreyscale - pixels[(width * (row - 1)) + (col + 1)]);
+	//		sum += abs(currentGreyscale - pixels[(width * row) + (col - 1)]);
+	//		sum += abs(currentGreyscale - pixels[(width * row) + (col + 1)]);
+	//		sum += abs(currentGreyscale - pixels[(width * (row + 1)) + (col - 1)]);
+	//		sum += abs(currentGreyscale - pixels[(width * (row + 1)) + col]);
+	//		sum += abs(currentGreyscale - pixels[(width * (row + 1)) + (col + 1)]);
+	//		totalSum += sum / 8.0;
 	//	}
 	//}
 
-	float meanCPU = totalSum / (double)(greyTextureWidth * greyTextureHeight);
+	//float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
 
-	//float sum = 0.0;
-	//for (float value : pixels)
-	//{
-	//	sum += value;
-	//}
-	//float meanCPU = sum / (float)(greyTextureWidth * greyTextureHeight);
+	float meanGPU = textureVariationShader.computeMeanTextureVariation(pixels, greyTextureWidth, greyTextureHeight);
 
-	float meanGPU(0.0f);
-	meanGPU = textureVariationShader.computeMeanTextureVariation(pixels, greyTextureWidth, greyTextureHeight);
-
-	cout << "CPU : " << meanCPU << endl;
-	cout << "GPU : " << meanGPU << endl;
-
-	delete &pixels;
-	return meanCPU;
+	//delete &pixels;
+	return make_tuple(meanGPU, &pixels);
 }
 
-// return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold(use gradient descent)
-Vector2 FractalUpdater::findJuliaOrigin(Vector2 origin)
+// return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold
+tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOrigin()
 {
 	Vector4 window(xMin, xMax, yMin, yMax);
 
-	auto start = std::chrono::high_resolution_clock::now();
-	float mean = getJuliaTotalGreyVariation(greyMaxIter, origin, window);
-	auto end = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> elapsed = end - start;
+	Vector2 randPoint = randomPoint();
+	tuple<float, vector<float>*> tuple = getJuliaTotalGreyVariation(greyMaxIter, randPoint, window);
+	float mean = get<0>(tuple);
+	vector<float>* juliaGreyTexture = get<1>(tuple);
 
-	//cout << "mean : " << mean << " and takes " << elapsed.count() << " seconds" << endl;
-	return origin;
+	int i = 1;
+	while (mean < juliaOriginThreshold)
+	{
+		randPoint = randomPoint();
+		tuple = getJuliaTotalGreyVariation(greyMaxIter, randPoint, window);
+		mean = get<0>(tuple);
+		juliaGreyTexture = get<1>(tuple);
+		i++;
+	}
+
+	return make_tuple(randPoint, juliaGreyTexture);
+}
+
+// Find a random z € |C such that Julia(c)(z) <= threshold && meanSum(Julia(c)(zi)) >= threshold2 where zi neighborhood
+Vector2 FractalUpdater::findRandomPointToZoomInJulia()
+{
+	tuple<Vector2, vector<float>*> tuple = findRandomJuliaOrigin();
+	Vector2 origin = get<0>(tuple);
+	vector<float>& juliaGreyText = *get<1>(tuple);
+
+	int randomRow(0);
+	int randomCol(0);
+	float meanNeighborhoodSum(0.0f);
+	int neigPixelSize = max((int)(centroidNeighborhoodRadius * (xMax - xMin)), 1);
+
+	do
+	{
+		randomRow = Random::randExclude(neigPixelSize, greyTextureHeight - neigPixelSize);
+		randomCol = Random::randExclude(neigPixelSize, greyTextureWidth - neigPixelSize);
+		float midValue = juliaGreyText[(randomRow * greyTextureWidth) + randomCol];
+		if (midValue > juliaCentroidPointBlackThreshold)
+			continue;
+
+		meanNeighborhoodSum = 0.0f;
+
+		for (int i = -neigPixelSize; i <= neigPixelSize; i++)
+		{
+			for (int j = -neigPixelSize; j <= neigPixelSize; j++)
+			{
+				if (i == 0 && i == j)
+				{
+					continue;
+				}
+
+				int newRow = randomRow + i;
+				int newCol = randomCol + j;
+				meanNeighborhoodSum += juliaGreyText[(newRow * greyTextureWidth) + newCol];
+			}
+		}
+
+		meanNeighborhoodSum /= neigPixelSize * neigPixelSize;
+
+		if (meanNeighborhoodSum < juliaCentroidPointNeighborhoodThreshold)
+		{
+			continue;
+		}
+
+		break;
+
+	} while (true);
+
+
+
+	delete& juliaGreyText;
+	return Vector2();
 }

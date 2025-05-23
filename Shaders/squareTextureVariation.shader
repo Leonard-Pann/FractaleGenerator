@@ -17,7 +17,7 @@ shared float partialSum[256]; // shared memory with thread in the same workgroup
 uniform int width;
 uniform int height;
 
-float getMeanDifference(int row, int col)
+float getDifferences(int row, int col)
 {
     float currentGreyscale = data[(width * row) + col];
 	float sum = abs(currentGreyscale - data[(width * (row - 1)) + (col - 1)]);
@@ -25,10 +25,10 @@ float getMeanDifference(int row, int col)
 	sum += abs(currentGreyscale - data[(width * (row - 1)) + (col + 1)]);
 	sum += abs(currentGreyscale - data[(width * row) + (col - 1)]);
 	sum += abs(currentGreyscale - data[(width * row) + (col + 1)]);
-	sum += abs(currentGreyscale - data[(width * (row + 1)) + col - 1)]);
+	sum += abs(currentGreyscale - data[(width * (row + 1)) + (col - 1)]);
 	sum += abs(currentGreyscale - data[(width * (row + 1)) + col]);
 	sum += abs(currentGreyscale - data[(width * (row + 1)) + (col + 1)]);
-	return sum / 8.0;
+	return sum;
 }
 
 void main()
@@ -45,7 +45,7 @@ void main()
 
         if(row != 0 && row != height - 1 && col != 0 && col != width - 1)
         {
-            val = getMeanDifference(row, col);
+            val = getDifferences(row, col);
         }
     }
 
@@ -69,13 +69,12 @@ void main()
 
     if (lid == 0) 
     {
-        // float sum = 0.0;
-        // for(int i = 0; i < 256; i++)
-        // {
-        //     sum += partialSum[i];
-        // }
+        double sumFloat = double(partialSum[0]) / 8.0; // sumFloat € [0, local_size_x = 256]
+        double nbWorkingGroup = double(width * height) / double(groupSize);
+        double maxSumFloat = double(groupSize);
+        double factor = 4000000000.0 / (maxSumFloat * nbWorkingGroup);
 
-        uint partilSumUint = uint(partialSum[0] * 100.0);
+        uint partilSumUint = uint(sumFloat * factor);
         atomicAdd(result, partilSumUint);
     }
 }

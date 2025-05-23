@@ -47,7 +47,7 @@ void onMouseScroll(GLFWwindow* window, double deltaX, double deltaY)
 
 int main(void)
 {
-    Random::set_random_seed();
+    Random::setRandomSeed();
 
     if (glfwInit() == 0)
         return -1;

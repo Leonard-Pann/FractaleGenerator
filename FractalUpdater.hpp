@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <vector>
+#include <tuple>
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
 #include "JuliaGreyComputeShader.hpp"
@@ -33,9 +34,10 @@ private:
 	JuliaGreyComputeShader juliaGreyShader;
 	TextureVariationShader textureVariationShader;
 
-	Vector2 random_point();
-	Vector2 findJuliaOrigin(Vector2 origin);
-	float getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window);
+	Vector2 randomPoint();
+	std::tuple<Vector2, std::vector<float>*> findRandomJuliaOrigin();
+	std::tuple<float, std::vector<float>*> getJuliaTotalGreyVariation(int maxIter, const Vector2 origin, const Vector4& window);
+	Vector2 findRandomPointToZoomInJulia();
 
 public:
 	FractalUpdater();

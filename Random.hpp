@@ -11,7 +11,7 @@ static int c_rand()
 class Random
 {
 public:
-    static inline void set_random_seed()
+    static inline void setRandomSeed()
     {
         srand(time(0));
     }
@@ -28,22 +28,22 @@ public:
 
     static inline int rand(int a, int b)
     {
-        return (int)(randExclude() * (abs(b - a) + 1)) + a;
+        return (int)(Random::randExclude() * (abs(b - a) + 1)) + a;
     }
 
     static inline  float rand(float a, float b)
     {
-        return c_rand() * abs(b - a) + a;
+        return (Random::rand() * abs(b - a)) + a;
     }
 
     static inline int randExclude(int a, int b)
     {
-        return rand(a, b - 1);
+        return Random::rand(a, b - 1);
     }
 
     static inline float randExclude(float a, float b)
     {
-        return randExclude() * abs(b - a) + a;
+        return Random::randExclude() * abs(b - a) + a;
     }
 };
 
