@@ -27,32 +27,7 @@ vec3 LerpColor(vec3 startCol, vec3 endCol, float t)
     return ((endCol.xyz - startCol.xyz) * t) + startCol.xyz;
 }
 
-vec4 getMandelbrotColor(float cx, float cy)
-{
-    float currentx = 0.0;
-    float currenty = 0.0;
-
-    float xTmp;
-
-    int nbIter = 0;
-    while(currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
-    {
-        xTmp = currentx;
-        currentx = (xTmp * xTmp - (currenty * currenty)) + cx;
-        currenty = 2.0 * xTmp * currenty + cy;
-        nbIter++;
-    }
-
-    if(nbIter >= maxIter)
-    {
-        return vec4(inColor.xyz, 1.0);
-    }
-
-    float fade = pow32(1.0 - (float(nbIter) / float(maxIter)));
-    return vec4(LerpColor(inColor, colorPalette[0], fade), 1.0);
-}
-
-float length(float x, float y)
+double length(double x, double y)
 {
     return sqrt(x * x + (y * y));
 }
@@ -88,12 +63,12 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
         return vec4(1.0, 0.0, 0.0, 1.0);
     }
 
-    float currentx = zx;
-    float currenty = zy;
+    double currentx = zx;
+    double currenty = zy;
 
-    float xTmp;
+    double xTmp;
 
-    float smoothValue = exp(-length(currentx, currenty));
+    float smoothValue = exp(float(-length(currentx, currenty)));
     float colorRange = 3.0;
     float colorShift = 0.0;
     float colorMod = float(maxIter) * 0.01 * colorRange;
@@ -105,14 +80,13 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
         currentx = (xTmp * xTmp - (currenty * currenty)) + cx;
         currenty = 2.0 * xTmp * currenty + cy;
         nbIter++;
-        smoothValue += exp(-length(currentx, currenty));
+        smoothValue += exp(float(-length(currentx, currenty)));
     }
 
-
     int shiftedIter = int((nbIter + colorShift * int((float(maxIter) / colorMod)))) % maxIter;
-    float floorSV = floor(smoothValue);
+    float floorSV = smoothValue;
     int maxIterMod = int(float(maxIter) / colorMod);
-    float shiftedSmoothValue = int(floorSV + colorShift * maxIterMod) % maxIter + (smoothValue - floorSV);
+    float shiftedSmoothValue = float(int(floorSV + double(colorShift * maxIterMod)) % maxIter) + float(smoothValue - floorSV);
 
     if (nbIter >= maxIter)
     {
@@ -128,7 +102,6 @@ void main()
     float posY = (vert_pos.y + 1.0) * 0.5 * (window.w - window.z) + window.z;
 
     color = getJuliaColor(posX, posY, seed.x, seed.y);
-    //color = getMandelbrotColor(pos.x, pos.y);
 };
 
 #shader vertex        

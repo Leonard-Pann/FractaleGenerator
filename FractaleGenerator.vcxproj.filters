@@ -65,7 +65,7 @@
     <ClInclude Include="BezierUtils.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="math.hpp">
+    <ClInclude Include="Math.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="JuliaFractal.hpp">

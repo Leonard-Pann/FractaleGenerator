@@ -72,27 +72,33 @@ int main(void)
     glfwSetCursorPosCallback(window, onMouseMove);
     //glfwSwapInterval(0); // Désactiver la VSync
 
-    //JuliaFractal juliaFractal("Shaders/julia.shader");
-    JuliaFractal juliaFractal("Shaders/juliaGrey.shader");
+    //JuliaFractal juliaFractal("Shaders/juliaDouble.shader");
+    JuliaFractal juliaFractal("Shaders/julia.shader");
+    //JuliaFractal juliaFractal("Shaders/juliaGrey.shader");
+    juliaFractal.shader.addUniform("redPoint");
 
-    FractalUpdater fractalUpdater;
+    FractalUpdater fractalUpdater(windowWidth, windowHeight);
 
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
+        //dt = 1.0 / 240.0;
         //std::cout << 1 / dt << std::endl;
 
-        float xNorm = lerp(-2.0f, 2.0f, (normalizeMousePosition.x * 0.5f) + 0.5f);
-        float yNorm = lerp(-2.0f, 2.0f, (normalizeMousePosition.y * 0.5f) + 0.5f);
+        float xNorm = Math::lerp(-2.0f, 2.0f, (normalizeMousePosition.x * 0.5f) + 0.5f);
+        float yNorm = Math::lerp(-2.0f, 2.0f, (normalizeMousePosition.y * 0.5f) + 0.5f);
         Vector2 newOrigin = Vector2(xNorm, yNorm);
         //std::cout << "x: " << newOrigin.x << " y: " << newOrigin.y << std::endl;
 
-        fractalUpdater.update(dt, newOrigin);
+        fractalUpdater.update(dt);
 
         FractaleParam& param = fractalUpdater.getFractaleParam();
         juliaFractal.setGenerationParam(param);
+
+        juliaFractal.shader.setUniform2f("redPoint", param.redPoint);
+
         juliaFractal.draw(window);
 
         glfwSwapBuffers(window);
