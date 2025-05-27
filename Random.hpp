@@ -1,7 +1,8 @@
 #ifndef __RANDOM_HPP
 #define __RANDOM_HPP
 
-#include <iostream>
+#include <stdlib.h>
+#include <vector>
 
 static int c_rand()
 {
@@ -11,6 +12,12 @@ static int c_rand()
 class Random
 {
 public:
+
+    static inline void setSeed(uint32_t seed)
+    {
+        srand(seed);
+    }
+
     static inline void setRandomSeed()
     {
         srand(time(0));
@@ -44,6 +51,20 @@ public:
     static inline float randExclude(float a, float b)
     {
         return Random::randExclude() * abs(b - a) + a;
+    }
+
+    template<class T>
+    static void shuffle(std::vector<T>& array)
+    {
+        int start = (int)array.size() - 1;
+        int randIndex;
+        for (int i = start; i >= 0; i--)
+        {
+            randIndex = Random::rand(0, i);
+            T tmp = array[i];
+            array[i] = array[randIndex];
+            array[randIndex] = tmp;
+        }
     }
 };
 

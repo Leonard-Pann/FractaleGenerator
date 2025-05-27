@@ -1,18 +1,36 @@
 #include "HermiteSpline.hpp"
-#include "BezierUtils.hpp"
+#include "Math.hpp"
+#include <iostream>
 
-HermiteSpline::HermiteSpline()
+using namespace std;
+
+int findRecur(float x, int start, int end, vector<float> arr)
 {
-	points = std::vector<Vector2>();
-	velocities = std::vector<Vector2>();
-	length = 0.0f;
+	if (end - start <= 1)
+		return arr[end] <= x ? end : start;
+
+	int mid = (start + end) / 2;
+	if (x < arr[mid])
+	{
+		return findRecur(x, start, mid, arr);
+	}
+	return findRecur(x, mid, end, arr);
 }
 
-HermiteSpline::HermiteSpline(std::vector<Vector2> points)
+HermiteSpline::HermiteSpline() : points(), velocities(), length(0.0f)
 {
-	this->points = points;
 
-	velocities = std::vector<Vector2>(points.size());
+}
+
+HermiteSpline::HermiteSpline(const vector<Vector2>& points) : points(points), length(0.0f)
+{
+	if (points.size() < 2)
+	{
+		cout << "A Hermite spline must have at least 4 points, got only " << points.size() << endl;
+		return;
+	}
+
+	velocities = vector<Vector2>(points.size());
 
 	for (int i = 1; i < velocities.size() - 1; i++)
 	{
@@ -25,12 +43,17 @@ HermiteSpline::HermiteSpline(std::vector<Vector2> points)
 	generateLUT();
 }
 
+HermiteSpline::HermiteSpline(const HermiteSpline& hermiteSpline) : points(hermiteSpline.points), velocities(hermiteSpline.velocities), lut(hermiteSpline.lut), length(hermiteSpline.length)
+{
+
+}
+
 Vector2 HermiteSpline::Evaluate(float t) const
 {
-	t = clamp01(t);
+	t = Math::clamp01(t);
 
 	float interLength = 1.0f / (float)(points.size() - 1);
-	int i = t < 1.0f ? (int)floor(t / interLength) : points.size() - 2;
+	int i = t < 1.0f ? Math::floor(t / interLength) : points.size() - 2;
 	float newT = (t - (i * interLength)) / interLength;
 
 	float cache = newT * newT;
@@ -52,13 +75,12 @@ float HermiteSpline::convertDistanceToTime(float x) const
 		return 1.0f;
 
 	int index = findRecur(x, 0, lut.length - 1, lut.x);
-	return Lerp(lut.t[index], lut.t[index + 1], (x - lut.x[index]) / (lut.x[index + 1] - lut.x[index]));
+	return Math::lerp(lut.t[index], lut.t[index + 1], (x - lut.x[index]) / (lut.x[index + 1] - lut.x[index]));
 }
 
 const Vector2 HermiteSpline::getStart() const
 {
 	return points[0];
-	
 }
 
 const Vector2 HermiteSpline::getEnd() const
@@ -69,8 +91,8 @@ const Vector2 HermiteSpline::getEnd() const
 void HermiteSpline::generateLUT()
 {
 	int nbPoints = 200;
-	std::vector<float> x = std::vector<float>(nbPoints);
-	std::vector<float> t = std::vector<float>(nbPoints);
+	vector<float> x = vector<float>(nbPoints);
+	vector<float> t = vector<float>(nbPoints);
 	t[0] = 0.0f;
 	x[0] = 0.0f;
 
@@ -81,7 +103,7 @@ void HermiteSpline::generateLUT()
 	{
 		t[i] = i * oneOnbPoints;
 		currentPoint = Evaluate(t[i]);
-		x[i] = x[i - 1] + distance(currentPoint, oldPoint);
+		x[i] = x[i - 1] + Vector2::distance(currentPoint, oldPoint);
 		oldPoint = currentPoint;
 	}
 

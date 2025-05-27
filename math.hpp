@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MATH_HPP
+#define MATH_HPP
 
 class Math
 {
@@ -28,4 +29,16 @@ public:
 	{
 		return value <= 0.0f ? 0.0f : (value >= 1.0f ? 1.0f : value);
 	}
+
+	static inline int floor(float value)
+	{
+		return (int)value;
+	}
+
+	static inline int ceil(float value)
+	{
+		return (float)((int)value) ==  value ? (int)value : (int)value + 1;
+	}
 };
+
+#endif

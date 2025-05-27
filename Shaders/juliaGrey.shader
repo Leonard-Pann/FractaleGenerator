@@ -8,7 +8,6 @@ layout(location = 0) out vec4 color;
 uniform vec2 seed;
 uniform vec4 window;
 uniform int maxIter;
-uniform vec2 redPoint;
 
 float pow32(float x)
 {
@@ -37,10 +36,12 @@ float length(float x, float y)
 
 vec4 getJuliaColor(float zx, float zy, float cx, float cy)
 {
-    if(length(zx - redPoint.x, zy - redPoint.y) < ((window.y - window.x) / 1920.0) * 4.0)
-    {
-        return vec4(1.0, 0.0, 0.0, 1.0);
-    }
+    // float maxXLength = (window.y - window.x) / 1920.0;
+    // float maxYLength = (window.w - window.z) / 1080.0;
+    // if(length(zx - redPoint.x, zy - redPoint.y) < 2.0 * sqrt(maxXLength * maxXLength + (maxYLength * maxYLength)))
+    // {
+    //     return vec4(1.0, 0.0, 0.0, 1.0);
+    // }
 
     float currentx = zx;
     float currenty = zy;

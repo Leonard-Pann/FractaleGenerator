@@ -39,7 +39,6 @@ vector<float>* JuliaGreyComputeShader::computeTexture(int maxIter, Vector2 origi
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
 
     float* data = (float*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-
     vector<float>* res = new vector<float>{ data, data + (textWidth * textHeight) };
 
     if (data != nullptr)

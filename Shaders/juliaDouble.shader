@@ -11,7 +11,6 @@ uniform int maxIter;
 uniform vec3 inColor;
 uniform vec3 colorPalette[7];
 uniform int nbColors;
-uniform vec2 redPoint;
 
 float pow32(float x)
 {
@@ -58,11 +57,6 @@ vec4 getColor(float nbIter, float maxIter)
 
 vec4 getJuliaColor(float zx, float zy, float cx, float cy)
 {
-    if(length(zx - redPoint.x, zy - redPoint.y) < ((window.y - window.x) / 1920.0) * 4.0)
-    {
-        return vec4(1.0, 0.0, 0.0, 1.0);
-    }
-
     double currentx = zx;
     double currenty = zy;
 

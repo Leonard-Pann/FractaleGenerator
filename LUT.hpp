@@ -9,16 +9,19 @@ struct LUT
 	std::vector<float> t;
 	int length;
 
-	LUT(std::vector<float>& x, std::vector<float>& t, int length)
+	LUT(std::vector<float>& x, std::vector<float>& t, int length) : x(x), t(t), length(length)
 	{
-		this->x = x;
-		this->t = t;
-		this->length = length;
+
 	}
 
-	LUT()
+	LUT(const LUT& lut) : x(lut.x), t(lut.t), length(lut.length)
 	{
-		this->length = 0;
+
+	}
+
+	LUT() : length(0.0f)
+	{
+
 	}
 };
 

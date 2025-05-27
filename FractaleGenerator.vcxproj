@@ -144,7 +144,6 @@
     <ClCompile Include="TextureVariationShader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BezierUtils.hpp" />
     <ClInclude Include="ComputeShader.hpp" />
     <ClInclude Include="FractaleParam.hpp" />
     <ClInclude Include="FractalUpdater.hpp" />

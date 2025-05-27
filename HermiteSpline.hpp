@@ -15,7 +15,8 @@ private:
 
 public:
 	HermiteSpline();
-	HermiteSpline(std::vector<Vector2> points);
+	HermiteSpline(const std::vector<Vector2>& points);
+	HermiteSpline(const HermiteSpline& hermiteSpline);
 	Vector2 Evaluate(float t) const;
 	Vector2 EvaluateDistance(float x) const;
 	float convertDistanceToTime(float x) const;

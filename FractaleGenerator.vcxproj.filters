@@ -62,9 +62,6 @@
     <ClInclude Include="HermiteSpline.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="BezierUtils.hpp">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="Math.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>

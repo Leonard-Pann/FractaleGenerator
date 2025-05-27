@@ -84,7 +84,7 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
-        //dt = 1.0 / 240.0;
+        dt = 1.0 / 240.0;
         //std::cout << 1 / dt << std::endl;
 
         float xNorm = Math::lerp(-2.0f, 2.0f, (normalizeMousePosition.x * 0.5f) + 0.5f);
@@ -94,10 +94,8 @@ int main(void)
 
         fractalUpdater.update(dt);
 
-        FractaleParam& param = fractalUpdater.getFractaleParam();
+        const FractaleParam& param = fractalUpdater.getFractaleParam();
         juliaFractal.setGenerationParam(param);
-
-        juliaFractal.shader.setUniform2f("redPoint", param.redPoint);
 
         juliaFractal.draw(window);
 
