@@ -1,5 +1,5 @@
-#ifndef __FRACTAL_PARAM_HPP
-#define __FRACTAL_PARAM_HPP
+#ifndef FRACTAL_PARAM_HPP
+#define FRACTAL_PARAM_HPP
 
 #include<vector>
 #include "Vector.hpp"

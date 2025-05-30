@@ -1,5 +1,5 @@
-#ifndef __VECTOR_HPP
-#define __VECTOR_HPP
+#ifndef VECTOR_HPP
+#define VECTOR_HPP
 
 #include <math.h>
 
@@ -28,7 +28,34 @@ struct Vector2
         float tmpY = v1.y - v2.y;
         return sqrtf(tmpX * tmpX + (tmpY * tmpY));
     }
+
+    static float sqrDistance(const Vector2& v1, const Vector2& v2)
+    {
+        float tmpX = v1.x - v2.x;
+        float tmpY = v1.y - v2.y;
+        return tmpX * tmpX + (tmpY * tmpY);
+    }
 };
+
+static Vector2 operator*(const Vector2& vector, float other)
+{
+    return Vector2(vector.x * other, vector.y * other);
+}
+
+static Vector2 operator*(float other, const Vector2& vector)
+{
+    return Vector2(vector.x * other, vector.y * other);
+}
+
+static Vector2 operator+(const Vector2& left, const Vector2& right)
+{
+    return Vector2(left.x + right.x, left.y + right.y);
+}
+
+static Vector2 operator-(const Vector2& left, const Vector2& right)
+{
+    return Vector2(left.x - right.x, left.y - right.y);
+}
 
 struct Vector3
 {
@@ -56,7 +83,35 @@ struct Vector3
         float tmpZ = v1.z - v2.z;
         return sqrtf(tmpX * tmpX + (tmpY * tmpY) + (tmpZ * tmpZ));
     }
+
+    static float sqrDistance(const Vector3& v1, const Vector3& v2)
+    {
+        float tmpX = v1.x - v2.x;
+        float tmpY = v1.y - v2.y;
+        float tmpZ = v1.z - v2.z;
+        return tmpX * tmpX + (tmpY * tmpY) + (tmpZ * tmpZ);
+    }
 };
+
+static Vector3 operator*(const Vector3& vector, float other)
+{
+    return Vector3(vector.x * other, vector.y * other, vector.z * other);
+}
+
+static Vector3 operator*(float other, const Vector3& vector)
+{
+    return Vector3(vector.x * other, vector.y * other, vector.z * other);
+}
+
+static Vector3 operator+(const Vector3& left, const Vector3& right)
+{
+    return Vector3(left.x + right.x, left.y + right.y, left.z + right.z);
+}
+
+static Vector3 operator-(const Vector3& left, const Vector3& right)
+{
+    return Vector3(left.x - right.x, left.y - right.y, left.z - right.z);
+}
 
 struct Vector4
 {
@@ -85,7 +140,36 @@ struct Vector4
         float tmpW = v1.w - v2.w;
         return sqrtf(tmpX * tmpX + (tmpY * tmpY) + (tmpZ * tmpZ) + (tmpW * tmpW));
     }
+
+    static float sqrDistance(const Vector4& v1, const Vector4& v2)
+    {
+        float tmpX = v1.x - v2.x;
+        float tmpY = v1.y - v2.y;
+        float tmpZ = v1.z - v2.z;
+        float tmpW = v1.w - v2.w;
+        return tmpX * tmpX + (tmpY * tmpY) + (tmpZ * tmpZ) + (tmpW * tmpW);
+    }
 };
+
+static Vector4 operator*(const Vector4& vector, float other)
+{
+    return Vector4(vector.x * other, vector.y * other, vector.z * other, vector.z * other);
+}
+
+static Vector4 operator*(float other, const Vector4& vector)
+{
+    return Vector4(vector.x * other, vector.y * other, vector.z * other, vector.z * other);
+}
+
+static Vector4 operator+(const Vector4& left, const Vector4& right)
+{
+    return Vector4(left.x + right.x, left.y + right.y, left.z + right.z, left.w + right.w);
+}
+
+static Vector4 operator-(const Vector4& left, const Vector4& right)
+{
+    return Vector4(left.x - right.x, left.y - right.y, left.z - right.z, left.w - right.w);
+}
 
 struct Vector2i
 {

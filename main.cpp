@@ -48,6 +48,7 @@ void onMouseScroll(GLFWwindow* window, double deltaX, double deltaY)
 int main(void)
 {
     Random::setRandomSeed();
+    //Random::setSeed(5);
 
     if (glfwInit() == 0)
         return -1;
@@ -72,9 +73,7 @@ int main(void)
     glfwSetCursorPosCallback(window, onMouseMove);
     //glfwSwapInterval(0); // Désactiver la VSync
 
-    //JuliaFractal juliaFractal("Shaders/juliaDouble.shader");
     JuliaFractal juliaFractal("Shaders/julia.shader");
-    //JuliaFractal juliaFractal("Shaders/juliaGrey.shader");
     juliaFractal.shader.addUniform("redPoint");
 
     FractalUpdater fractalUpdater(windowWidth, windowHeight);

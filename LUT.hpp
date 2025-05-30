@@ -1,5 +1,5 @@
-#ifndef __LUT_HPP
-#define __LUT_HPP
+#ifndef LUT_HPP
+#define LUT_HPP
 
 #include <vector>
 

@@ -1,5 +1,5 @@
-#ifndef __RANDOM_HPP
-#define __RANDOM_HPP
+#ifndef RANDOM_HPP
+#define RANDOM_HPP
 
 #include <stdlib.h>
 #include <vector>

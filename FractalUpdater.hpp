@@ -1,5 +1,5 @@
-#ifndef __FRACTAL_UPDATER_HPP
-#define __FRACTAL_UPDATER_HPP
+#ifndef FRACTAL_UPDATER_HPP
+#define FRACTAL_UPDATER_HPP
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -11,7 +11,7 @@
 #include "Vector.hpp"
 #include "JuliaGreyComputeShader.hpp"
 #include "TextureVariationShader.hpp"
-#include "HermiteSpline.hpp"
+#include "CatmulRomSpline.hpp"
 
 class FractalUpdater
 {
@@ -19,28 +19,33 @@ private:
 
 	static std::vector<std::vector<Vector3>> colorPallets;
 
-	enum class TransitionState
-	{
-		zooming = 0, dezooming = 1, changeFractal = 2
-	};
-
 	class StateTarget
 	{
 	private:
-		HermiteSpline spline; // seed / c component of the julia fractal
+		HermiteSpline<Vector2> spline; // seed / c component of the julia fractal
+		HermiteSpline<Vector2> zoomSpline;
 
 	public:
-		Vector2 zoomPoint;
 		float zoomDuration;
 		float dezoomDuration;
 		float zoom;
 
 		StateTarget() : zoomDuration(0.0f), dezoomDuration(0.0f), zoom(0.0f) {};
-		StateTarget(const StateTarget& state) : spline(state.spline), zoomPoint(state.zoomPoint), zoomDuration(state.zoomDuration), dezoomDuration(state.dezoomDuration), zoom(state.zoom) {}
-		StateTarget(std::vector<Vector2> origines, Vector2 zoomPoint, float zoomDuration, float dezoomDuration, float zoom) :
-			spline(origines), zoomPoint(zoomPoint), zoomDuration(zoomDuration), dezoomDuration(dezoomDuration), zoom(zoom)
+		StateTarget(const StateTarget& state) : spline(state.spline), zoomSpline(state.zoomSpline), zoomDuration(state.zoomDuration), dezoomDuration(state.dezoomDuration), zoom(state.zoom) {}
+		StateTarget(std::vector<Vector2> origines, std::vector<Vector2> zoomPoints, float zoomDuration, float dezoomDuration, float zoom) :
+			spline(origines), zoomSpline(zoomPoints), zoomDuration(zoomDuration), dezoomDuration(dezoomDuration), zoom(zoom)
 		{
 
+		}
+
+		Vector2 finalZoomPoint() const
+		{
+			return zoomSpline.getEnd();
+		}
+
+		Vector2 getZoomPoint(float t) const
+		{
+			return zoomSpline.evaluate(t);
 		}
 
 		Vector2 finalOrigin() const
@@ -50,7 +55,7 @@ private:
 
 		Vector2 getOrigin(float t) const
 		{
-			return spline.EvaluateDistance(t);
+			return spline.evaluate(t);
 		}
 	};
 
@@ -72,14 +77,24 @@ private:
 
 	StateTarget* target;
 	StateTarget* newTarget;
-	TransitionState state;
+
 	// zoom
+
 	float zoomTime;
+	bool isZooming;
+	float zoomStartOffset;
+
 	// dezoom
+	bool isDezooming;
+	StateTarget* dezoomTarget;
+	std::vector<CatmulRomSpline<Vector3>>* dezoomColorsSplines;
+
 	// changeFractal
-	Vector2 startZoomPoint;
+	Vector2 changeFractalSize;
+	bool isChangingFractal;
 	float changeFractalTimer;
 	float changeFractalDuration;
+	float changeFractalStartOffset;
 	int minNbOrigines, maxNbOrigines;
 	bool isNewTargetReady;
 
@@ -89,6 +104,12 @@ private:
 	std::function<void*(void*)> callback;
 	void* callbackArg;
 	void* callbackResult;
+
+	//colors
+	int nbColorsInPalet;
+	int nbColorsInAnUpdateCircle;
+	std::vector<CatmulRomSpline<Vector3>>* colorsSplines;
+	float colorTimer;
 
 	Vector2 randomPoint() const;
 	std::tuple<Vector2, std::vector<float>*> findRandomJuliaOrigin();
@@ -102,6 +123,8 @@ private:
 	std::tuple<Vector2, Vector2> findRandomOriginAndZoomPointOtherThread();
 	void generateNewTarget(StateTarget* oldTarget);
 	void generateNewTargetOtherThread(StateTarget* oldTarget);
+	std::vector<Vector3>* getCurrentColorPallet(std::vector<CatmulRomSpline<Vector3>>* pallet);
+	std::vector<CatmulRomSpline<Vector3>>* generateNewPallets();
 
 	void zoom(float dt);
 	void dezoom(float dt);

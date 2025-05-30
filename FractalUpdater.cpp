@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include <thread>
+#include <list>
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
 #include "Math.hpp"
@@ -12,7 +13,7 @@ using namespace std;
 
 #pragma endregion
 
-#pragma region palette
+#pragma region pallets
 
 vector<vector<Vector3>> FractalUpdater::colorPallets =
 {
@@ -26,21 +27,23 @@ vector<vector<Vector3>> FractalUpdater::colorPallets =
 		Vector3(0.0f / 255.0f,   7.f / 255.0f, 100.0f / 255.0f)
 	},
 
-	//// Fire
+	// Fire
 	{
 		Vector3(20.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f),
 		Vector3(255.0f / 255.0f,  20.0f / 255.0f,   0.0f / 255.0f),
-		Vector3(255.0f / 255.0f, 200.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 175.0f / 255.0f,   0.0f / 255.0f),
 		Vector3(255.0f / 255.0f,  20.0f / 255.0f,   0.0f / 255.0f),
-		Vector3(20.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f)
+		Vector3(60.0f / 255.0f,   40.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(40.0f / 255.0f,   20.0f / 255.0f,   0.0f / 255.0f)
 	},
 
 	// Electric
 	{
 		Vector3(0.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f),
 		Vector3(0.0f / 255.0f,   0.0f / 255.0f, 200.0f / 255.0f),
-		Vector3(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f),
+		Vector3(220.0f / 255.0f, 220.0f / 255.0f, 255.0f / 255.0f),
 		Vector3(0.0f / 255.0f,   0.0f / 255.0f, 200.0f / 255.0f),
+		Vector3(0.0f / 255.0f,   0.0f / 255.0f,   100.0f / 255.0f),
 		Vector3(0.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f)
 	},
 
@@ -50,15 +53,29 @@ vector<vector<Vector3>> FractalUpdater::colorPallets =
 		Vector3(255.0f / 255.0f, 171.f / 255.0f,  12.f / 255.0f),
 		Vector3(255.0f / 255.0f, 247.f / 255.0f, 127.f / 255.0f),
 		Vector3(255.0f / 255.0f, 171.f / 255.0f,  12.f / 255.0f),
-		Vector3(85.f / 255.0f,  47.f / 255.0f,   0.0f / 255.0f)
+		Vector3(85.0f / 255.0f,  47.f / 255.0f,   0.0f / 255.0f),
+		Vector3(40.0f / 255.0f,  40.0f / 255.0f,   40.0f / 255.0f),
 	},
 
-	// Black and white gradient
-	{
-		Vector3(0.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f),
-		Vector3(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f),
-		Vector3(0.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f)
-	}
+	//// Black and white gradient
+	//{
+	//	Vector3(0.0f, 0.0f, 0.0f),
+	//	Vector3(1.0f, 1.0f, 1.0f),
+	//	Vector3(0.5f, 0.5f, 0.5f),
+	//	Vector3(0.25f, 0.25f, 0.25f),
+	//	Vector3(0.0f, 0.0f, 0.0f),
+	//	Vector3(0.0f, 0.0f, 0.0f)
+	//},
+
+	//// Radoactive
+	//{
+	//	Vector3(40.0f / 255.0f,  90.0f / 255.0f,   25.0f / 255.0f),
+	//	Vector3(40.0f / 255.0f,  255.0f / 255.0f,   0.0f / 255.0f),
+	//	Vector3(40.0f / 255.0f,  150.0f / 255.0f,   35.0f / 255.0f),
+	//	Vector3(40.0f / 255.0f,  255.0f / 255.0f,   0.0f / 255.0f),
+	//	Vector3(40.0f / 255.0f,  90 / 255.0f,   25.0f / 255.0f),
+	//	Vector3(40.0f / 255.0f,  40.0f / 255.0f,   40.0f / 255.0f)
+	//}
 };
 
 #pragma endregion
@@ -80,15 +97,18 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	xMax = horizontalSize * 0.5f;
 
 	maxSize = Vector2(xMax - xMin, yMax - yMin);
-	minSize = Vector2(maxSize.x / 60000.0f, maxSize.y / 60000.0f);
+	minSize = Vector2(maxSize.x / 40000.0f, maxSize.y / 40000.0f);
 
-	zoomMinDuration = 10.0f; 
-	zoomMaxDuration = 10.0f;
+	// Zoom
+	zoomStartOffset = -1.0f;
+	zoomMinDuration = 11.0f; 
+	zoomMaxDuration = 11.0f;
 	minZoom = 1.0f;
 	maxZoom = 1.0f;
 
-	dezoomMinDuration = 4.0f;
-	dezoomMaxDuration = 6.0f;
+	// Dezoom
+	dezoomMinDuration = 10.0f;
+	dezoomMaxDuration = 10.0f;
 
 	// For findJuliaOrigin method
 	greyTextureWidth = 1920;
@@ -103,32 +123,50 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	refiningPointToZoomIter = Math::ceil(((float)screenWidth / 1920.0f) * refineZoomIterOn1080pScreen);
 
 	// Change Fractal
-	changeFractalDuration = 7.0f;
-	minNbOrigines = 4; // min 1
-	maxNbOrigines = 4;
+	changeFractalDuration = 15.0f;
+	changeFractalStartOffset = -0.2f;
+	minNbOrigines = 5; // min 3
+	maxNbOrigines = 5;
 
-	Vector3 colorIn(0.0f, 0.0f, 0.0f);
-	int maxIter = 1000;
-	params = FractaleParam(Vector2(), xMin, xMax, yMin, yMax, colorIn, colorPallets[0], maxIter);
-
+	//target
 	generateNewTarget(nullptr);
 	target = newTarget;
 	generateNewTargetOtherThread(target);
 
-	params.origin = target->getOrigin(0.0f);
+	//Colors
+	nbColorsInPalet = (int)colorPallets[0].size();
+	nbColorsInAnUpdateCircle = 3;
+	colorsSplines = generateNewPallets();
+	colorTimer = 0.0f;
+	vector<Vector3>* currentPallet = getCurrentColorPallet(colorsSplines);
 
-	startZoomPoint = target->zoomPoint;
-	params.xMin = startZoomPoint.x - (maxSize.x * 0.5f);
-	params.xMax = startZoomPoint.x + (maxSize.x * 0.5f);
-	params.yMin = startZoomPoint.y - (maxSize.y * 0.5f);
-	params.yMax = startZoomPoint.y + (maxSize.y * 0.5f);
+	//dezoom
+	dezoomTarget = target;
+	dezoomColorsSplines = colorsSplines;
 
-	state = TransitionState::changeFractal;
+	Vector3 colorIn(0.0f, 0.0f, 0.0f);
+	int maxIter = 1000;
+
+	Vector2 startZoomPoint = target->getZoomPoint(0.0f);
+	int xMin = startZoomPoint.x - (maxSize.x * 0.5f);
+	int xMax = startZoomPoint.x + (maxSize.x * 0.5f);
+	int yMin = startZoomPoint.y - (maxSize.y * 0.5f);
+	int yMax = startZoomPoint.y + (maxSize.y * 0.5f);
+
+	params = FractaleParam(target->getOrigin(0.0f), xMin, xMax, yMin, yMax, colorIn, *currentPallet, maxIter);
+	delete currentPallet;
+
+	isChangingFractal = true;
+	isZooming = false;
+	isDezooming = false;
 	changeFractalTimer = 0.0f;
 	zoomTime = 0.0f;
+	changeFractalSize = maxSize;
 }
 
 #pragma endregion
+
+#pragma region getter/utils
 
 const FractaleParam& FractalUpdater::getFractaleParam() const
 {
@@ -139,6 +177,8 @@ Vector2 FractalUpdater::randomPoint() const
 {
 	return Vector2(Random::rand(xMin, xMax), Random::rand(yMin, yMax));
 }
+
+#pragma endregion
 
 #pragma region update
 
@@ -154,19 +194,21 @@ void FractalUpdater::update(float dt)
 		}
 	}
 
-	switch (state)
+	colorTimer += dt;
+
+	if (isDezooming)
 	{
-		case FractalUpdater::TransitionState::zooming:
-			zoom(dt);
-			break;
-		case FractalUpdater::TransitionState::dezooming:
-			dezoom(dt);
-			break;
-		case FractalUpdater::TransitionState::changeFractal:
-			changeFractal(dt);
-			break;
-		default:
-			break;
+		dezoom(dt);
+	}
+
+	if (isZooming)
+	{
+		zoom(dt);
+	}
+
+	if (isChangingFractal)
+	{
+		changeFractal(dt);
 	}
 }
 
@@ -175,24 +217,55 @@ void FractalUpdater::zoom(float dt)
 	zoomTime += dt;
 
 	float endSizeX = Math::lerp(maxSize.x, minSize.x, target->zoom);
-	float sizeX = params.xMax - params.xMin;;
+	float sizeX = params.xMax - params.xMin;
 	float growthFactor = pow(endSizeX / sizeX, dt / (target->zoomDuration - zoomTime));
 	sizeX *= growthFactor;
 
 	float endSizeY = Math::lerp(maxSize.y, minSize.y, target->zoom);
-	float sizeY = params.yMax - params.yMin;;
+	float sizeY = params.yMax - params.yMin;
 	growthFactor = pow(endSizeY / sizeY, dt / (target->zoomDuration - zoomTime));
 	sizeY *= growthFactor;
 
-	params.xMin = target->zoomPoint.x - (sizeX * 0.5f);
-	params.xMax = target->zoomPoint.x + (sizeX * 0.5f);
-	params.yMin = target->zoomPoint.y - (sizeY * 0.5f);
-	params.yMax = target->zoomPoint.y + (sizeY * 0.5f);
+
+	//float endSizeX = Math::lerp(maxSize.x, minSize.x, target->zoom);
+	//float sizeX = params.xMax - params.xMin;;
+	//float tNorm = Math::clamp01(zoomTime / target->zoomDuration);
+	//float tEasedNow = tNorm * tNorm * (3.0f - 2.0f * tNorm);
+	//float tPrevNorm = Math::clamp01((zoomTime - dt) / target->zoomDuration);
+	//float tEasedPrev = tPrevNorm * tPrevNorm * (3.0f - 2.0f * tPrevNorm);
+	//float dtEased = (tEasedNow - tEasedPrev) * target->zoomDuration;
+	//dtEased = tNorm; // No easing
+	//float growthFactor = std::pow(endSizeX / sizeX, dtEased / (target->zoomDuration - zoomTime));
+	//sizeX *= growthFactor;
+
+
+	//float endSizeY = Math::lerp(maxSize.y, minSize.y, target->zoom);
+	//float sizeY = params.yMax - params.yMin;;
+	//growthFactor = std::pow(endSizeY / sizeY, dtEased / (target->zoomDuration - zoomTime));
+	//sizeY *= growthFactor;
+
+	if (isChangingFractal)
+	{
+		changeFractalSize.x = sizeX;
+		changeFractalSize.y = sizeY;
+	}
+	else
+	{
+		params.xMin = target->finalZoomPoint().x - (sizeX * 0.5f);
+		params.xMax = target->finalZoomPoint().x + (sizeX * 0.5f);
+		params.yMin = target->finalZoomPoint().y - (sizeY * 0.5f);
+		params.yMax = target->finalZoomPoint().y + (sizeY * 0.5f);
+	}
+
+	vector<Vector3>* currentPallet = getCurrentColorPallet(colorsSplines);
+	params.colorPalette = *currentPallet;
+	delete currentPallet;
 
 	if (zoomTime >= target->zoomDuration)
 	{
 		zoomTime = 0.0f;
-		state = TransitionState::dezooming;
+		isZooming = false;
+		isDezooming = true;
 	}
 }
 
@@ -200,7 +273,7 @@ void FractalUpdater::dezoom(float dt)
 {
 	zoomTime += dt;
 
-	float sizeX = params.xMax - params.xMin;;
+	float sizeX = params.xMax - params.xMin;
 	float growthFactor = pow(maxSize.x / sizeX, dt / (target->dezoomDuration - zoomTime));
 	sizeX *= growthFactor;
 
@@ -208,29 +281,71 @@ void FractalUpdater::dezoom(float dt)
 	growthFactor = pow(maxSize.y / sizeY, dt / (target->dezoomDuration - zoomTime));
 	sizeY *= growthFactor;
 
-	params.xMin = target->zoomPoint.x - (sizeX * 0.5f);
-	params.xMax = target->zoomPoint.x + (sizeX * 0.5f);
-	params.yMin = target->zoomPoint.y - (sizeY * 0.5f);
-	params.yMax = target->zoomPoint.y + (sizeY * 0.5f);
 
-	if (zoomTime >= target->dezoomDuration)
+	//float sizeX = params.xMax - params.xMin;;
+	//float tNorm = Math::clamp01(zoomTime / target->dezoomDuration);
+	//float tEasedNow = tNorm * tNorm * (3.0f - 2.0f * tNorm);
+	//float tPrevNorm = Math::clamp01((zoomTime - dt) / target->dezoomDuration);
+	//float tEasedPrev = tPrevNorm * tPrevNorm * (3.0f - 2.0f * tPrevNorm);
+	//float dtEased = (tEasedNow - tEasedPrev) * target->dezoomDuration;
+	//dtEased = tNorm;
+	//float growthFactor = std::pow(maxSize.x / sizeX, dtEased / (target->dezoomDuration - zoomTime));
+	//sizeX *= growthFactor;
+
+
+	//float sizeY = params.yMax - params.yMin;;
+	//growthFactor = std::pow(maxSize.y / sizeY, dtEased / (target->zoomDuration - zoomTime));
+	//sizeY *= growthFactor;
+
+
+	if (isChangingFractal)
 	{
-		zoomTime = 0.0f;
-		startZoomPoint = target->zoomPoint;
+		changeFractalSize.x = sizeX;
+		changeFractalSize.y = sizeY;
+	}
+	else
+	{
+		params.xMin = dezoomTarget->finalZoomPoint().x - (sizeX * 0.5f);
+		params.xMax = dezoomTarget->finalZoomPoint().x + (sizeX * 0.5f);
+		params.yMin = dezoomTarget->finalZoomPoint().y - (sizeY * 0.5f);
+		params.yMax = dezoomTarget->finalZoomPoint().y + (sizeY * 0.5f);
+	}
 
+	if (!isChangingFractal && zoomTime - changeFractalStartOffset >= dezoomTarget->dezoomDuration)
+	{
 		while (!isNewTargetReady)
 		{
 			this_thread::sleep_for(chrono::milliseconds(1));
 		}
 
-		delete target;
 		target = newTarget;
 
 		generateNewTargetOtherThread(target);
 
+		colorsSplines = generateNewPallets();
+
+		changeFractalSize.x = sizeX;
+		changeFractalSize.y = sizeY;
+		isChangingFractal = true;
 		changeFractalTimer = 0.0f;
-		state = TransitionState::changeFractal;
 	}
+
+	if (zoomTime >= dezoomTarget->dezoomDuration)
+	{
+		zoomTime = 0.0f;
+		changeFractalSize = maxSize;
+
+		delete dezoomTarget;
+		delete dezoomColorsSplines;
+		dezoomColorsSplines = colorsSplines;
+		dezoomTarget = target;
+		colorTimer = 0.0f;
+		isDezooming = false;
+	}
+
+	vector<Vector3>* currentPallet = getCurrentColorPallet(dezoomColorsSplines);
+	params.colorPalette = *currentPallet;
+	delete currentPallet;
 }
 
 void FractalUpdater::changeFractal(float dt)
@@ -239,23 +354,110 @@ void FractalUpdater::changeFractal(float dt)
 	float lerpTime = Math::clamp01(changeFractalTimer / changeFractalDuration);
 
 	Vector2 newOrigin = target->getOrigin(lerpTime);
-
-	float x = Math::lerp(startZoomPoint.x, target->zoomPoint.x, lerpTime);
-	float y = Math::lerp(startZoomPoint.y, target->zoomPoint.y, lerpTime);
-	Vector2 newZoomPoint = Vector2(x, y);
+	Vector2 newZoomPoint = target->getZoomPoint(lerpTime);
 
 	params.origin = newOrigin;
-	params.xMin = newZoomPoint.x - (maxSize.x * 0.5f);
-	params.xMax = newZoomPoint.x + (maxSize.x * 0.5f);
-	params.yMin = newZoomPoint.y - (maxSize.y * 0.5f);
-	params.yMax = newZoomPoint.y + (maxSize.y * 0.5f);
+	params.xMin = newZoomPoint.x - (changeFractalSize.x * 0.5f);
+	params.xMax = newZoomPoint.x + (changeFractalSize.x * 0.5f);
+	params.yMin = newZoomPoint.y - (changeFractalSize.y * 0.5f);
+	params.yMax = newZoomPoint.y + (changeFractalSize.y * 0.5f);
+
+	if (!isDezooming && !isZooming)
+	{
+		vector<Vector3>* currentPallet = getCurrentColorPallet(colorsSplines);
+		params.colorPalette = *currentPallet;
+		delete currentPallet;
+	}
+
+	if (!isZooming && changeFractalTimer - zoomStartOffset >= changeFractalDuration)
+	{
+		isZooming = true;
+		zoomTime = 0.0;
+	}
 
 	if (changeFractalTimer >= changeFractalDuration)
 	{
-		state = TransitionState::zooming;
-		zoomTime = 0.0;
+		isChangingFractal = false;
 	}
 }
+
+vector<CatmulRomSpline<Vector3>>* FractalUpdater::generateNewPallets()
+{
+	vector<vector<Vector3>> pallets(nbColorsInPalet);
+	for (int i = 0; i < nbColorsInPalet; i++)
+	{
+		pallets[i].reserve(nbColorsInAnUpdateCircle);
+	}
+
+	if (colorsSplines == nullptr)
+	{
+		colorsSplines = new vector<CatmulRomSpline<Vector3>>();
+		colorsSplines->reserve(nbColorsInPalet);
+		int lastIndex = -1;
+		for (int i = 0; i < nbColorsInAnUpdateCircle; i++)
+		{
+			int randIndex = Random::randExclude(0, colorPallets.size());
+			while (randIndex == lastIndex)
+			{
+				randIndex = Random::randExclude(0, colorPallets.size());
+			}
+
+			for (int j = 0; j < nbColorsInPalet; j++)
+			{
+				pallets[j].push_back(colorPallets[randIndex][j]);
+			}
+
+			lastIndex = randIndex;
+		}
+	}
+	else
+	{
+		for (int i = 0; i < nbColorsInPalet; i++)
+		{
+			pallets[i].push_back((*colorsSplines)[i].getEnd());
+		}
+
+		int lastIndex = -1;
+		for (int i = 1; i < nbColorsInAnUpdateCircle; i++)
+		{
+			int randIndex = Random::randExclude(0, colorPallets.size());
+			while (randIndex == lastIndex)
+			{
+				randIndex = Random::randExclude(0, colorPallets.size());
+			}
+
+			for (int j = 0; j < nbColorsInPalet; j++)
+			{
+				pallets[j].push_back(colorPallets[randIndex][j]);
+			}
+
+			lastIndex = randIndex;
+		}
+	}
+
+	vector<CatmulRomSpline<Vector3>>* newPallet = new vector<CatmulRomSpline<Vector3>>();
+	newPallet->reserve(nbColorsInPalet);
+	for (int i = 0; i < nbColorsInPalet; i++)
+	{
+		newPallet->push_back(CatmulRomSpline<Vector3>(pallets[i]));
+	}
+	return newPallet;
+}
+
+vector<Vector3>* FractalUpdater::getCurrentColorPallet(vector<CatmulRomSpline<Vector3>>* pallet)
+{
+	float totalDuration = target->zoomDuration + target->dezoomDuration + changeFractalDuration + changeFractalStartOffset + zoomStartOffset;
+	float t = Math::clamp01(colorTimer / totalDuration);
+
+	vector<Vector3>* currentPallet = new vector<Vector3>(nbColorsInPalet);
+	for (int i = 0; i < nbColorsInPalet; i++)
+	{
+		(*currentPallet)[i] = (*pallet)[i].evaluateDistance(t);
+	}
+
+	return currentPallet;
+}
+
 
 #pragma endregion
 
@@ -881,6 +1083,37 @@ tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointOtherThread(
 
 #pragma region generateNewTarget
 
+void sortOrigin(vector<Vector2>& origins, vector<vector<float>*>& textures)
+{
+	for (int i = 3; i < origins.size(); i++)
+	{
+		Vector2& newPoint = origins[i];
+		float minSqrDist = Math::linePointSqrDistance(origins[0], origins[1], origins[i]);
+		int minIndex = 0;
+
+		for (int j = 1; j < i; j++)
+		{
+			float sqrDist = Math::linePointSqrDistance(origins[j], origins[(j + 1) % i], origins[i]);
+			if (sqrDist < minSqrDist)
+			{
+				minSqrDist = sqrDist;
+				minIndex = j;
+			}
+		}
+
+		for (int j = i - 1; j > minIndex; j--)
+		{
+			// swap j and j + 1
+			Vector2 tmp = origins[j];
+			origins[j] = origins[j + 1];
+			origins[j + 1] = tmp;
+			vector<float>* tmpText = textures[j];
+			textures[j] = textures[j + 1];
+			textures[j + 1] = tmpText;
+		}
+	}
+}
+
 void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 {
 	isNewTargetReady = false;
@@ -910,34 +1143,7 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 		textures.push_back(get<1>(originTuple));
 	}
 
-	Vector2 lastOrigin = origines[0];
-	for (uint32_t i = 1; i < origines.size() - 1; i++)
-	{
-		int minIndex = i;
-		float minDist = Vector2::distance(lastOrigin, origines[i]);
-		for (uint32_t j = i + 1; j < origines.size(); j++)
-		{
-			float dist = Vector2::distance(lastOrigin, origines[j]);
-			if (dist < minDist)
-			{
-				minDist = dist;
-				minIndex = j;
-			}
-		}
-
-		if (minIndex != i)
-		{
-			Vector2 tmpVector = origines[i];
-			origines[i] = origines[minIndex];
-			origines[minIndex] = tmpVector;
-
-			vector<float>* tmpTexture = textures[i];
-			textures[i] = textures[minIndex];
-			textures[minIndex] = tmpTexture;
-		}
-
-		lastOrigin = origines[i];
-	}
+	sortOrigin(origines, textures);
 
 	Vector2 randZoomPoint = findRandomPointToZoomInJulia(origines[origines.size() - 1], *textures[textures.size() - 1]);
 
@@ -946,11 +1152,15 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 		delete textures[i];
 	}
 
+	vector<Vector2> zoomPoints(3);
+	zoomPoints[0] = oldTarget == nullptr ? randomPoint() * 0.5f : oldTarget->finalZoomPoint();
+	zoomPoints[2] = randZoomPoint;
+
 	float zoomDuration = Random::rand(zoomMinDuration, zoomMaxDuration);
 	float dezoomDuration = Random::rand(dezoomMinDuration, dezoomMaxDuration);
 	float zoom = Random::rand(minZoom, maxZoom);
 	
-	newTarget = new StateTarget(origines, randZoomPoint, zoomDuration, dezoomDuration, zoom);
+	newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
 
 	auto end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> elapsed = end - start;
@@ -963,7 +1173,8 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 {
 	isNewTargetReady = false;
 	Vector2 finalOrigin = oldTarget == nullptr ? Vector2() : oldTarget->finalOrigin();
-	auto lambda = [this, finalOrigin]()
+	Vector2 startZoom = oldTarget == nullptr ? randomPoint() * 0.75f : oldTarget->finalZoomPoint();
+	auto lambda = [this, finalOrigin, startZoom]()
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 		Random::setRandomSeed();
@@ -982,34 +1193,7 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 			textures.push_back(get<1>(originTuple));
 		}
 
-		Vector2 lastOrigin = origines[0];
-		for (uint32_t i = 1; i < origines.size() - 1; i++)
-		{
-			int minIndex = i;
-			float minDist = Vector2::distance(lastOrigin, origines[i]);
-			for (uint32_t j = i + 1; j < origines.size(); j++)
-			{
-				float dist = Vector2::distance(lastOrigin, origines[j]);
-				if (dist < minDist)
-				{
-					minDist = dist;
-					minIndex = j;
-				}
-			}
-
-			if (minIndex != i)
-			{
-				Vector2 tmpVector = origines[i];
-				origines[i] = origines[minIndex];
-				origines[minIndex] = tmpVector;
-
-				vector<float>* tmpTexture = textures[i];
-				textures[i] = textures[minIndex];
-				textures[minIndex] = tmpTexture;
-			}
-
-			lastOrigin = origines[i];
-		}
+		sortOrigin(origines, textures);
 
 		Vector2 randZoomPoint = findRandomPointToZoomInJuliaOtherThread(origines[origines.size() - 1], *textures[textures.size() - 1]);
 
@@ -1018,11 +1202,15 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 			delete textures[i];
 		}
 
+		vector<Vector2> zoomPoints(3);
+		zoomPoints[0] = startZoom;
+		zoomPoints[2] = randZoomPoint;
+
 		float zoomDuration = Random::rand(zoomMinDuration, zoomMaxDuration);
 		float dezoomDuration = Random::rand(dezoomMinDuration, dezoomMaxDuration);
 		float zoom = Random::rand(minZoom, maxZoom);
 
-		this->newTarget = new StateTarget(origines, randZoomPoint, zoomDuration, dezoomDuration, zoom);
+		this->newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
 
 		auto end = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double> elapsed = end - start;

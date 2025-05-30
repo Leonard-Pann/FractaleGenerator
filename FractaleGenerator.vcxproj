@@ -136,7 +136,6 @@
     <ClCompile Include="ComputeShader.cpp" />
     <ClCompile Include="FractalUpdater.cpp" />
     <ClCompile Include="FragmentShader.cpp" />
-    <ClCompile Include="HermiteSpline.cpp" />
     <ClCompile Include="JuliaFractal.cpp" />
     <ClCompile Include="JuliaGreyComputeShader.cpp" />
     <ClCompile Include="main.cpp" />
@@ -144,6 +143,7 @@
     <ClCompile Include="TextureVariationShader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CatmulRomSpline.hpp" />
     <ClInclude Include="ComputeShader.hpp" />
     <ClInclude Include="FractaleParam.hpp" />
     <ClInclude Include="FractalUpdater.hpp" />
