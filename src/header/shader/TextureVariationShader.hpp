@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <vector>
-#include "ComputeShader.hpp"
+#include "../../header/shader/ComputeShader.hpp"
 
 class TextureVariationShader : public ComputeShader
 {

@@ -8,20 +8,20 @@
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
 #include "math.hpp"
-#include "Shader.hpp"
-#include "JuliaFractal.hpp"
+#include "shader/JuliaFractal.hpp"
 
 using namespace std;
 
-Vector2 mousePosition;
-Vector2 normalizeMousePosition; //between -1 and 1
-const int windowWidth = 1920;
-const int windowHeight = 1080;
+//Vector2 mousePosition;
+//Vector2 normalizeMousePosition; //between -1 and 1
+int windowWidth;
+int windowHeight;
+const bool fullscreen = true;
 
 double getDeltaTime()
 {
     static double previousSeconds = 0.0f;
-    double currentSeconds = glfwGetTime(); // nombre de secondes depuis le début de l'exécution
+    double currentSeconds = glfwGetTime(); // seconds pass from the app start
     double dt = currentSeconds - previousSeconds;
     previousSeconds = currentSeconds;
     return dt;
@@ -32,28 +32,33 @@ void onFrameBufferResize(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void onMouseMove(GLFWwindow* window, double x, double y)
-{
-    mousePosition.x = x;
-    mousePosition.y = y;
-    normalizeMousePosition.x = (mousePosition.x / (windowWidth - 1.0f)) * 2.0f - 1.0f; //between -1 and 1
-    normalizeMousePosition.y = ((mousePosition.y / (windowHeight - 1.0f)) * -2.0f + 1.0f); //between -1 and 1
-}
+//void onMouseMove(GLFWwindow* window, double x, double y)
+//{
+//    mousePosition.x = x;
+//    mousePosition.y = y;
+//    normalizeMousePosition.x = (mousePosition.x / (windowWidth - 1.0f)) * 2.0f - 1.0f; //between -1 and 1
+//    normalizeMousePosition.y = ((mousePosition.y / (windowHeight - 1.0f)) * -2.0f + 1.0f); //between -1 and 1
+//}
+//
+//void onMouseScroll(GLFWwindow* window, double deltaX, double deltaY)
+//{
+//    // nothing yet
+//}
 
-void onMouseScroll(GLFWwindow* window, double deltaX, double deltaY)
+int main()
 {
-    // nothing yet
-}
-
-int main(void)
-{
-    //Random::setRandomSeed();
-    Random::setSeed(42);
+    Random::setRandomSeed();
 
     if (glfwInit() == 0)
         return -1;
 
-    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "FractalGenerator", NULL, NULL);
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+
+    windowWidth = mode->width;
+    windowHeight = mode->height;
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "FractalGenerator", fullscreen ? primaryMonitor : nullptr, nullptr);
+
     if (window == nullptr)
     {
         glfwTerminate();
@@ -61,6 +66,7 @@ int main(void)
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     if (glewInit() != GLEW_OK)
     {
@@ -68,12 +74,12 @@ int main(void)
     }
     glewExperimental = GL_TRUE;
 
-    glfwSetScrollCallback(window, onMouseScroll);
+    //glfwSetScrollCallback(window, onMouseScroll);
     glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
-    glfwSetCursorPosCallback(window, onMouseMove);
-    //glfwSwapInterval(0); // Désactiver la VSync
+    //glfwSetCursorPosCallback(window, onMouseMove);
+    //glfwSwapInterval(0); // disable VSync
 
-    JuliaFractal juliaFractal("Shaders/julia.shader");
+    JuliaFractal juliaFractal("shaders/julia.shader");
     FractalUpdater fractalUpdater(windowWidth, windowHeight);
 
     while (!glfwWindowShouldClose(window))
@@ -81,18 +87,9 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
-        dt = 1.0 / 240.0;
-        //std::cout << 1 / dt << std::endl;
-
-        float xNorm = Math::lerp(-2.0f, 2.0f, (normalizeMousePosition.x * 0.5f) + 0.5f);
-        float yNorm = Math::lerp(-2.0f, 2.0f, (normalizeMousePosition.y * 0.5f) + 0.5f);
-        Vector2 newOrigin = Vector2(xNorm, yNorm);
-        //std::cout << "x: " << newOrigin.x << " y: " << newOrigin.y << std::endl;
-
         fractalUpdater.update(dt);
 
-        const FractaleParam& param = fractalUpdater.getFractaleParam();
-        juliaFractal.setGenerationParam(param);
+        juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
 
         juliaFractal.draw(window);
 
@@ -101,6 +98,7 @@ int main(void)
         glfwPollEvents();
     }
 
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }

@@ -9,9 +9,9 @@
 #include <mutex>
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
-#include "JuliaGreyComputeShader.hpp"
-#include "TextureVariationShader.hpp"
-#include "CatmulRomSpline.hpp"
+#include "shader/JuliaGreyComputeShader.hpp"
+#include "shader/TextureVariationShader.hpp"
+#include "bezierCurve/CatmulRomSpline.hpp"
 #include "Number.hpp"
 
 class FractalUpdater
@@ -105,6 +105,7 @@ private:
 	std::function<void*(void*)> callback;
 	void* callbackArg;
 	void* callbackResult;
+	int millisecondToSleepAfterCallComputerSharder;
 
 	//colors
 	int nbColorsInPalet;

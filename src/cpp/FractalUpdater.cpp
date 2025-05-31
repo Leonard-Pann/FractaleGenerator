@@ -1,7 +1,6 @@
 #pragma region include
 
 #include <algorithm>
-#include <chrono>
 #include <iostream>
 #include <thread>
 #include <list>
@@ -97,15 +96,15 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	xMax = horizontalSize * 0.5f;
 
 	maxSize = Vector2(xMax - xMin, yMax - yMin);
-	minSize = Vector2(maxSize.x / 20000.0f, maxSize.y / 20000.0f);
+	minSize = Vector2(maxSize.x / 30000.0f, maxSize.y / 30000.0f);
 
 	// Zoom
 	zoomStartOffset = -0.4f;
-	zoomMinDuration = 15.0f; 
-	zoomMaxDuration = 15.0f;
+	zoomMinDuration = 17.5f; 
+	zoomMaxDuration = 17.5f;
 	minZoom = 1.0f;
 	maxZoom = 1.0f;
-	zoomTweenIntensity = 0.001f;
+	zoomTweenIntensity = 0.0007f;
 
 	// Dezoom
 	dezoomMinDuration = 5.0f;
@@ -125,11 +124,12 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 
 	// Change Fractal
 	changeFractalDuration = 15.0f;
-	changeFractalStartOffset = -0.4f;
+	changeFractalStartOffset = -0.2f;
 	minNbOrigines = 4; // min 3
 	maxNbOrigines = 4;
 
 	//target
+	millisecondToSleepAfterCallComputerSharder = 75;
 	generateNewTarget(nullptr);
 	target = newTarget;
 	generateNewTargetOtherThread(target);
@@ -647,6 +647,8 @@ tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread(
 
 		delete result;
 
+		this_thread::sleep_for(chrono::milliseconds(millisecondToSleepAfterCallComputerSharder));
+
 	} while (mean < juliaOriginThreshold);
 
 	return make_tuple(randonPoint, juliaGreyTexture);
@@ -846,6 +848,8 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 			ComputeJuliaTextureReturn* result = (ComputeJuliaTextureReturn*)this->callbackResult;
 			texture = result->texture;
 			delete result;
+
+			this_thread::sleep_for(chrono::milliseconds(millisecondToSleepAfterCallComputerSharder));
 		}
 		else
 		{
@@ -1151,8 +1155,6 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 {
 	isNewTargetReady = false;
 
-	auto start = std::chrono::high_resolution_clock::now();
-
 	int nbOrigines = Random::rand(minNbOrigines, maxNbOrigines - 1);
 	vector<Vector2> origines;
 	vector<vector<float>*> textures;
@@ -1186,7 +1188,7 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 	}
 
 	vector<Vector2> zoomPoints(3);
-	zoomPoints[0] = oldTarget == nullptr ? randomPoint() * 0.5f : oldTarget->finalZoomPoint();
+	zoomPoints[0] = oldTarget == nullptr ? Vector2() : oldTarget->finalZoomPoint();
 	zoomPoints[2] = randZoomPoint;
 
 	float zoomDuration = Random::rand(zoomMinDuration, zoomMaxDuration);
@@ -1195,10 +1197,6 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 	
 	newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
 
-	auto end = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> elapsed = end - start;
-	std::cout << "lastNewPoint{" << origines[origines.size() - 1].x << ", " << origines[origines.size() - 1].y << "} " << "Elapsed time: " << elapsed.count() << " seconds" << endl;
-
 	isNewTargetReady = true;
 }
 
@@ -1206,10 +1204,9 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 {
 	isNewTargetReady = false;
 	Vector2 finalOrigin = oldTarget == nullptr ? Vector2() : oldTarget->finalOrigin();
-	Vector2 startZoom = oldTarget == nullptr ? randomPoint() * 0.75f : oldTarget->finalZoomPoint();
+	Vector2 startZoom = oldTarget == nullptr ? Vector2() : oldTarget->finalZoomPoint();
 	auto lambda = [this, finalOrigin, startZoom]()
 	{
-		auto start = std::chrono::high_resolution_clock::now();
 		Random::setRandomSeed();
 		int nbOrigines = Random::rand(minNbOrigines, maxNbOrigines - 1);
 		vector<Vector2> origines;
@@ -1244,11 +1241,6 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 		float zoom = Random::rand(minZoom, maxZoom);
 
 		this->newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
-
-		auto end = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> elapsed = end - start;
-		std::cout << "lastNewPoint{" << origines[origines.size() - 1].x << ", " << origines[origines.size() - 1].y << "} " << "Elapsed time: " << elapsed.count() << " seconds" << endl;
-
 	};
 
 	std::thread thread(lambda);

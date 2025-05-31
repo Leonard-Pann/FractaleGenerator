@@ -1,8 +1,8 @@
-#include "TextureVariationShader.hpp"
+#include "shader/TextureVariationShader.hpp"
 
 using namespace std;
 
-TextureVariationShader::TextureVariationShader() : ComputeShader::ComputeShader("Shaders/squareTextureVariation.shader"), ssboInput(0), ssboOutput(0)
+TextureVariationShader::TextureVariationShader() : ComputeShader::ComputeShader("shaders/squareTextureVariation.shader"), ssboInput(0), ssboOutput(0)
 {
 
 }

@@ -18,69 +18,69 @@
     <ClCompile Include="main.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="FractalUpdater.cpp">
+    <ClCompile Include="src\cpp\FractalUpdater.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="JuliaFractal.cpp">
+    <ClCompile Include="src\cpp\shader\JuliaFractal.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
+    <ClCompile Include="src\cpp\shader\Shader.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="JuliaGreyComputeShader.cpp">
+    <ClCompile Include="src\cpp\shader\JuliaGreyComputeShader.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="ComputeShader.cpp">
+    <ClCompile Include="src\cpp\shader\ComputeShader.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="FragmentShader.cpp">
+    <ClCompile Include="src\cpp\shader\FragmentShader.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="TextureVariationShader.cpp">
+    <ClCompile Include="src\cpp\shader\TextureVariationShader.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FractalUpdater.hpp">
+    <ClInclude Include="src\header\FractalUpdater.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="FractaleParam.hpp">
+    <ClInclude Include="src\header\FractaleParam.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="Vector.hpp">
+    <ClInclude Include="src\header\Vector.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="Random.hpp">
+    <ClInclude Include="src\header\Random.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="LUT.hpp">
+    <ClInclude Include="src\header\bezierCurve\LUT.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="HermiteSpline.hpp">
+    <ClInclude Include="src\header\bezierCurve\HermiteSpline.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="Math.hpp">
+    <ClInclude Include="src\header\Math.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="JuliaFractal.hpp">
+    <ClInclude Include="src\header\shader\JuliaFractal.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.hpp">
+    <ClInclude Include="src\header\shader\Shader.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="ComputeShader.hpp">
+    <ClInclude Include="src\header\shader\ComputeShader.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="FragmentShader.hpp">
+    <ClInclude Include="src\header\shader\FragmentShader.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="TextureVariationShader.hpp">
+    <ClInclude Include="src\header\shader\TextureVariationShader.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="CatmulRomSpline.hpp">
+    <ClInclude Include="src\header\bezierCurve\CatmulRomSpline.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="Number.hpp">
+    <ClInclude Include="src\header\Number.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>

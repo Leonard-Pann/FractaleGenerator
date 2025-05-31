@@ -1,8 +1,8 @@
-#include "JuliaGreyComputeShader.hpp"
+#include "shader/JuliaGreyComputeShader.hpp"
 
 using namespace std;
 
-JuliaGreyComputeShader::JuliaGreyComputeShader() : ComputeShader::ComputeShader("Shaders/juliaGreyCompute.shader"), ssbo(0)
+JuliaGreyComputeShader::JuliaGreyComputeShader() : ComputeShader::ComputeShader("shaders/juliaGreyCompute.shader"), ssbo(0)
 {
 
 }

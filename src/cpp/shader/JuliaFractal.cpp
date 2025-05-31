@@ -1,4 +1,4 @@
-#include "JuliaFractal.hpp"
+#include "shader/JuliaFractal.hpp"
 
 using namespace std;
 
