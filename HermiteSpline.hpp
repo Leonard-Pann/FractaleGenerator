@@ -31,10 +31,6 @@ protected:
 			t[i] = i * oneOnbPoints;
 			currentPoint = evaluate(t[i]);
 			x[i] = x[i - 1] + T::distance(currentPoint, oldPoint);
-			if (std::isnan(x[i]))
-			{
-				std::cout << "Nan found" << std::endl;
-			}
 			oldPoint = currentPoint;
 		}
 
@@ -87,6 +83,8 @@ public:
 		generateLUT();
 	}
 	HermiteSpline(const HermiteSpline& hermiteSpline) : points(hermiteSpline.points), velocities(hermiteSpline.velocities), lut(hermiteSpline.lut), length(hermiteSpline.length) {}
+
+	const std::vector<T>& getPoints() { return this->points; }
 
 	T evaluate(float t) const
 	{

@@ -152,6 +152,7 @@
     <ClInclude Include="JuliaFractal.hpp" />
     <ClInclude Include="LUT.hpp" />
     <ClInclude Include="Math.hpp" />
+    <ClInclude Include="Number.hpp" />
     <ClInclude Include="Random.hpp" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="TextureVariationShader.hpp" />

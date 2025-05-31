@@ -22,12 +22,12 @@ public:
 
 	static inline float min(float a, float b)
 	{
-		return a < b ? a : b;
+		return a <= b ? a : b;
 	}
 
 	static inline float max(float a, float b)
 	{
-		return a > b ? a : b;
+		return a >= b ? a : b;
 	}
 
 	static inline float clamp(float min, float max, float value)
@@ -60,6 +60,16 @@ public:
 	static inline float easesin(float x)
 	{
 		return 0.5f * std::sinf(M_PI * x + (1.5f * M_PI)) + 0.5f;
+	}
+
+	static inline float tween(float x, float intensity = 0.2f)
+	{
+		return intensity * sinf((2.0f * M_PI * x) + (2.5f * M_PI)) + 1.0f;
+	}
+
+	static inline float inverseTween(float x, float intensity = 0.2f)
+	{
+		return intensity * sinf((2.0f * M_PI * x) + (1.5f * M_PI)) + 1.0f;
 	}
 };
 

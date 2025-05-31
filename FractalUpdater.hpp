@@ -12,6 +12,7 @@
 #include "JuliaGreyComputeShader.hpp"
 #include "TextureVariationShader.hpp"
 #include "CatmulRomSpline.hpp"
+#include "Number.hpp"
 
 class FractalUpdater
 {
@@ -79,10 +80,10 @@ private:
 	StateTarget* newTarget;
 
 	// zoom
-
 	float zoomTime;
 	bool isZooming;
 	float zoomStartOffset;
+	float zoomTweenIntensity;
 
 	// dezoom
 	bool isDezooming;
@@ -110,6 +111,11 @@ private:
 	int nbColorsInAnUpdateCircle;
 	std::vector<CatmulRomSpline<Vector3>>* colorsSplines;
 	float colorTimer;
+	float minColorRange, maxColorRange;
+	CatmulRomSpline<Number> colorRangeSpline;
+	float colorRangeDuration;
+	int nbColorRangeInSpline;
+	float colorRangeTimer;
 
 	Vector2 randomPoint() const;
 	std::tuple<Vector2, std::vector<float>*> findRandomJuliaOrigin();
@@ -125,6 +131,7 @@ private:
 	void generateNewTargetOtherThread(StateTarget* oldTarget);
 	std::vector<Vector3>* getCurrentColorPallet(std::vector<CatmulRomSpline<Vector3>>* pallet);
 	std::vector<CatmulRomSpline<Vector3>>* generateNewPallets();
+	void generateColorRangeSpline();
 
 	void zoom(float dt);
 	void dezoom(float dt);

@@ -97,18 +97,19 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	xMax = horizontalSize * 0.5f;
 
 	maxSize = Vector2(xMax - xMin, yMax - yMin);
-	minSize = Vector2(maxSize.x / 40000.0f, maxSize.y / 40000.0f);
+	minSize = Vector2(maxSize.x / 20000.0f, maxSize.y / 20000.0f);
 
 	// Zoom
-	zoomStartOffset = -1.0f;
-	zoomMinDuration = 11.0f; 
-	zoomMaxDuration = 11.0f;
+	zoomStartOffset = -0.4f;
+	zoomMinDuration = 15.0f; 
+	zoomMaxDuration = 15.0f;
 	minZoom = 1.0f;
 	maxZoom = 1.0f;
+	zoomTweenIntensity = 0.001f;
 
 	// Dezoom
-	dezoomMinDuration = 10.0f;
-	dezoomMaxDuration = 10.0f;
+	dezoomMinDuration = 5.0f;
+	dezoomMaxDuration = 5.0f;
 
 	// For findJuliaOrigin method
 	greyTextureWidth = 1920;
@@ -124,9 +125,9 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 
 	// Change Fractal
 	changeFractalDuration = 15.0f;
-	changeFractalStartOffset = -0.2f;
-	minNbOrigines = 5; // min 3
-	maxNbOrigines = 5;
+	changeFractalStartOffset = -0.4f;
+	minNbOrigines = 4; // min 3
+	maxNbOrigines = 4;
 
 	//target
 	generateNewTarget(nullptr);
@@ -139,6 +140,12 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	colorsSplines = generateNewPallets();
 	colorTimer = 0.0f;
 	vector<Vector3>* currentPallet = getCurrentColorPallet(colorsSplines);
+	minColorRange = 2.0f;
+	maxColorRange = 6.0f;
+	colorRangeDuration = 300.0f;
+	nbColorRangeInSpline = 15;
+	colorRangeTimer = 0.0f;
+	generateColorRangeSpline();
 
 	//dezoom
 	dezoomTarget = target;
@@ -153,7 +160,8 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	int yMin = startZoomPoint.y - (maxSize.y * 0.5f);
 	int yMax = startZoomPoint.y + (maxSize.y * 0.5f);
 
-	params = FractaleParam(target->getOrigin(0.0f), xMin, xMax, yMin, yMax, colorIn, *currentPallet, maxIter);
+	float a = colorRangeSpline.getStart();
+	params = FractaleParam(target->getOrigin(0.0f), xMin, xMax, yMin, yMax, colorIn, *currentPallet, maxIter, colorRangeSpline.getStart().value());
 	delete currentPallet;
 
 	isChangingFractal = true;
@@ -176,6 +184,30 @@ const FractaleParam& FractalUpdater::getFractaleParam() const
 Vector2 FractalUpdater::randomPoint() const
 {
 	return Vector2(Random::rand(xMin, xMax), Random::rand(yMin, yMax));
+}
+
+void FractalUpdater::generateColorRangeSpline()
+{
+	vector<Number> points(nbColorRangeInSpline + 2);
+	if (colorRangeSpline.getPoints().size() <= 0)
+	{
+		for (size_t i = 0; i < points.size(); i++)
+		{
+			points[i] = Random::rand(minColorRange, maxColorRange);
+		}
+	}
+	else
+	{
+		const vector<Number>& oldPoints = colorRangeSpline.getPoints();
+		points[0] = oldPoints[oldPoints.size() - 2];
+		points[1] = oldPoints[oldPoints.size() - 1];
+		for (size_t i = 2; i < points.size(); i++)
+		{
+			points[i] = Random::rand(minColorRange, maxColorRange);
+		}
+	}
+
+	colorRangeSpline = CatmulRomSpline<Number>(points);
 }
 
 #pragma endregion
@@ -210,39 +242,39 @@ void FractalUpdater::update(float dt)
 	{
 		changeFractal(dt);
 	}
+
+	colorRangeTimer += dt;
+	Number colorRange = colorRangeSpline.evaluateDistance(colorRangeTimer / colorRangeDuration);
+
+	params.colorRange = colorRange.value();
+	if (colorRangeTimer >= colorRangeDuration)
+	{
+		colorRangeTimer -= colorRangeDuration;
+		generateColorRangeSpline();
+	}
 }
 
 void FractalUpdater::zoom(float dt)
 {
 	zoomTime += dt;
 
+	float startSizeX = maxSize.x;
 	float endSizeX = Math::lerp(maxSize.x, minSize.x, target->zoom);
 	float sizeX = params.xMax - params.xMin;
-	float growthFactor = pow(endSizeX / sizeX, dt / (target->zoomDuration - zoomTime));
-	sizeX *= growthFactor;
+	float q = pow(endSizeX / startSizeX, dt / target->zoomDuration);
+	float lerp = zoomTime / target->zoomDuration;
+	float factor = Math::tween(lerp, zoomTweenIntensity);
+	q *= factor;
+	sizeX *= q;
+	sizeX = Math::max(sizeX, endSizeX);
 
+	float startSizeY = maxSize.y;
 	float endSizeY = Math::lerp(maxSize.y, minSize.y, target->zoom);
 	float sizeY = params.yMax - params.yMin;
-	growthFactor = pow(endSizeY / sizeY, dt / (target->zoomDuration - zoomTime));
-	sizeY *= growthFactor;
-
-
-	//float endSizeX = Math::lerp(maxSize.x, minSize.x, target->zoom);
-	//float sizeX = params.xMax - params.xMin;;
-	//float tNorm = Math::clamp01(zoomTime / target->zoomDuration);
-	//float tEasedNow = tNorm * tNorm * (3.0f - 2.0f * tNorm);
-	//float tPrevNorm = Math::clamp01((zoomTime - dt) / target->zoomDuration);
-	//float tEasedPrev = tPrevNorm * tPrevNorm * (3.0f - 2.0f * tPrevNorm);
-	//float dtEased = (tEasedNow - tEasedPrev) * target->zoomDuration;
-	//dtEased = tNorm; // No easing
-	//float growthFactor = std::pow(endSizeX / sizeX, dtEased / (target->zoomDuration - zoomTime));
-	//sizeX *= growthFactor;
-
-
-	//float endSizeY = Math::lerp(maxSize.y, minSize.y, target->zoom);
-	//float sizeY = params.yMax - params.yMin;;
-	//growthFactor = std::pow(endSizeY / sizeY, dtEased / (target->zoomDuration - zoomTime));
-	//sizeY *= growthFactor;
+	q = pow(endSizeY / startSizeY, dt / target->zoomDuration);
+	q *= factor;
+	sizeY *= q;
+	sizeY = Math::max(sizeY, endSizeY);
 
 	if (isChangingFractal)
 	{
@@ -273,30 +305,31 @@ void FractalUpdater::dezoom(float dt)
 {
 	zoomTime += dt;
 
-	float sizeX = params.xMax - params.xMin;
-	float growthFactor = pow(maxSize.x / sizeX, dt / (target->dezoomDuration - zoomTime));
-	sizeX *= growthFactor;
-
-	float sizeY = params.yMax - params.yMin;;
-	growthFactor = pow(maxSize.y / sizeY, dt / (target->dezoomDuration - zoomTime));
-	sizeY *= growthFactor;
-
-
-	//float sizeX = params.xMax - params.xMin;;
-	//float tNorm = Math::clamp01(zoomTime / target->dezoomDuration);
-	//float tEasedNow = tNorm * tNorm * (3.0f - 2.0f * tNorm);
-	//float tPrevNorm = Math::clamp01((zoomTime - dt) / target->dezoomDuration);
-	//float tEasedPrev = tPrevNorm * tPrevNorm * (3.0f - 2.0f * tPrevNorm);
-	//float dtEased = (tEasedNow - tEasedPrev) * target->dezoomDuration;
-	//dtEased = tNorm;
-	//float growthFactor = std::pow(maxSize.x / sizeX, dtEased / (target->dezoomDuration - zoomTime));
+	//float sizeX = params.xMax - params.xMin;
+	//float growthFactor = pow(maxSize.x / sizeX, dt / (dezoomTarget->dezoomDuration - zoomTime));
 	//sizeX *= growthFactor;
 
-
 	//float sizeY = params.yMax - params.yMin;;
-	//growthFactor = std::pow(maxSize.y / sizeY, dtEased / (target->zoomDuration - zoomTime));
+	//growthFactor = pow(maxSize.y / sizeY, dt / (dezoomTarget->dezoomDuration - zoomTime));
 	//sizeY *= growthFactor;
 
+	float startSizeX = Math::lerp(maxSize.x, minSize.x, dezoomTarget->zoom);
+	float endSizeX = maxSize.x;
+	float sizeX = params.xMax - params.xMin;
+	float q = pow(endSizeX / startSizeX, dt / dezoomTarget->dezoomDuration);
+	float lerp = zoomTime / dezoomTarget->dezoomDuration;
+	float factor = Math::inverseTween(lerp, zoomTweenIntensity);
+	q *= factor;
+	sizeX *= q;
+	sizeX = Math::min(sizeX, endSizeX);
+
+	float startSizeY = Math::lerp(maxSize.y, minSize.y, dezoomTarget->zoom);
+	float endSizeY = maxSize.y;
+	float sizeY = params.yMax - params.yMin;
+	q = pow(endSizeY / startSizeY, dt / dezoomTarget->dezoomDuration);
+	q *= factor;
+	sizeY *= q;
+	sizeY = Math::min(sizeY, endSizeY);
 
 	if (isChangingFractal)
 	{

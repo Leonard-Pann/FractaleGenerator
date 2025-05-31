@@ -12,6 +12,7 @@ JuliaFractal::JuliaFractal(const string& path) : shader(path)
     shader.addUniform("inColor");
     shader.addUniform("colorPalette");
     shader.addUniform("nbColors");
+    shader.addUniform("colorRange");
 
     glGenBuffers(1, &positionBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
@@ -38,6 +39,7 @@ void JuliaFractal::setGenerationParam(const FractaleParam& params)
     shader.setUniform3f("inColor", params.inColor);
     shader.setUniform4f("window", Vector4(params.xMin, params.xMax, params.yMin, params.yMax));
     shader.setUniform3fv("colorPalette", params.colorPalette);
+    shader.setUniform1f("colorRange", params.colorRange);
 }
 
 void JuliaFractal::draw(GLFWwindow* window)
