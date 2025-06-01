@@ -1,3 +1,6 @@
-Fractale Generator est un programme dédié à la visualisation des fractales de Julia.
-La génération des fractales est réalisée sur le GPU grâce à OpenGL.
-Le programme propose une animation dynamique des fractales de Julia en les interpolant à l'aide de courbes de Bézier.![FractaleGenerator](https://github.com/user-attachments/assets/5f7869cf-2c44-4ba4-99f4-cc0a7d7ec3f5)
+Fractal Generator is a program dedicated to the visualization of Julia fractals.
+The application displays beautiful Julia fractals in real time. The selection of fractals is random, although an algorithm ensures that only visually interesting fractals are chosen.
+The selection and generation of fractals are performed on the GPU using OpenGL.
+The program offers dynamic animation of Julia fractals by interpolating them using Bézier curves.
+https://github.com/user-attachments/assets/6fdee914-6b6b-4ae1-bdd0-c2fb534ac98b
+
