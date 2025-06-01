@@ -3,6 +3,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#ifndef _DEBUG
+#include <windows.h>
+#endif
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
 #include "FractalUpdater.hpp"
@@ -42,10 +45,14 @@ void onFrameBufferResize(GLFWwindow* window, int width, int height)
 //
 //void onMouseScroll(GLFWwindow* window, double deltaX, double deltaY)
 //{
-//    // nothing yet
+//     //nothing yet
 //}
 
+#ifdef _DEBUG
 int main()
+#else
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+#endif
 {
     Random::setRandomSeed();
 

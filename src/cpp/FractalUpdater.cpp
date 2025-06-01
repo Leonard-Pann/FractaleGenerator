@@ -266,7 +266,7 @@ void FractalUpdater::zoom(float dt)
 	float factor = Math::tween(lerp, zoomTweenIntensity);
 	q *= factor;
 	sizeX *= q;
-	sizeX = Math::max(sizeX, endSizeX);
+	sizeX = max(sizeX, endSizeX);
 
 	float startSizeY = maxSize.y;
 	float endSizeY = Math::lerp(maxSize.y, minSize.y, target->zoom);
@@ -274,7 +274,7 @@ void FractalUpdater::zoom(float dt)
 	q = pow(endSizeY / startSizeY, dt / target->zoomDuration);
 	q *= factor;
 	sizeY *= q;
-	sizeY = Math::max(sizeY, endSizeY);
+	sizeY = max(sizeY, endSizeY);
 
 	if (isChangingFractal)
 	{
@@ -305,14 +305,6 @@ void FractalUpdater::dezoom(float dt)
 {
 	zoomTime += dt;
 
-	//float sizeX = params.xMax - params.xMin;
-	//float growthFactor = pow(maxSize.x / sizeX, dt / (dezoomTarget->dezoomDuration - zoomTime));
-	//sizeX *= growthFactor;
-
-	//float sizeY = params.yMax - params.yMin;;
-	//growthFactor = pow(maxSize.y / sizeY, dt / (dezoomTarget->dezoomDuration - zoomTime));
-	//sizeY *= growthFactor;
-
 	float startSizeX = Math::lerp(maxSize.x, minSize.x, dezoomTarget->zoom);
 	float endSizeX = maxSize.x;
 	float sizeX = params.xMax - params.xMin;
@@ -321,7 +313,7 @@ void FractalUpdater::dezoom(float dt)
 	float factor = Math::inverseTween(lerp, zoomTweenIntensity);
 	q *= factor;
 	sizeX *= q;
-	sizeX = Math::min(sizeX, endSizeX);
+	sizeX = min(sizeX, endSizeX);
 
 	float startSizeY = Math::lerp(maxSize.y, minSize.y, dezoomTarget->zoom);
 	float endSizeY = maxSize.y;
@@ -329,7 +321,7 @@ void FractalUpdater::dezoom(float dt)
 	q = pow(endSizeY / startSizeY, dt / dezoomTarget->dezoomDuration);
 	q *= factor;
 	sizeY *= q;
-	sizeY = Math::min(sizeY, endSizeY);
+	sizeY = min(sizeY, endSizeY);
 
 	if (isChangingFractal)
 	{

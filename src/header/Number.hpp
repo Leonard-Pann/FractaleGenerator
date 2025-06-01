@@ -1,8 +1,6 @@
 #ifndef NUMBER_HPP
 #define NUMBER_HPP
 
-#include "Math.hpp"
-
 struct Number
 {
 private:
@@ -18,7 +16,8 @@ public:
 	operator float() const { return m_value; }
 	static float distance(const Number& a, const Number& b)
 	{
-		return Math::abs(a.m_value - b.m_value);
+		float d = a.m_value - b.m_value;
+		return d >= 0.0f ? d : -d;
 	}
 };
 

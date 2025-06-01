@@ -10,29 +10,9 @@ public:
 
 	#define M_PI 3.14159265358979323846f
 
-	static inline float abs(float x)
-	{
-		return x >= 0.0f ? x : -x;
-	}
-
 	static inline float lerp(float start, float end, float t)
 	{
 		return (end - start) * t + start;
-	}
-
-	static inline float min(float a, float b)
-	{
-		return a <= b ? a : b;
-	}
-
-	static inline float max(float a, float b)
-	{
-		return a >= b ? a : b;
-	}
-
-	static inline float clamp(float min, float max, float value)
-	{
-		return Math::max(Math::min(max, value), min);
 	}
 
 	static inline float clamp01(float value)
