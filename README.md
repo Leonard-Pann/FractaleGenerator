@@ -3,5 +3,5 @@ The application displays beautiful Julia fractals in real time. The selection of
 The selection and generation of fractals are performed on the GPU using OpenGL.
 The program offers dynamic animation of Julia fractals by interpolating them using Bézier curves.
 
-https://github.com/user-attachments/assets/6fdee914-6b6b-4ae1-bdd0-c2fb534ac98b
+https://github.com/user-attachments/assets/f19592e9-dfc7-4011-957c-357e213a4d6c
 
