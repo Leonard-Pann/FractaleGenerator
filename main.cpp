@@ -17,8 +17,8 @@ using namespace std;
 
 //Vector2 mousePosition;
 //Vector2 normalizeMousePosition; //between -1 and 1
-int windowWidth;
-int windowHeight;
+int windowWidth = 1280;
+int windowHeight = 720;
 const bool fullscreen = true;
 
 double getDeltaTime()
@@ -62,8 +62,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
 
-    windowWidth = mode->width;
-    windowHeight = mode->height;
+    windowWidth = fullscreen ? mode->width : windowWidth;
+    windowHeight = fullscreen ? mode->height : windowHeight;
     GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "FractalGenerator", fullscreen ? primaryMonitor : nullptr, nullptr);
 
     if (window == nullptr)
