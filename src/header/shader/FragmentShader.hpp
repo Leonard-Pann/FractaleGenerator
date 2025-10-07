@@ -6,7 +6,7 @@
 #include <string>
 #include "Shader.hpp"
 
-static struct ShaderProgrammSource
+struct ShaderProgrammSource
 {
 	std::string vertexSource;
 	std::string fragmentSource;

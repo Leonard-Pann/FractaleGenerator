@@ -39,7 +39,7 @@ public:
 
 	static inline float easesin(float x)
 	{
-		return 0.5f * std::sinf(M_PI * x + (1.5f * M_PI)) + 0.5f;
+		return 0.5f * sinf(M_PI * x + (1.5f * M_PI)) + 0.5f;
 	}
 
 	static inline float tween(float x, float intensity = 0.2f)
