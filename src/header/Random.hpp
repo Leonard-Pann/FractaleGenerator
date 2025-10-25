@@ -25,12 +25,15 @@ public:
 
     static inline float rand()
     {
-        return ((float)c_rand()) / RAND_MAX;
+        return (float)((double)c_rand() / (double)RAND_MAX);
     }
 
     static inline float randExclude()
     {
-        return ((float)c_rand()) / (RAND_MAX + 1);
+        int rand = c_rand();
+        if(rand == RAND_MAX)
+            return 1.0f - std::numeric_limits<float>::epsilon();
+        return (float)((double)(rand - 1) / (double)RAND_MAX);
     }
 
     static inline int rand(int a, int b)

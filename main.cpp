@@ -3,23 +3,20 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#ifndef _DEBUG
-#include <windows.h>
-#endif
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
-#include "math.hpp"
+#include "Math.hpp"
 #include "shader/JuliaFractal.hpp"
 
 using namespace std;
 
-//Vector2 mousePosition;
-//Vector2 normalizeMousePosition; //between -1 and 1
-int windowWidth = 1280;
-int windowHeight = 720;
-const bool fullscreen = true;
+void processInput(GLFWwindow *window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+}
 
 double getDeltaTime()
 {
@@ -35,24 +32,11 @@ void onFrameBufferResize(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-//void onMouseMove(GLFWwindow* window, double x, double y)
-//{
-//    mousePosition.x = x;
-//    mousePosition.y = y;
-//    normalizeMousePosition.x = (mousePosition.x / (windowWidth - 1.0f)) * 2.0f - 1.0f; //between -1 and 1
-//    normalizeMousePosition.y = ((mousePosition.y / (windowHeight - 1.0f)) * -2.0f + 1.0f); //between -1 and 1
-//}
-//
-//void onMouseScroll(GLFWwindow* window, double deltaX, double deltaY)
-//{
-//     //nothing yet
-//}
+int windowWidth = 1600;
+int windowHeight = 900;
+const bool fullscreen = false;
 
-#ifdef _DEBUG
 int main()
-#else
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-#endif
 {
     Random::setRandomSeed();
 
@@ -61,51 +45,45 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
-
     windowWidth = fullscreen ? mode->width : windowWidth;
     windowHeight = fullscreen ? mode->height : windowHeight;
-    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "FractalGenerator", fullscreen ? primaryMonitor : nullptr, nullptr);
-
-    if (window == nullptr)
-    {
-        glfwTerminate();
-        return -1;
-    }
-
-    glfwMakeContextCurrent(window);
+	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "FractalGenerator", fullscreen ? primaryMonitor : nullptr, nullptr);
+    
+	if (window == nullptr)
+	{
+		cout << "Failed to create GLFW window" << endl;
+		glfwTerminate();
+		return -1;
+	}
+    
+	glfwMakeContextCurrent(window);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
-    if (glewInit() != GLEW_OK)
-    {
-        cout << "Error in glewInit" << endl;
-    }
-    glewExperimental = GL_TRUE;
-
-    //glfwSetScrollCallback(window, onMouseScroll);
-    glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
-    //glfwSetCursorPosCallback(window, onMouseMove);
-    //glfwSwapInterval(0); // disable VSync
+    glewInit();
+	glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
 
     JuliaFractal juliaFractal("shaders/julia.shader");
-    FractalUpdater fractalUpdater(windowWidth, windowHeight);
+    // FractalUpdater fractalUpdater(windowWidth, windowHeight);
+	while (!glfwWindowShouldClose(window))
+	{
+		processInput(window);
 
-    while (!glfwWindowShouldClose(window))
-    {
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-        float dt = getDeltaTime();
-        fractalUpdater.update(dt);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-        juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
+        // float dt = getDeltaTime();
+        // fractalUpdater.update(dt);
 
-        juliaFractal.draw(window);
+        // juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
 
-        glfwSwapBuffers(window);
+        // juliaFractal.draw(window);
 
-        glfwPollEvents();
-    }
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
 
     glfwDestroyWindow(window);
-    glfwTerminate();
-    return 0;
+	glfwTerminate();
+	return 0;
 }

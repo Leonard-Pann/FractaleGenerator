@@ -13,7 +13,7 @@ LIBS:=-lGL -lGLEW -lglfw
 SOURCES_CPP:=$(shell find src -name '*.cpp' -print)
 OBJECTS_CPP:=$(patsubst src/%.cpp,$(BUILD_DIR)/%.o,$(SOURCES_CPP))
 
-SRC_SHADERS:=$(shell find shaders -type f)
+SRC_SHADERS:=$(shell find Shaders -type f)
 TARGET_SHADERS:=$(patsubst %,$(BIN_DIR)/%,$(SRC_SHADERS))
 
 .PHONY: all clean
@@ -49,7 +49,7 @@ $(SHADERS_BIN_DIR):
 
 # Install shaders
 
-$(SHADERS_BIN_DIR)/%: shaders/% | $(SHADERS_BIN_DIR)
+$(SHADERS_BIN_DIR)/%: Shaders/% | $(SHADERS_BIN_DIR)
 	@echo Installing shader $@
 	@cp $< $@
 

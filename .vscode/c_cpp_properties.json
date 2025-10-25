@@ -1,0 +1,23 @@
+{
+    "env": 
+    {
+        "ARCH": "x86_64"
+    },
+    "configurations": [
+        {
+            "name": "Kernel",
+            "includePath": [
+                "${workspaceFolder}/src/header",
+            ],
+            "defines": [
+                "_DEBUG"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c23",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "linux-clang-x64",
+            "compilerArgs": ["-std=c23"]
+        }
+    ],
+    "version": 4
+}

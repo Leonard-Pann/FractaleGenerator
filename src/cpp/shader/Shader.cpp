@@ -7,6 +7,11 @@ Shader::Shader(const string& path) : m_shaderId(0), m_path(path)
 
 }
 
+void Shader::load()
+{
+
+}
+
 void Shader::addUniform(const string& name)
 {
     GLint location = glGetUniformLocation(m_shaderId, name.data());
