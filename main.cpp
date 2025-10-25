@@ -10,16 +10,16 @@
 #include "Vector.hpp"
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
-#include "math.hpp"
+#include "Math.hpp"
 #include "shader/JuliaFractal.hpp"
 
 using namespace std;
 
 //Vector2 mousePosition;
 //Vector2 normalizeMousePosition; //between -1 and 1
-int windowWidth = 1280;
-int windowHeight = 720;
-const bool fullscreen = true;
+int windowWidth = 1920;
+int windowHeight = 1080;
+const bool fullscreen = false;
 
 double getDeltaTime()
 {
@@ -28,6 +28,12 @@ double getDeltaTime()
     double dt = currentSeconds - previousSeconds;
     previousSeconds = currentSeconds;
     return dt;
+}
+
+void processInput(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 }
 
 void onFrameBufferResize(GLFWwindow* window, int width, int height)
@@ -79,10 +85,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     {
         cout << "Error in glewInit" << endl;
     }
+
     glewExperimental = GL_TRUE;
 
-    //glfwSetScrollCallback(window, onMouseScroll);
     glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
+    //glfwSetScrollCallback(window, onMouseScroll);
     //glfwSetCursorPosCallback(window, onMouseMove);
     //glfwSwapInterval(0); // disable VSync
 
@@ -91,6 +98,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     while (!glfwWindowShouldClose(window))
     {
+        processInput(window);
+
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
