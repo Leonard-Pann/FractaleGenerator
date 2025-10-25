@@ -110,7 +110,7 @@ private:
 	//colors
 	int nbColorsInPalet;
 	int nbColorsInAnUpdateCircle;
-	std::vector<CatmulRomSpline<Vector3>>* colorsSplines;
+	std::vector<CatmulRomSpline<Vector3>>* colorsSplines = nullptr;
 	float colorTimer;
 	float minColorRange, maxColorRange;
 	CatmulRomSpline<Number> colorRangeSpline;
