@@ -2,7 +2,7 @@
 
 using namespace std;
 
-JuliaFractal::JuliaFractal(const string& path) : shader(path)
+JuliaFractal::JuliaFractal() : shader("shaders/julia.shader")
 {
     shader.load();
 
@@ -45,9 +45,6 @@ void JuliaFractal::setGenerationParam(const FractaleParam& params)
 void JuliaFractal::draw(GLFWwindow* window)
 {
     glUseProgram(shader.shaderId());
-
-    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
 
     glBindVertexArray(vao);
 

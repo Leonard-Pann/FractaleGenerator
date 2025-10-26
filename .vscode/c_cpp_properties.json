@@ -5,7 +5,7 @@
     },
     "configurations": [
         {
-            "name": "Kernel",
+            "name": "FractalGenerator",
             "includePath": [
                 "${workspaceFolder}/src/header",
             ],

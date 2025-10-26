@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <vector>
 
-static int c_rand()
+static inline int c_rand()
 {
     return rand();
 }
@@ -23,32 +23,33 @@ public:
         srand(time(0));
     }
 
-    static inline float rand()
+        static inline float rand()
     {
         return (float)((double)c_rand() / (double)RAND_MAX);
     }
 
     static inline float randExclude()
     {
-        int rand = c_rand();
-        if(rand == RAND_MAX)
-            return 1.0f - std::numeric_limits<float>::epsilon();
-        return (float)((double)(rand - 1) / (double)RAND_MAX);
+        return (float)((double)c_rand() / ((double)RAND_MAX + 1.0));
     }
 
     static inline int rand(int a, int b)
     {
-        return (int)(Random::randExclude() * (abs(b - a) + 1)) + a;
+        if (a == b)
+            return a;
+        return (c_rand() % abs(b - a)) + a;
     }
 
-    static inline  float rand(float a, float b)
+    static inline float rand(float a, float b)
     {
         return (Random::rand() * abs(b - a)) + a;
     }
 
     static inline int randExclude(int a, int b)
     {
-        return Random::rand(a, b - 1);
+        if (a == b || abs(b - a) == 1)
+            return a;
+        return (c_rand() % (abs(b - a) - 1)) + a;
     }
 
     static inline float randExclude(float a, float b)

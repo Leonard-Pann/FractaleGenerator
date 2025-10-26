@@ -530,7 +530,7 @@ tuple<float, vector<float>*> FractalUpdater::getJuliaTotalGreyVariation(int maxI
 
 #pragma region findRandomJuliaOrigin
 
-// return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold
+// return a random c ï¿½ |C such that the absolute difference of gray scale julia fractale is >= threshold
 tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOrigin()
 {
 	Vector4 window(xMin, xMax, yMin, yMax);
@@ -591,7 +591,7 @@ void* getJuliaTotalGreyVariationOtherThread(void* params)
 }
 
 
-// return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold
+// return a random c ï¿½ |C such that the absolute difference of gray scale julia fractale is >= threshold
 tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread()
 {
 	JuliaTotalGreyVariationOtherThreadParams params;
@@ -776,7 +776,7 @@ void* computeJuliaTexture(void* params)
 }
 
 
-// Find a random z € |C such that Julia(c)(z) = 0 && it exist a neighborhood of z name zi such as Julia(c)(zi) > 0
+// Find a random z ï¿½ |C such that Julia(c)(z) = 0 && it exist a neighborhood of z name zi such as Julia(c)(zi) > 0
 Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vector<float>& initJuliaGreyText, bool otherThread)
 {
 	tuple<bool, Vector2> tuple = initRandomPointToZoom(origin, initJuliaGreyText);

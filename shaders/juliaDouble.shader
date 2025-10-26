@@ -1,5 +1,5 @@
 #shader fragment
-#version 430 core
+#version 460 core
 
 in vec2 vert_pos;
 
@@ -99,7 +99,7 @@ void main()
 };
 
 #shader vertex        
-#version 430 core
+#version 460 core
         
 layout(location = 0) in vec2 position;
 

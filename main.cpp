@@ -62,8 +62,8 @@ int main()
     glewInit();
 	glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
 
-    JuliaFractal juliaFractal("shaders/julia.shader");
-    // FractalUpdater fractalUpdater(windowWidth, windowHeight);
+    JuliaFractal juliaFractal;
+    FractalUpdater fractalUpdater(windowWidth, windowHeight);
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput(window);
@@ -72,12 +72,15 @@ int main()
 
 		glClear(GL_COLOR_BUFFER_BIT);
 
-        // float dt = getDeltaTime();
-        // fractalUpdater.update(dt);
+        float dt = getDeltaTime();
 
-        // juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
+        fractalUpdater.update(dt);
 
-        // juliaFractal.draw(window);
+        const FractaleParam& fp = fractalUpdater.getFractaleParam();
+
+        juliaFractal.setGenerationParam(fp);
+
+        juliaFractal.draw(window);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
