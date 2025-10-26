@@ -35,7 +35,9 @@ public:
 
     static inline int rand(int a, int b)
     {
-        return (int)(Random::randExclude() * (abs(b - a) + 1)) + a;
+        if (a == b)
+            return a;
+        return (c_rand() % abs(b - a)) + a;
     }
 
     static inline float rand(float a, float b)
@@ -45,7 +47,9 @@ public:
 
     static inline int randExclude(int a, int b)
     {
-        return Random::rand(a, b - 1);
+        if (a == b || abs(b - a) == 1)
+            return a;
+        return (c_rand() % (abs(b - a) - 1)) + a;
     }
 
     static inline float randExclude(float a, float b)
