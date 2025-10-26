@@ -8,8 +8,10 @@ The program offers dynamic animation of Julia fractals by interpolating them usi
 Install process : 
 
 OpenGL 4.6 :
+
 Windows :
 Clone the main branch and open the solution with visual studio and build the projet (require Desktop developement with C++ module).
+
 Linux :
 Clone the linux branch and make sure all dependancy are install on your system:
 sudo apt install clang
@@ -20,6 +22,7 @@ sudo apt install libglfw3-dev
 sudo apt install clang
 
 OpenGL SE 3.2:
+
 Clone the OpenGL 3.2 branch and make sure all dependancy are install on your system:
 sudo apt install clang
 sudo apt install make
