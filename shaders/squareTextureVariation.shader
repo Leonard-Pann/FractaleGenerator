@@ -1,4 +1,4 @@
-#version 460
+#version 430
 
 layout(local_size_x = 256) in;
 
@@ -69,7 +69,7 @@ void main()
 
     if (lid == 0) 
     {
-        double sumFloat = double(partialSum[0]) / 8.0; // sumFloat € [0, local_size_x = 256]
+        double sumFloat = double(partialSum[0]) / 8.0; // sumFloat ï¿½ [0, local_size_x = 256]
         double nbWorkingGroup = double(width * height) / double(groupSize);
         double maxSumFloat = double(groupSize);
         double factor = 4000000000.0 / (maxSumFloat * nbWorkingGroup);
