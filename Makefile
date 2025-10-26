@@ -5,7 +5,10 @@ TARGET:=$(BIN_DIR)/fractales_generator
 
 # Compilation stuff
 CXX=clang++
-CXXFLAGS:=-std=c++23 -g -O0 -MMD -MP
+#Debug
+CXXFLAGS:=-std=c++23 -g -O0
+#Release
+# CXXFLAGS:=-std=c++23 -O3
 INCLUDES:=-Isrc/header
 LDFLAGS:=
 LIBS:=-lGL -lGLEW -lglfw
