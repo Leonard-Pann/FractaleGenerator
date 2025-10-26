@@ -1,4 +1,4 @@
-#version 430
+#version 460
 
 layout (local_size_x = 16, local_size_y = 16) in;
 
@@ -65,10 +65,6 @@ void main()
     {
         return;
     }
-
-    //fx, fy is from -1 to 1 coordonate
-    // float fx = (float(x) / float(textureSize.x - 1)) * 2.0 - 1.0;
-    // float fy = (float(y) / float(textureSize.y - 1)) * 2.0 - 1.0;
 
     // posX, posY is from window coordonate
     float posX = (float(x) / float(textureSize.x - 1)) * (window.y - window.x) + window.x;

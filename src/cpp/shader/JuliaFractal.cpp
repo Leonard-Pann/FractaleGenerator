@@ -46,6 +46,9 @@ void JuliaFractal::draw(GLFWwindow* window)
 {
     glUseProgram(shader.shaderId());
 
+    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer);
+
     glBindVertexArray(vao);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

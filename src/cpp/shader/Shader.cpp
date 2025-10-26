@@ -12,6 +12,7 @@ void Shader::load()
 
 }
 
+
 void Shader::addUniform(const string& name)
 {
     GLint location = glGetUniformLocation(m_shaderId, name.data());

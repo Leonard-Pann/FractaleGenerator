@@ -1,5 +1,5 @@
 #shader fragment
-#version 430 core
+#version 460 core
 
 in vec2 vert_pos;
 
@@ -26,6 +26,31 @@ vec3 LerpColor(vec3 startCol, vec3 endCol, float t)
 {
     return ((endCol.xyz - startCol.xyz) * t) + startCol.xyz;
 }
+
+// vec4 getMandelbrotColor(float cx, float cy)
+// {
+//     float currentx = 0.0;
+//     float currenty = 0.0;
+
+//     float xTmp;
+
+//     int nbIter = 0;
+//     while(currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
+//     {
+//         xTmp = currentx;
+//         currentx = (xTmp * xTmp - (currenty * currenty)) + cx;
+//         currenty = 2.0 * xTmp * currenty + cy;
+//         nbIter++;
+//     }
+
+//     if(nbIter >= maxIter)
+//     {
+//         return vec4(inColor.xyz, 1.0);
+//     }
+
+//     float fade = pow32(1.0 - (float(nbIter) / float(maxIter)));
+//     return vec4(LerpColor(inColor, colorPalette[0], fade), 1.0);
+// }
 
 float length(float x, float y)
 {
@@ -96,10 +121,11 @@ void main()
     float posY = (vert_pos.y + 1.0) * 0.5 * (window.w - window.z) + window.z;
 
     color = getJuliaColor(posX, posY, seed.x, seed.y);
+    //color = getMandelbrotColor(pos.x, pos.y);
 };
 
 #shader vertex        
-#version 430 core
+#version 460 core
         
 layout(location = 0) in vec2 position;
 

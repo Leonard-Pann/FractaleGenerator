@@ -76,8 +76,8 @@ private:
 	JuliaGreyComputeShader juliaGreyShader;
 	TextureVariationShader textureVariationShader;
 
-	StateTarget* target;
-	StateTarget* newTarget;
+	StateTarget* target = nullptr;
+	StateTarget* newTarget = nullptr;
 
 	// zoom
 	float zoomTime;
@@ -87,7 +87,7 @@ private:
 
 	// dezoom
 	bool isDezooming;
-	StateTarget* dezoomTarget = nullptr;
+	StateTarget* dezoomTarget;
 	std::vector<CatmulRomSpline<Vector3>>* dezoomColorsSplines = nullptr;
 
 	// changeFractal
