@@ -83,10 +83,6 @@ layout(location = 0) in vec2 position;
 
 out vec2 vert_pos;
 
-uniform vec2 seed;
-uniform vec4 window;
-uniform int maxIter;
-
 void main()
 {
     vert_pos = position;

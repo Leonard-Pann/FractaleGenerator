@@ -105,13 +105,6 @@ layout(location = 0) in vec2 position;
 
 out vec2 vert_pos;
 
-uniform vec2 seed;
-uniform vec4 window;
-uniform int maxIter;
-uniform vec3 inColor;
-uniform vec3 colorPalette[7];
-uniform int nbColors;
-
 void main()
 {
     vert_pos = position;
