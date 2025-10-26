@@ -1,7 +1,7 @@
 #ifndef RANDOM_HPP
 #define RANDOM_HPP
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <vector>
 
 static inline int c_rand()

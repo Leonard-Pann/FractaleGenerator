@@ -87,8 +87,8 @@ private:
 
 	// dezoom
 	bool isDezooming;
-	StateTarget* dezoomTarget;
-	std::vector<CatmulRomSpline<Vector3>>* dezoomColorsSplines;
+	StateTarget* dezoomTarget = nullptr;
+	std::vector<CatmulRomSpline<Vector3>>* dezoomColorsSplines = nullptr;
 
 	// changeFractal
 	Vector2 changeFractalSize;

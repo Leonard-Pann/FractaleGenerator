@@ -17,6 +17,11 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
+//Vector2 mousePosition;
+//Vector2 normalizeMousePosition; //between -1 and 1
+int windowWidth = 1920;
+int windowHeight = 1080;
+const bool fullscreen = false;
 
 double getDeltaTime()
 {
@@ -25,6 +30,12 @@ double getDeltaTime()
     double dt = currentSeconds - previousSeconds;
     previousSeconds = currentSeconds;
     return dt;
+}
+
+void processInput(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 }
 
 void onFrameBufferResize(GLFWwindow* window, int width, int height)
