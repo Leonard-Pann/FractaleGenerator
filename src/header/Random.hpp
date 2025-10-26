@@ -1,10 +1,10 @@
 #ifndef RANDOM_HPP
 #define RANDOM_HPP
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <vector>
 
-static int c_rand()
+static inline int c_rand()
 {
     return rand();
 }
@@ -30,10 +30,7 @@ public:
 
     static inline float randExclude()
     {
-        int rand = c_rand();
-        if (rand == RAND_MAX)
-            return 1.0f - FLT_MIN;
-        return (float)((double)(rand - 1) / (double)RAND_MAX);
+        return (float)((double)c_rand() / ((double)RAND_MAX + 1.0));
     }
 
     static inline int rand(int a, int b)
@@ -41,7 +38,7 @@ public:
         return (int)(Random::randExclude() * (abs(b - a) + 1)) + a;
     }
 
-    static inline  float rand(float a, float b)
+    static inline float rand(float a, float b)
     {
         return (Random::rand() * abs(b - a)) + a;
     }
