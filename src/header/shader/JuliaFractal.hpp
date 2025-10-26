@@ -31,7 +31,7 @@ private:
 public:
 	FragmentShader shader;
 
-	JuliaFractal(const std::string& path);
+	JuliaFractal();
     void setGenerationParam(const FractaleParam& params);
     void draw(GLFWwindow* window);
     ~JuliaFractal();

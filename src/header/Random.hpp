@@ -23,7 +23,7 @@ public:
         srand(time(0));
     }
 
-    static inline float rand()
+        static inline float rand()
     {
         return (float)((double)c_rand() / (double)RAND_MAX);
     }

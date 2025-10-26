@@ -20,7 +20,7 @@ public:
 	GLuint shaderId() { return m_shaderId; };
 
 	Shader(const std::string& path);
-	virtual void load() {};
+	virtual void load();
 	void addUniform(const std::string& name);
 	void setUniform1i(const std::string& name, int value);
 	void setUniform2i(const std::string& name, int value, int value2);
