@@ -6,12 +6,12 @@ TARGET:=$(BIN_DIR)/fractales_generator
 # Compilation stuff
 CXX=clang++
 #Debug
-CXXFLAGS:=-std=c++23 -g -O0
+CXXFLAGS:=-std=c++23 -g -O0 -D_REENTRANT
 #Release
-# CXXFLAGS:=-std=c++23 -O3
-INCLUDES:=-Isrc/header
+# CXXFLAGS:=-std=c++23 -O3 -D_REENTRANT
+INCLUDES:=-Isrc/header -I/usr/include
 LDFLAGS:=
-LIBS:=-lGL -lGLEW -lglfw
+LIBS:=-lSDL2 -lEGL -lGLESv2
 
 SOURCES_CPP:=$(shell find src -name '*.cpp' -print)
 OBJECTS_CPP:=$(patsubst src/%.cpp,$(BUILD_DIR)/%.o,$(SOURCES_CPP))
@@ -23,13 +23,11 @@ TARGET_SHADERS:=$(patsubst %,$(BIN_DIR)/%,$(SRC_SHADERS))
 all: $(TARGET) $(TARGET_SHADERS) | $(BUILD_DIR) $(BIN_DIR)
 
 # Link
-
 $(TARGET): $(OBJECTS_CPP) $(BUILD_DIR)/main.o | $(BUILD_DIR) $(BIN_DIR)
 	@echo Linking $@
 	@$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 # Compile
-
 $(BUILD_DIR)/%.o: src/%.cpp | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	@echo Compiling $@
@@ -40,7 +38,6 @@ $(BUILD_DIR)/main.o: main.cpp | $(BUILD_DIR)
 	@$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 # Directories
-
 $(BUILD_DIR):
 	@mkdir -p $@
 
@@ -51,12 +48,10 @@ $(SHADERS_BIN_DIR):
 	@mkdir -p $@
 
 # Install shaders
-
 $(SHADERS_BIN_DIR)/%: shaders/% | $(SHADERS_BIN_DIR)
 	@echo Installing shader $@
 	@cp $< $@
 
 # Other
-
 clean:
 	rm -rf build

@@ -34,4 +34,11 @@ OpenGL SE 3.2:
 Clone the OpenGL 3.2 branch and make sure all dependancy are install on your system:
 
 sudo apt install clang
+
 sudo apt install make
+
+sudo apt install libsdl2-dev
+
+sudo apt install libegl1-mesa-dev
+
+sudo apt install libegles2-mesa-dev
