@@ -1,21 +1,25 @@
-#ifndef JULIA_GREY_COMPUTE_SHADER_HPP
-#define JULIA_GREY_COMPUTE_SHADER_HPP
+#ifndef JULIA_GREY_FRAGMENT_SHADER_HPP
+#define JULIA_GREY_FRAGMENT_SHADER_HPP
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <GLES3/gl32.h>
+#include <EGL/egl.h>
 #include <string>
-#include "ComputeShader.hpp"
+#include <vector>
+#include "FragmentShader.hpp"
+#include "Vector.hpp"
 
-class JuliaGreyComputeShader : public ComputeShader
+class JuliaGreyFragmentShader : public FragmentShader
 {
 private:
-	GLuint ssbo;
+    GLuint fbo;
+    GLuint textureId;
+    int texWidth, texHeight;
 
 public:
-	JuliaGreyComputeShader();
-	void load() override;
-	std::vector<float>* computeTexture(int maxIter, Vector2 origin, const Vector4& window, int textWidth, int textHeight);
-	~JuliaGreyComputeShader() override;
+    JuliaGreyFragmentShader();
+    void load() override;
+    std::vector<float> computeTexture(int maxIter, Vector2 origin, const Vector4& window, int width, int height);
+    ~JuliaGreyFragmentShader() override;
 };
 
 #endif

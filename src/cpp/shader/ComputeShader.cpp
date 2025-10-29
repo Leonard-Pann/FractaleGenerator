@@ -27,8 +27,8 @@ void ComputeShader::compile()
 
     if (success == 0)
     {
-        char log[512];
-        glGetShaderInfoLog(shader, 512, nullptr, log);
+        char log[1024];
+        glGetShaderInfoLog(shader, 1024, nullptr, log);
         cout << "Shader " << m_path << " compile error :\n" << log << endl;
         glDeleteShader(shader);
         return;
@@ -41,8 +41,8 @@ void ComputeShader::compile()
     glGetProgramiv(program, GL_LINK_STATUS, &success);
     if (success == 0)
     {
-        char log[512];
-        glGetProgramInfoLog(program, 512, nullptr, log);
+        char log[1024];
+        glGetProgramInfoLog(program, 1024, nullptr, log);
         cout << "Program "<< m_path << " link error :\n" << log << endl;
         glDeleteShader(shader);
         return;

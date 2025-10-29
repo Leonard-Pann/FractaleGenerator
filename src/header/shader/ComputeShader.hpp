@@ -1,8 +1,8 @@
 #ifndef COMPUTE_SHADER_HPP
 #define COMPUTE_SHADER_HPP
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <GLES3/gl32.h>
+#include <EGL/egl.h>
 #include <string>
 #include "Shader.hpp"
 

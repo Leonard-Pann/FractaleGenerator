@@ -26,12 +26,6 @@ const bool fullscreen = false;
 //     return dt;
 // }
 
-// void processInput(GLFWwindow* window)
-// {
-//     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-//         glfwSetWindowShouldClose(window, true);
-// }
-
 // void onFrameBufferResize(GLFWwindow* window, int width, int height)
 // {
 //     glViewport(0, 0, width, height);
@@ -60,6 +54,9 @@ int main()
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
+    windowWidth = fullscreen ? mode->width : windowWidth;
+    windowHeight = fullscreen ? mode->height : windowHeight;
+
     SDL_Window* window = SDL_CreateWindow("Fractal Generator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
                             windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
@@ -79,6 +76,10 @@ int main()
         return -1;
     }
 
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+	// glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
+
+
     if (SDL_GL_MakeCurrent(window, glctx) != 0) 
     {
         cout << "SDL_GL_MakeCurrent failed: " << SDL_GetError() << endl;
@@ -93,6 +94,9 @@ int main()
 
     bool running = true;
     SDL_Event ev;
+    
+    // JuliaFractal juliaFractal;
+    // FractalUpdater fractalUpdater(windowWidth, windowHeight);
     while (running) 
     {
         while (SDL_PollEvent(&ev)) 
@@ -103,10 +107,15 @@ int main()
             }
         }
 
-        // clear with a color
         glViewport(0, 0, windowWidth, windowHeight);
         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+    //     float dt = getDeltaTime();
+    //     fractalUpdater.update(dt);
+    //     const FractaleParam& fp = fractalUpdater.getFractaleParam();
+    //     juliaFractal.setGenerationParam(fp);
+    //     juliaFractal.draw(window);
 
         SDL_GL_SwapWindow(window);
         SDL_Delay(16); // ~60fps idle
@@ -115,54 +124,5 @@ int main()
     SDL_GL_DeleteContext(glctx);
     SDL_DestroyWindow(window);
     SDL_Quit();
-
-    // if (glfwInit() == 0)
-    //     return -1;
-
-    // GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
-    // const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
-    // windowWidth = fullscreen ? mode->width : windowWidth;
-    // windowHeight = fullscreen ? mode->height : windowHeight;
-	// GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "FractalGenerator", fullscreen ? primaryMonitor : nullptr, nullptr);
-    
-	// if (window == nullptr)
-	// {
-	// 	cout << "Failed to create GLFW window" << endl;
-	// 	glfwTerminate();
-	// 	return -1;
-	// }
-    
-	// glfwMakeContextCurrent(window);
-    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-
-    // glewInit();
-	// glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
-
-    // JuliaFractal juliaFractal;
-    // FractalUpdater fractalUpdater(windowWidth, windowHeight);
-	// while (!glfwWindowShouldClose(window))
-	// {
-	// 	processInput(window);
-
-    //     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
-	// 	glClear(GL_COLOR_BUFFER_BIT);
-
-    //     float dt = getDeltaTime();
-
-    //     fractalUpdater.update(dt);
-
-    //     const FractaleParam& fp = fractalUpdater.getFractaleParam();
-
-    //     juliaFractal.setGenerationParam(fp);
-
-    //     juliaFractal.draw(window);
-
-	// 	glfwSwapBuffers(window);
-	// 	glfwPollEvents();
-	// }
-
-    // glfwDestroyWindow(window);
-	// glfwTerminate();
 	return 0;
 }

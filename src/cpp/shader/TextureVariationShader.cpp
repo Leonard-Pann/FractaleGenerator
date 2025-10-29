@@ -1,66 +1,72 @@
-#include "shader/TextureVariationShader.hpp"
+#include "shader/TextureVariationFragmentShader.hpp"
+#include <iostream>
+#include <numeric>
 
 using namespace std;
 
-TextureVariationShader::TextureVariationShader() : ComputeShader::ComputeShader("shaders/squareTextureVariation.shader"), ssboInput(0), ssboOutput(0)
+TextureVariationFragmentShader::TextureVariationFragmentShader() : FragmentShader("shaders/textureVariationFragment.shader"), fbo(0), inputTexture(0), outputTexture(0)
 {
 
 }
 
-void TextureVariationShader::load()
+void TextureVariationFragmentShader::load()
 {
-    ComputeShader::load();
+    FragmentShader::load();
 
-    glGenBuffers(1, &ssboInput);
-
-    glGenBuffers(1, &ssboOutput);
+    glGenFramebuffers(1, &fbo);
+    glGenTextures(1, &inputTexture);
+    glGenTextures(1, &outputTexture);
 
     addUniform("width");
     addUniform("height");
+    addUniform("inputTex");
 }
 
-float TextureVariationShader::computeMeanTextureVariation(const std::vector<float>& texture, int width, int height)
+float TextureVariationFragmentShader::computeMeanTextureVariation(const std::vector<float>& texture, int width, int height)
 {
+    glBindTexture(GL_TEXTURE_2D, inputTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, texture.data());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glBindTexture(GL_TEXTURE_2D, outputTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, nullptr);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outputTexture, 0);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        cout << "FBO incomplete" << endl;
+        return 0.0f;
+    }
+
+    glViewport(0, 0, width, height);
     glUseProgram(m_shaderId);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboInput);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, (width * height) * sizeof(float), texture.data(), GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboInput);
-
-    uint32_t zero = 0.0f;
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboOutput);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(uint32_t), &zero, GL_DYNAMIC_READ);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssboOutput);
 
     setUniform1i("width", width);
     setUniform1i("height", height);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, inputTexture);
+    setUniform1i("inputTex", 0);
 
-    GLuint localSize = 256;
-    GLuint numGroups = ((width * height) + localSize - 1) / localSize;
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 
-    glDispatchCompute(numGroups, 1, 1);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    vector<float> pixels(width * height);
+    glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, pixels.data());
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboOutput);
-    uint32_t* result = (uint32_t*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-    if (result != nullptr)
-    {
-        double nbWorkingGroup = double(width * height) / double(localSize);
-        double maxSumFloat = 256.0;
-        double factor = 4000000000.0 / (maxSumFloat * nbWorkingGroup);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        float res = (float)((double)*result / factor);
-        res /= width * height;
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-        return res;
-    }
-    return 0.0f;
+    // Compute average variation on CPU
+    float sum = accumulate(pixels.begin(), pixels.end(), 0.0f);
+    return sum / (width * height);
 }
 
-
-TextureVariationShader::~TextureVariationShader()
+TextureVariationFragmentShader::~TextureVariationFragmentShader()
 {
-    glDeleteBuffers(1, &ssboInput);
-    glDeleteBuffers(1, &ssboOutput);
+    glDeleteTextures(1, &inputTexture);
+    glDeleteTextures(1, &outputTexture);
+    glDeleteFramebuffers(1, &fbo);
 }
-

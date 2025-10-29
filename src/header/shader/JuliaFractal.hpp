@@ -1,8 +1,8 @@
 #ifndef JULIA_FRACTAL_HPP
 #define JULIA_FRACTAL_HPP
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <GLES3/gl32.h>
+#include <EGL/egl.h>
 #include <string>
 #include "FragmentShader.hpp"
 #include "FractaleParam.hpp"
@@ -10,7 +10,7 @@
 class JuliaFractal
 {
 private:
-    GLfloat const vertices_positions[8] =
+    GLfloat const verticesPositions[8] =
     {
         -1.0f, 1.0f,
         1.0f, 1.0f,
@@ -18,7 +18,7 @@ private:
         -1.0f, -1.0f,
     };
 
-    GLuint const vertices_indices[6] =
+    GLuint const verticesIndices[6] =
     {
         0, 1, 2,
         0, 2, 3,
@@ -33,9 +33,8 @@ public:
 
 	JuliaFractal();
     void setGenerationParam(const FractaleParam& params);
-    void draw(GLFWwindow* window);
+    void draw();
     ~JuliaFractal();
 };
-
 
 #endif

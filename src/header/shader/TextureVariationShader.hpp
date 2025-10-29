@@ -1,22 +1,24 @@
-#ifndef TEXTURE_VARIATION_SHADER_HPP
-#define TEXTURE_VARIATION_SHADER_HPP
+#ifndef TEXTURE_VARIATION_FRAGMENT_SHADER_HPP
+#define TEXTURE_VARIATION_FRAGMENT_SHADER_HPP
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <GLES3/gl32.h>
+#include <EGL/egl.h>
 #include <string>
 #include <vector>
-#include "../../header/shader/ComputeShader.hpp"
+#include "FragmentShader.hpp"
 
-class TextureVariationShader : public ComputeShader
+class TextureVariationFragmentShader : public FragmentShader
 {
 private:
-	GLuint ssboInput, ssboOutput;
+    GLuint fbo;
+    GLuint inputTexture;
+    GLuint outputTexture;
 
 public:
-	TextureVariationShader();
-	void load() override;
-	float computeMeanTextureVariation(const std::vector<float>& texture, int width, int height);
-	~TextureVariationShader() override;
+    TextureVariationFragmentShader();
+    void load() override;
+    float computeMeanTextureVariation(const std::vector<float>& texture, int width, int height);
+    ~TextureVariationFragmentShader() override;
 };
 
 #endif

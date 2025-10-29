@@ -12,9 +12,14 @@ void Shader::load()
 
 }
 
+GLuint Shader::shaderId() const
+{
+    return m_shaderId;
+}
+
 void Shader::addUniform(const string& name)
 {
-    GLint location = glGetUniformLocation(m_shaderId, name.data());
+    GLint location = glGetUniformLocation(m_shaderId, name.c_str());
     m_uniformIds[name] = location;
 }
 
@@ -65,9 +70,9 @@ void Shader::setUniform1fv(const string& name, vector<float> values)
 
 void Shader::setUniform2fv(const string& name, vector<Vector2> values)
 {
-    vector<float> floatValues = vector<float>();
+    vector<float> floatValues;
     floatValues.reserve(values.size() * 2);
-    for (Vector2 v : values)
+    for (Vector2& v : values)
     {
         floatValues.push_back(v.x);
         floatValues.push_back(v.y);
@@ -77,9 +82,9 @@ void Shader::setUniform2fv(const string& name, vector<Vector2> values)
 
 void Shader::setUniform3fv(const string& name, vector<Vector3> values)
 {
-    vector<float> floatValues = vector<float>();
+    vector<float> floatValues;
     floatValues.reserve(values.size() * 3);
-    for (Vector3 v : values)
+    for (Vector3& v : values)
     {
         floatValues.push_back(v.x);
         floatValues.push_back(v.y);
@@ -90,9 +95,9 @@ void Shader::setUniform3fv(const string& name, vector<Vector3> values)
 
 void Shader::setUniform4fv(const string& name, vector<Vector4> values)
 {
-    vector<float> floatValues = vector<float>();
+    vector<float> floatValues;
     floatValues.reserve(values.size() * 4);
-    for (Vector4 v : values)
+    for (Vector4& v : values)
     {
         floatValues.push_back(v.x);
         floatValues.push_back(v.y);
