@@ -488,69 +488,68 @@ vector<Vector3>* FractalUpdater::getCurrentColorPallet(vector<CatmulRomSpline<Ve
 
 #pragma region getJuliaTotalGreyVariation
 
-tuple<float, vector<float>*> FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
+tuple<float, vector<float>> FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
 {
-	vector<float>* pixels = juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
+	vector<float> pixels = juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
 
 	// The comment lines below is the CPU version for computing the mean variation
-	//int widthEnd = greyTextureWidth - 1;
-	//int heightEnd = greyTextureHeight - 1;
-	//float currentGreyscale;
-	//float totalSum(0.0);
+	// TO DO : Do it in multi tread
+	int widthEnd = greyTextureWidth - 1;
+	int heightEnd = greyTextureHeight - 1;
+	float currentGreyscale;
+	float totalSum(0.0);
 
-	//for (int i = 0; i < greyTextureWidth * greyTextureHeight; i++)
-	//{
-	//	int row = i / greyTextureWidth;
-	//	int col = i % greyTextureWidth;
+	for (int i = 0; i < greyTextureWidth * greyTextureHeight; i++)
+	{
+		int row = i / greyTextureWidth;
+		int col = i % greyTextureWidth;
 
-	//	if (row != 0 && row != greyTextureHeight - 1 && col != 0 && col != greyTextureWidth - 1)
-	//	{
-	//		int width = greyTextureWidth;
-	//		float currentGreyscale = pixels[(width * row) + col];
-	//		float sum = abs(currentGreyscale - pixels[(width * (row - 1)) + (col - 1)]);
-	//		sum += abs(currentGreyscale - pixels[(width * (row - 1)) + col]);
-	//		sum += abs(currentGreyscale - pixels[(width * (row - 1)) + (col + 1)]);
-	//		sum += abs(currentGreyscale - pixels[(width * row) + (col - 1)]);
-	//		sum += abs(currentGreyscale - pixels[(width * row) + (col + 1)]);
-	//		sum += abs(currentGreyscale - pixels[(width * (row + 1)) + (col - 1)]);
-	//		sum += abs(currentGreyscale - pixels[(width * (row + 1)) + col]);
-	//		sum += abs(currentGreyscale - pixels[(width * (row + 1)) + (col + 1)]);
-	//		totalSum += sum / 8.0;
-	//	}
-	//}
+		if (row != 0 && row != greyTextureHeight - 1 && col != 0 && col != greyTextureWidth - 1)
+		{
+			int width = greyTextureWidth;
+			float currentGreyscale = pixels[(width * row) + col];
+			float sum = abs(currentGreyscale - pixels[(width * (row - 1)) + (col - 1)]);
+			sum += abs(currentGreyscale - pixels[(width * (row - 1)) + col]);
+			sum += abs(currentGreyscale - pixels[(width * (row - 1)) + (col + 1)]);
+			sum += abs(currentGreyscale - pixels[(width * row) + (col - 1)]);
+			sum += abs(currentGreyscale - pixels[(width * row) + (col + 1)]);
+			sum += abs(currentGreyscale - pixels[(width * (row + 1)) + (col - 1)]);
+			sum += abs(currentGreyscale - pixels[(width * (row + 1)) + col]);
+			sum += abs(currentGreyscale - pixels[(width * (row + 1)) + (col + 1)]);
+			totalSum += sum / 8.0;
+		}
+	}
 
-	//float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
+	float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
 
-	float meanGPU = textureVariationShader.computeMeanTextureVariation(*pixels, greyTextureWidth, greyTextureHeight);
+	// The line below is the GPU version for computing the mean variation
+	// float meanGPU = textureVariationShader.computeMeanTextureVariation(*pixels, greyTextureWidth, greyTextureHeight);
 
-	return make_tuple(meanGPU, pixels);
+	return make_tuple(meanCPU, pixels);
 }
 
 #pragma endregion
 
 #pragma region findRandomJuliaOrigin
 
-// return a random c � |C such that the absolute difference of gray scale julia fractale is >= threshold
+// return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold
 tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOrigin()
 {
 	Vector4 window(xMin, xMax, yMin, yMax);
 
 	Vector2 randPoint = randomPoint();
-	tuple<float, vector<float>*> tuple = getJuliaTotalGreyVariation(greyMaxIter, randPoint, window);
+	tuple<float, vector<float>> tuple = getJuliaTotalGreyVariation(greyMaxIter, randPoint, window);
 	float mean = get<0>(tuple);
-	vector<float>* juliaGreyTexture = get<1>(tuple);
 
 	while (mean < juliaOriginThreshold)
 	{
-		delete juliaGreyTexture;
-
 		randPoint = randomPoint();
 		tuple = getJuliaTotalGreyVariation(greyMaxIter, randPoint, window);
 		mean = get<0>(tuple);
 		juliaGreyTexture = get<1>(tuple);
 	}
 
-	return make_tuple(randPoint, juliaGreyTexture);
+	return make_tuple(randPoint, get<1>(tuple));
 }
 
 struct JuliaTotalGreyVariationOtherThreadParams
@@ -591,7 +590,7 @@ void* getJuliaTotalGreyVariationOtherThread(void* params)
 }
 
 
-// return a random c � |C such that the absolute difference of gray scale julia fractale is >= threshold
+// return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold
 tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread()
 {
 	JuliaTotalGreyVariationOtherThreadParams params;
@@ -741,7 +740,6 @@ tuple<bool, Vector2> FractalUpdater::initRandomPointToZoom(Vector2 origin, vecto
 
 	return make_tuple(false, Vector2(x, y));
 }
-
 
 struct ComputeJuliaTextureParams
 {
