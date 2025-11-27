@@ -27,5 +27,4 @@ public:
 	~FragmentShader() override;
 };
 
-
 #endif

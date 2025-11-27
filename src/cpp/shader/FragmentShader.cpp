@@ -53,7 +53,6 @@ GLuint FragmentShader::compileShader(unsigned int type, const string& source)
     glShaderSource(id, 1, &src, nullptr);
     glCompileShader(id);
 
-    //todo : error handleing
     int result;
     glGetShaderiv(id, GL_COMPILE_STATUS, &result);
     if (result == GL_FALSE)
@@ -81,7 +80,7 @@ GLuint FragmentShader::createShader(const string& vertexShader, const string& fr
     glAttachShader(programm, vs);
     glAttachShader(programm, fs);
     glLinkProgram(programm);
-    glValidateProgram(programm);
+    glValidateProgram(programm); // Maybe need to remove this?
 
     glDeleteShader(vs);
     glDeleteShader(fs);

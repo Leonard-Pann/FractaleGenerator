@@ -1,7 +1,7 @@
 #ifndef JULIA_FRACTAL_HPP
 #define JULIA_FRACTAL_HPP
 
-#include <GL/glew.h>
+#include <GLES3/gl3.h>
 #include <GLFW/glfw3.h>
 #include <string>
 #include "FragmentShader.hpp"
@@ -18,7 +18,7 @@ private:
         -1.0f, -1.0f,
     };
 
-    GLuint const vertices_indices[6] =
+    GLushort const vertices_indices[6] =
     {
         0, 1, 2,
         0, 2, 3,
@@ -36,6 +36,5 @@ public:
     void draw(GLFWwindow* window);
     ~JuliaFractal();
 };
-
 
 #endif
