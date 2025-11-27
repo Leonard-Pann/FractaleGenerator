@@ -491,16 +491,20 @@ vector<Vector3>* FractalUpdater::getCurrentColorPallet(vector<CatmulRomSpline<Ve
 tuple<float, vector<float>*> FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
 {
 	vector<float>* pixels = juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
+	float meanCPU = computeGreyVariation(pixels, greyTextureWidth, greyTextureHeight);
 
-	// CPU version for computing the mean variation
-	// Can be optimise if compute the variation in a fragment shader them compute the average in the CPU
+	return make_tuple(meanCPU, pixels);
+}
+
+static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, int greyTextureHeight)
+{
+	// optimise CPU version for computing the mean variation
+	// Can be optimise using multi thread or computing the variation in a fragment shader them compute the average in the CPU
 	int widthEnd = greyTextureWidth - 1;
 	int heightEnd = greyTextureHeight - 1;
 	float currentGreyscale(0.0);
 	float sum(0.0);
 	float totalSum(0.0);
-
-	const float oneO8 = 1.0 / 8.0;
 
 	int start = greyTextureWidth + 1; // to avoid the first row and avoid check if row != 0 in the loop
 	int end = greyTextureWidth * (greyTextureHeight - 1) - 1; // to avoid the last row and avoid check if row != greyTextureHeight - 1 in the loop
@@ -539,7 +543,7 @@ tuple<float, vector<float>*> FractalUpdater::getJuliaTotalGreyVariation(int maxI
 	totalSum /= 8.0 * nbIter;
 
 	float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
-	return make_tuple(meanCPU, pixels);
+	return meanCPU;
 }
 
 #pragma endregion
@@ -574,15 +578,13 @@ struct JuliaTotalGreyVariationOtherThreadParams
 	int maxIter;
 	Vector2 origin;
 	Vector4 window;
-	JuliaGreyComputeShader* juliaGreyShader;
-	TextureVariationShader* textureVariationShader;
+	JuliaGreyShader* juliaGreyShader;
 	int greyTextureWidth;
 	int greyTextureHeight;
 };
 
 struct JuliaTotalGreyVariationOtherThreadReturn
 {
-	float mean;
 	vector<float>* texture;
 };
 
@@ -592,22 +594,18 @@ void* getJuliaTotalGreyVariationOtherThread(void* params)
 	int maxIter = paramsCast->maxIter;
 	Vector2 origin = paramsCast->origin;
 	Vector4 window = paramsCast->window;
-	JuliaGreyComputeShader* juliaGreyShader = paramsCast->juliaGreyShader;
-	TextureVariationShader* textureVariationShader = paramsCast->textureVariationShader;
+	JuliaGreyShader* juliaGreyShader = paramsCast->juliaGreyShader;
 	int greyTextureWidth = paramsCast->greyTextureWidth;
 	int greyTextureHeight = paramsCast->greyTextureHeight;
 
 	vector<float>* pixels = juliaGreyShader->computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
-	float meanGPU = textureVariationShader->computeMeanTextureVariation(*pixels, greyTextureWidth, greyTextureHeight);
 
 	JuliaTotalGreyVariationOtherThreadReturn* res = new JuliaTotalGreyVariationOtherThreadReturn();
-	res->mean = meanGPU;
 	res->texture = pixels;
 	return res;
 }
 
-
-// return a random c � |C such that the absolute difference of gray scale julia fractale is >= threshold
+// return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold
 tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread()
 {
 	JuliaTotalGreyVariationOtherThreadParams params;
@@ -650,7 +648,7 @@ tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread(
 		}
 
 		result = (JuliaTotalGreyVariationOtherThreadReturn*)callbackResult;
-		mean = result->mean;
+		mean = computeGreyVariation(result->texture, greyTextureWidth, greyTextureHeight);
 		juliaGreyTexture = result->texture;
 
 		delete result;
@@ -758,13 +756,12 @@ tuple<bool, Vector2> FractalUpdater::initRandomPointToZoom(Vector2 origin, vecto
 	return make_tuple(false, Vector2(x, y));
 }
 
-
 struct ComputeJuliaTextureParams
 {
 	int maxIter;
 	Vector2 origin;
 	Vector4 window;
-	JuliaGreyComputeShader* juliaGreyShader;
+	JuliaGreyShader* juliaGreyShader;
 	int greyTextureWidth;
 	int greyTextureHeight;
 };
@@ -780,7 +777,7 @@ void* computeJuliaTexture(void* params)
 	int maxIter = paramsCast->maxIter;
 	Vector2 origin = paramsCast->origin;
 	Vector4 window = paramsCast->window;
-	JuliaGreyComputeShader* juliaGreyShader = paramsCast->juliaGreyShader;
+	JuliaGreyShader* juliaGreyShader = paramsCast->juliaGreyShader;
 	int greyTextureWidth = paramsCast->greyTextureWidth;
 	int greyTextureHeight = paramsCast->greyTextureHeight;
 
@@ -792,7 +789,7 @@ void* computeJuliaTexture(void* params)
 }
 
 
-// Find a random z � |C such that Julia(c)(z) = 0 && it exist a neighborhood of z name zi such as Julia(c)(zi) > 0
+// Find a random z € |C such that Julia(c)(z) = 0 && it exist a neighborhood of z name zi such as Julia(c)(zi) > 0
 Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vector<float>& initJuliaGreyText, bool otherThread)
 {
 	tuple<bool, Vector2> tuple = initRandomPointToZoom(origin, initJuliaGreyText);
@@ -1095,37 +1092,6 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaOtherThread(Vector2 origin, 
 
 #pragma endregion
 
-#pragma region findRandomOriginAndZoomPoint
-
-tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPoint()
-{
-	tuple<Vector2, vector<float>*> tuple = findRandomJuliaOrigin();
-	Vector2 origin = get<0>(tuple);
-	vector<float>* juliaGreyText = get<1>(tuple);
-
-	Vector2 pointToZoom = findRandomPointToZoomInJulia(origin, *juliaGreyText);
-
-	delete juliaGreyText;
-
-	return make_tuple(origin, pointToZoom);
-}
-
-
-tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointOtherThread()
-{
-	tuple<Vector2, vector<float>*> tuple = findRandomJuliaOriginOtherThread();
-	Vector2 origin = get<0>(tuple);
-	vector<float>* juliaGreyText = get<1>(tuple);
-
-	Vector2 pointToZoom = findRandomPointToZoomInJuliaOtherThread(origin, *juliaGreyText);
-
-	delete juliaGreyText;
-
-	return make_tuple(origin, pointToZoom);
-}
-
-#pragma endregion
-
 #pragma region generateNewTarget
 
 void sortOrigin(vector<Vector2>& origins, vector<vector<float>*>& textures)
@@ -1251,7 +1217,7 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 		this->newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
 	};
 
-	std::thread thread(lambda);
+	thread thread(lambda);
 	thread.detach();
 
 	isNewTargetReady = true;

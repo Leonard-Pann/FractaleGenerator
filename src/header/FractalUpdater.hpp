@@ -9,7 +9,7 @@
 #include <mutex>
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
-#include "shader/JuliaGreyComputeShader.hpp"
+#include "shader/JuliaGreyShader.hpp"
 #include "shader/TextureVariationShader.hpp"
 #include "bezierCurve/CatmulRomSpline.hpp"
 #include "Number.hpp"
@@ -73,7 +73,7 @@ private:
 	//internal members
 	int greyTextureWidth, greyTextureHeight, greyMaxIter;
 	int refiningPointToZoomIter;
-	JuliaGreyComputeShader juliaGreyShader;
+	JuliaGreyShader juliaGreyShader;
 
 	StateTarget* target;
 	StateTarget* newTarget;
