@@ -41,7 +41,10 @@ int main()
     Random::setRandomSeed();
 
     if (glfwInit() == 0)
+    {
+        cout << "Failed in glfwInit" << endl;
         return -1;
+    }
 
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);

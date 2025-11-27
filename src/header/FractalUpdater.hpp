@@ -74,7 +74,6 @@ private:
 	int greyTextureWidth, greyTextureHeight, greyMaxIter;
 	int refiningPointToZoomIter;
 	JuliaGreyComputeShader juliaGreyShader;
-	TextureVariationShader textureVariationShader;
 
 	StateTarget* target;
 	StateTarget* newTarget;
