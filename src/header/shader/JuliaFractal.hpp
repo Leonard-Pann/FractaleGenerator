@@ -18,7 +18,7 @@ private:
         -1.0f, -1.0f,
     };
 
-    GLushort const vertices_indices[6] =
+    GLuint const vertices_indices[6] =
     {
         0, 1, 2,
         0, 2, 3,
