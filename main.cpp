@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <GLES3/gl3.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <fstream>
@@ -11,6 +11,11 @@
 #include "shader/JuliaFractal.hpp"
 
 using namespace std;
+
+static void errorCallback(int error, const char* description)
+{
+    cout << "GLFW error " << error << " : " << description;
+}
 
 void processInput(GLFWwindow *window)
 {
@@ -40,11 +45,19 @@ int main()
 {
     Random::setRandomSeed();
 
+    glfwSetErrorCallback(errorCallback);
+
     if (glfwInit() == 0)
     {
         cout << "Failed in glfwInit" << endl;
         return -1;
     }
+
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+
 
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
@@ -61,8 +74,8 @@ int main()
     
 	glfwMakeContextCurrent(window);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    glfwSwapInterval(1); // enable v-sync
 
-    glewInit();
 	glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
 
     JuliaFractal juliaFractal;
@@ -77,7 +90,7 @@ int main()
 
         float dt = getDeltaTime();
 
-        fractalUpdater.update(dt);
+        // fractalUpdater.update(dt);
 
         const FractaleParam& fp = fractalUpdater.getFractaleParam();
 

@@ -6,7 +6,7 @@
 
 struct FractaleParam
 {
-    Vector2 origin; // the c constant in the formula Zn+1 = Zn² + c
+    Vector2 origin; // the c constant in the formula Zn+1 = ZnÂ² + c
     float xMin, xMax, yMin, yMax;
     float colorRange;
     Vector3 inColor;

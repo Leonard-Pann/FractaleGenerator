@@ -1,7 +1,7 @@
 #ifndef FRAGMENT_SHADER_HPP
 #define FRAGMENT_SHADER_HPP
 
-#include <GL/glew.h>
+#include <GLES3/gl3.h>
 #include <GLFW/glfw3.h>
 #include <string>
 #include "Shader.hpp"

@@ -16,7 +16,7 @@ static const GLuint quadIndices[] =
     0, 2, 3
 };
 
-JuliaGreyShader::JuliaGreyShader() : FragmentShader::FragmentShader("shaders/juliaGreyCompute.shader"), vao(0), vbo(0), ebo(0), fbo(0), greyTexture(0)
+JuliaGreyShader::JuliaGreyShader() : FragmentShader::FragmentShader("shaders/juliaGrey.shader"), vao(0), vbo(0), ebo(0), fbo(0), greyTexture(0)
 {
 
 }
@@ -90,5 +90,9 @@ vector<float>* JuliaGreyShader::computeTexture(int maxIter, Vector2 origin, cons
 
 JuliaGreyShader::~JuliaGreyShader()
 {
-    glDeleteBuffers(1, &ssbo);
+    glDeleteBuffers(1, &ebo);
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteVertexArrays(1, &fbo);
+    glDeleteTextures(1, &greyTexture);
 }

@@ -57,4 +57,5 @@ JuliaFractal::~JuliaFractal()
 {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &positionBuffer);
+    glDeleteBuffers(1, &indicesBuffer);
 }
