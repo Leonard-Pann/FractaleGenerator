@@ -492,58 +492,86 @@ vector<Vector3>* FractalUpdater::getCurrentColorPallet(vector<CatmulRomSpline<Ve
 
 static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, int greyTextureHeight)
 {
-	// optimise CPU version for computing the mean variation
-	// Can be optimise using multi thread or computing the variation in a fragment shader them compute the average in the CPU
-	int widthEnd = greyTextureWidth - 1;
-	int heightEnd = greyTextureHeight - 1;
-	float currentGreyscale(0.0);
-	float sum(0.0);
+	// The code below is the old unoptimized CPU version for computing the mean variation
+	float currentGreyscale;
 	float totalSum(0.0);
 
-	int start = greyTextureWidth + 1; // to avoid the first row and avoid check if row != 0 in the loop
-	int end = greyTextureWidth * (greyTextureHeight - 1) - 1; // to avoid the last row and avoid check if row != greyTextureHeight - 1 in the loop
-	int greyTextureWidthM1 = greyTextureWidth - 1;
-
-	for (int i = start; i < end; i++)
+	for (int i = 0; i < greyTextureWidth * greyTextureHeight; i++)
 	{
+		int row = i / greyTextureWidth;
 		int col = i % greyTextureWidth;
 
-		if(col == greyTextureWidthM1)
+		if (row != 0 && row != greyTextureHeight - 1 && col != 0 && col != greyTextureWidth - 1)
 		{
-			i++;
-			continue;
+			int width = greyTextureWidth;
+			float currentGreyscale = (*pixels)[(width * row) + col];
+			float sum = abs(currentGreyscale - (*pixels)[(width * (row - 1)) + (col - 1)]);
+			sum += abs(currentGreyscale - (*pixels)[(width * (row - 1)) + col]);
+			sum += abs(currentGreyscale - (*pixels)[(width * (row - 1)) + (col + 1)]);
+			sum += abs(currentGreyscale - (*pixels)[(width * row) + (col - 1)]);
+			sum += abs(currentGreyscale - (*pixels)[(width * row) + (col + 1)]);
+			sum += abs(currentGreyscale - (*pixels)[(width * (row + 1)) + (col - 1)]);
+			sum += abs(currentGreyscale - (*pixels)[(width * (row + 1)) + col]);
+			sum += abs(currentGreyscale - (*pixels)[(width * (row + 1)) + (col + 1)]);
+			totalSum += sum / 8.0;
 		}
-
-		int row = i / greyTextureWidth;
-
-		int wTrM1 = greyTextureWidth * (row - 1);
-		int wTr = wTrM1 + greyTextureWidth;
-		int wTrP1 = wTr + greyTextureWidth;
-		int colM1 = col - 1;
-		int colP1 = col + 1;
-
-		currentGreyscale = (*pixels)[wTr + col];
-		sum = abs(currentGreyscale - (*pixels)[wTrM1 + colM1]);
-		sum += abs(currentGreyscale - (*pixels)[wTrM1 + col]);
-		sum += abs(currentGreyscale - (*pixels)[wTrM1 + colP1]);
-		sum += abs(currentGreyscale - (*pixels)[wTr + colM1]);
-		sum += abs(currentGreyscale - (*pixels)[wTr + colP1]);
-		sum += abs(currentGreyscale - (*pixels)[wTrP1 + colM1]);
-		sum += abs(currentGreyscale - (*pixels)[wTrP1 + col]);
-		sum += abs(currentGreyscale - (*pixels)[wTrP1 + colP1]);
 	}
 
-	int nbIter = (greyTextureWidth * (greyTextureHeight - 2)) - (2 * greyTextureHeight) + 4;
-	totalSum /= 8.0 * nbIter;
-
 	float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
+
+	// // optimise CPU version for computing the mean variation
+	// // Can be optimise using multi thread or computing the variation in a fragment shader them compute the average in the CPU
+	// float currentGreyscale(0.0);
+	// float sum(0.0);
+
+	// int start = greyTextureWidth + 1; // to avoid the first row and avoid check if row != 0 in the loop
+	// int end = greyTextureWidth * (greyTextureHeight - 1) - 1; // to avoid the last row and avoid check if row != greyTextureHeight - 1 in the loop
+	// int greyTextureWidthM1 = greyTextureWidth - 1;
+
+	// for (int i = start; i < end; i++)
+	// {
+	// 	int col = i % greyTextureWidth;
+
+	// 	if(col == greyTextureWidthM1)
+	// 	{
+	// 		i++;
+	// 		continue;
+	// 	}
+
+	// 	int row = i / greyTextureWidth;
+
+	// 	int wTrM1 = greyTextureWidth * (row - 1);
+	// 	int wTr = wTrM1 + greyTextureWidth;
+	// 	int wTrP1 = wTr + greyTextureWidth;
+	// 	int colM1 = col - 1;
+	// 	int colP1 = col + 1;
+
+	// 	currentGreyscale = (*pixels)[wTr + col];
+	// 	sum = abs(currentGreyscale - (*pixels)[wTrM1 + colM1]);
+	// 	sum += abs(currentGreyscale - (*pixels)[wTrM1 + col]);
+	// 	sum += abs(currentGreyscale - (*pixels)[wTrM1 + colP1]);
+	// 	sum += abs(currentGreyscale - (*pixels)[wTr + colM1]);
+	// 	sum += abs(currentGreyscale - (*pixels)[wTr + colP1]);
+	// 	sum += abs(currentGreyscale - (*pixels)[wTrP1 + colM1]);
+	// 	sum += abs(currentGreyscale - (*pixels)[wTrP1 + col]);
+	// 	sum += abs(currentGreyscale - (*pixels)[wTrP1 + colP1]);
+	// }
+
+	// int nbIter = (greyTextureWidth * (greyTextureHeight - 2)) - (2 * greyTextureHeight) + 4;
+	// sum /= 8.0 * nbIter;
+
+	// float meanCPU = sum / (greyTextureWidth * greyTextureHeight);
+
 	return meanCPU;
 }
 
 tuple<float, vector<float>*> FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
 {
-	vector<float>* pixels = juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
-	float meanCPU = computeGreyVariation(pixels, greyTextureWidth, greyTextureHeight);
+	vector<float>* pixels = juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight); // juliaGreyShader.computeTexture works perfectly 
+
+	return make_tuple(0.0, pixels);
+
+	float meanCPU = computeGreyVariation(pixels, greyTextureWidth, greyTextureHeight); // probleme with this function
 	cout << "Bite : " << meanCPU << endl;
 
 	return make_tuple(meanCPU, pixels);
@@ -562,7 +590,7 @@ tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOrigin()
 
 	tuple<float, vector<float>*> tuple = getJuliaTotalGreyVariation(greyMaxIter, randPoint, window);
 
-	// return make_tuple(Vector2(), nullptr);
+	return make_tuple(Vector2(), nullptr);
 
 	float mean = get<0>(tuple);
 	vector<float>* juliaGreyTexture = get<1>(tuple);
@@ -1154,6 +1182,7 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 	for (int i = 0; i < nbOrigines; i++)
 	{
 		tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOrigin();
+		break; // This line is for debbugging purposes
 		origines.push_back(get<0>(originTuple));
 		textures.push_back(get<1>(originTuple));
 	}
