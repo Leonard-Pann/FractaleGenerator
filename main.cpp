@@ -15,8 +15,8 @@
 
 using namespace std;
 
-int windowWidth = 1920;
-int windowHeight = 1080;
+int windowWidth = 1600;
+int windowHeight = 900;
 const bool fullscreen = false;
 
 double getDeltaTime()
@@ -59,6 +59,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #endif
 {
     Random::setRandomSeed();
+    Random::setSeed(42);
 
     if (glfwInit() == 0)
         return -1;
@@ -84,11 +85,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
     //glfwSetScrollCallback(window, onMouseScroll);
     //glfwSetCursorPosCallback(window, onMouseMove);
-    //glfwSwapInterval(0); // disable VSync
+    glfwSwapInterval(0); // disable VSync
 
     JuliaFractal juliaFractal;
     FractalUpdater fractalUpdater(windowWidth, windowHeight);
 
+    float totalTime(0.0);
+    int nbFrame(0);
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
@@ -96,7 +99,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
-        fractalUpdater.update(dt);
+        //fractalUpdater.update(dt);
 
         juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
 
@@ -105,6 +108,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         glfwSwapBuffers(window);
 
         glfwPollEvents();
+
+        nbFrame++;
+        totalTime += dt;
+        cout << static_cast<float>(nbFrame) / totalTime << endl;
+        //cout << 1.0 / dt << endl;
     }
 
     glfwDestroyWindow(window);

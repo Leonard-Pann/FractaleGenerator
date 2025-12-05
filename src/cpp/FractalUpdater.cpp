@@ -88,6 +88,10 @@ FractalUpdater::FractalUpdater()
 
 FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreyShader()
 {
+	params = FractaleParam(Vector2(0.25, 0.5), -1.5, 1.5, -1.0, 1.0, Vector3(0, 0, 0), colorPallets[0], 750, 4.0);
+	return;
+
+
 	//params
 	yMin = -1.4f;
 	yMax = 1.4f;
