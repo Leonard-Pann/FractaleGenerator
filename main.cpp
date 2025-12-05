@@ -64,10 +64,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (glfwInit() == 0)
         return -1;
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
@@ -116,7 +116,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         nbFrame++;
         totalTime += dt;
-        cout << static_cast<float>(nbFrame) / totalTime << endl;
+        //cout << static_cast<float>(nbFrame) / totalTime << endl;
         //cout << 1.0 / dt << endl;
     }
 
