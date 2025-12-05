@@ -19,16 +19,22 @@ uniform int height;
 
 float getDifferences(int row, int col)
 {
-    float currentGreyscale = data[(width * row) + col];
-	float sum = abs(currentGreyscale - data[(width * (row - 1)) + (col - 1)]);
-	sum += abs(currentGreyscale - data[(width * (row - 1)) + col]);
-	sum += abs(currentGreyscale - data[(width * (row - 1)) + (col + 1)]);
-	sum += abs(currentGreyscale - data[(width * row) + (col - 1)]);
-	sum += abs(currentGreyscale - data[(width * row) + (col + 1)]);
-	sum += abs(currentGreyscale - data[(width * (row + 1)) + (col - 1)]);
-	sum += abs(currentGreyscale - data[(width * (row + 1)) + col]);
-	sum += abs(currentGreyscale - data[(width * (row + 1)) + (col + 1)]);
-	return sum;
+    int colM1 = col - 1;
+    int colP1 = col + 1;
+    int wTRowM1 = width * (row - 1);
+    int wTRow = wTRowM1 + width; 
+    int wTRowP1 = wTRow + width; 
+
+    float currentGreyscale = data[wTRow + col];
+    float sum = abs(currentGreyscale - data[wTRowM1 + colM1]);
+    sum += abs(currentGreyscale - data[wTRowM1 + col]);
+    sum += abs(currentGreyscale - data[wTRowM1 + colP1]);
+    sum += abs(currentGreyscale - data[wTRow + colM1]);
+    sum += abs(currentGreyscale - data[wTRow + colP1]);
+    sum += abs(currentGreyscale - data[wTRowP1 + colM1]);
+    sum += abs(currentGreyscale - data[wTRowP1 + col]);
+    sum += abs(currentGreyscale - data[wTRowP1 + colP1]);
+    return sum;
 }
 
 void main()

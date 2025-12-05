@@ -13,45 +13,6 @@ uniform vec3 colorPalette[6];
 uniform int nbColors;
 uniform float colorRange;
 
-float pow32(float x)
-{
-    float tmp = x * x;
-    x = tmp * tmp;
-    tmp = x * x;
-    x = tmp * tmp;
-    return x * x;
-}
-
-vec3 LerpColor(vec3 startCol, vec3 endCol, float t)
-{
-    return ((endCol.xyz - startCol.xyz) * t) + startCol.xyz;
-}
-
-// vec4 getMandelbrotColor(float cx, float cy)
-// {
-//     float currentx = 0.0;
-//     float currenty = 0.0;
-
-//     float xTmp;
-
-//     int nbIter = 0;
-//     while(currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
-//     {
-//         xTmp = currentx;
-//         currentx = (xTmp * xTmp - (currenty * currenty)) + cx;
-//         currenty = 2.0 * xTmp * currenty + cy;
-//         nbIter++;
-//     }
-
-//     if(nbIter >= maxIter)
-//     {
-//         return vec4(inColor.xyz, 1.0);
-//     }
-
-//     float fade = pow32(1.0 - (float(nbIter) / float(maxIter)));
-//     return vec4(LerpColor(inColor, colorPalette[0], fade), 1.0);
-// }
-
 float length(float x, float y)
 {
     return sqrt(x * x + (y * y));
@@ -59,26 +20,27 @@ float length(float x, float y)
 
 vec4 getColor(float nbIter, float maxIter)
 {
-	float value = nbIter / maxIter;
-	vec3 color = vec3(1.0, 1.0, 1.0);
+    float value = nbIter / maxIter;
+    vec3 color;
 
-	float minValue;
-	float maxValue;
-    float nbCols = float(nbColors) - 1.0;
+    float minValue;
+    float maxValue;
+    int end = nbColors - 1;
+    float nbCols = float(end);
 
-	for (int i = 0; i < nbColors - 1; i++)
-	{
-		minValue = float(i) / nbCols;
-		maxValue = float(i + 1) / nbCols;
+    for (int i = 0; i < end; i++)
+    {
+        minValue = float(i) / nbCols;
+        maxValue = float(i + 1) / nbCols;
 
-		if (value >= minValue && value <= maxValue)
-		{
-			color = mix(colorPalette[i], colorPalette[i + 1], (value - minValue) * nbCols);
-			break;
-		}
-	}
+        if (value >= minValue && value <= maxValue)
+        {
+            color = mix(colorPalette[i], colorPalette[i + 1], (value - minValue) * nbCols);
+            break;
+        }
+    }
 
-	return vec4(color.xyz, 1.0);
+    return vec4(color.xyz, 1.0);
 }
 
 vec4 getJuliaColor(float zx, float zy, float cx, float cy)
@@ -92,23 +54,25 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
     float colorMod = float(maxIter) * 0.01 * colorRange;
 
     int nbIter = 0;
-    while(currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
+    float currentModule = fma(currentx, currentx, currenty * currenty);
+    while(currentModule < 4.0 && nbIter < maxIter)
     {
         xTmp = currentx;
-        currentx = (xTmp * xTmp - (currenty * currenty)) + cx;
-        currenty = 2.0 * xTmp * currenty + cy;
+        currentx = fma(xTmp, xTmp, -currenty * currenty) + cx;
+        currenty = fma(2.0 * xTmp, currenty, cy);
         nbIter++;
         smoothValue += exp(-length(currentx, currenty));
+        currentModule = fma(currentx, currentx, currenty * currenty);
     }
 
     if (nbIter >= maxIter)
     {
-		return vec4(inColor.xyz, 1.0);
+        return vec4(inColor.xyz, 1.0);
     }
 
     float floorSV = floor(smoothValue);
     float smotthValueDecimal = smoothValue - floorSV;
-	float shiftedSmoothValue = int(floorSV) % maxIter + smotthValueDecimal;
+    float shiftedSmoothValue = int(floorSV) % maxIter + smotthValueDecimal;
 
     float hundredORange = 100.0 / colorRange;
     float iter = mod(float(shiftedSmoothValue), hundredORange);
@@ -117,11 +81,10 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
      
 void main()
 {
-    float posX = (vert_pos.x + 1.0) * 0.5 * (window.y - window.x) + window.x;
-    float posY = (vert_pos.y + 1.0) * 0.5 * (window.w - window.z) + window.z;
+    float posX = fma(0.5 * (vert_pos.x + 1.0), window.y - window.x, window.x);
+    float posY = fma(0.5 * (vert_pos.y + 1.0),  window.w - window.z, window.z);
 
     color = getJuliaColor(posX, posY, seed.x, seed.y);
-    //color = getMandelbrotColor(pos.x, pos.y);
 };
 
 #shader vertex        

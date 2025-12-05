@@ -12,15 +12,6 @@ layout(std430, binding = 0) buffer Output
     float pixels[];
 };
 
-float pow32(float x)
-{
-    float tmp = x * x;
-    x = tmp * tmp;
-    tmp = x * x;
-    x = tmp * tmp;
-    return x * x;
-}
-
 float pow64(float x)
 {
     float tmp = x * x;
@@ -38,17 +29,19 @@ float getJuliaGreyScale(float zx, float zy, float cx, float cy)
 
     float xTmp;
     int nbIter = 0;
-    while(currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
+    float currentModule = fma(currentx, currentx, currenty * currenty);
+    while(currentModule < 4.0 && nbIter < maxIter)
     {
         xTmp = currentx;
-        currentx = (xTmp * xTmp - (currenty * currenty)) + cx;
-        currenty = 2.0 * xTmp * currenty + cy;
+        currentx = fma(xTmp, xTmp, -currenty * currenty) + cx;
+        currenty = fma(2.0 * xTmp, currenty, cy);
         nbIter++;
+        currentModule = fma(currentx, currentx, currenty * currenty);
     }
 
     if (nbIter >= maxIter)
     {
-		return 0.0;
+        return 0.0;
     }
 
     float fade = pow64(1.0 - (float(nbIter) / float(maxIter)));
@@ -67,10 +60,10 @@ void main()
     }
 
     // posX, posY is from window coordonate
-    float posX = (float(x) / float(textureSize.x - 1)) * (window.y - window.x) + window.x;
-    float posY = (float(y) / float(textureSize.y - 1)) * (window.w - window.z) + window.z;
+    float posX = fma(float(x) / float(textureSize.x - 1), window.y - window.x, window.x);
+    float posY = fma(float(y) / float(textureSize.y - 1), window.w - window.z, window.z);
 
     float greyScale = getJuliaGreyScale(posX, posY, seed.x, seed.y);
-    int index = int(y * textureSize.x + x);
+    int index = int(fma(y, textureSize.x, x));
     pixels[index] = greyScale;
 }

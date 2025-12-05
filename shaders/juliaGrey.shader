@@ -9,15 +9,6 @@ uniform vec2 seed;
 uniform vec4 window;
 uniform int maxIter;
 
-float pow32(float x)
-{
-    float tmp = x * x;
-    x = tmp * tmp;
-    tmp = x * x;
-    x = tmp * tmp;
-    return x * x;
-}
-
 float pow64(float x)
 {
     float tmp = x * x;
@@ -28,32 +19,21 @@ float pow64(float x)
     return tmp * tmp;
 }
 
-//tmp
-float length(float x, float y)
-{
-    return sqrt(x * x + (y * y));
-}
-
 vec4 getJuliaColor(float zx, float zy, float cx, float cy)
 {
-    // float maxXLength = (window.y - window.x) / 1920.0;
-    // float maxYLength = (window.w - window.z) / 1080.0;
-    // if(length(zx - redPoint.x, zy - redPoint.y) < 2.0 * sqrt(maxXLength * maxXLength + (maxYLength * maxYLength)))
-    // {
-    //     return vec4(1.0, 0.0, 0.0, 1.0);
-    // }
-
     float currentx = zx;
     float currenty = zy;
 
     float xTmp;
     int nbIter = 0;
-    while(currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
+    float currentModule = fma(currentx, currentx, currenty * currenty);
+    while(currentModule < 4.0 && nbIter < maxIter)
     {
         xTmp = currentx;
-        currentx = (xTmp * xTmp - (currenty * currenty)) + cx;
-        currenty = 2.0 * xTmp * currenty + cy;
+        currentx = fma(xTmp, xTmp, -currenty * currenty) + cx;
+        currenty = fma(2.0 * xTmp, currenty, cy);
         nbIter++;
+        currentModule = fma(currentx, currentx, currenty * currenty);
     }
 
     vec3 inColor = vec3(0.0, 0.0, 0.0);
@@ -61,7 +41,7 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
 
     if (nbIter >= maxIter)
     {
-		return vec4(inColor.xyz, 1.0);
+        return vec4(inColor.xyz, 1.0);
     }
 
     float fade = pow64(1.0 - (float(nbIter) / float(maxIter)));
@@ -70,8 +50,8 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
         
 void main()
 {
-    float posX = (vert_pos.x + 1.0) * 0.5 * (window.y - window.x) + window.x;
-    float posY = (vert_pos.y + 1.0) * 0.5 * (window.w - window.z) + window.z;
+    float posX = fma(0.5 * (vert_pos.x + 1.0), window.y - window.x, window.x);
+    float posY = fma(0.5 * (vert_pos.y + 1.0),  window.w - window.z, window.z);
 
     color = getJuliaColor(posX, posY, seed.x, seed.y);
 };

@@ -15,8 +15,8 @@
 
 using namespace std;
 
-int windowWidth = 1920;
-int windowHeight = 1080;
+int windowWidth = 1600;
+int windowHeight = 900;
 const bool fullscreen = false;
 
 double getDeltaTime()
