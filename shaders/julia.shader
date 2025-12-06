@@ -13,40 +13,34 @@ uniform vec3 colorPalette[6];
 uniform int nbColors;
 uniform float colorRange;
 
-float pow32(float x)
+float length2(float x, float y)
 {
-    float tmp = x * x;
-    x = tmp * tmp;
-    tmp = x * x;
-    x = tmp * tmp;
-    return x * x;
+    return sqrt(fma(x, x, y * y));
 }
 
 vec4 getColor(float nbIter, float maxIter)
 {
     float value = nbIter / maxIter;
-    vec3 col = vec3(1.0);
+    vec3 color;
 
-    float nbCols = float(nbColors) - 1.0;
+    float minValue;
+    float maxValue;
+    int end = nbColors - 1;
+    float nbCols = float(end);
 
-    for (int i = 0; i < nbColors - 1; i++)
+    for (int i = 0; i < end; i++)
     {
-        float minValue = float(i) / nbCols;
-        float maxValue = float(i + 1) / nbCols;
+        minValue = float(i) / nbCols;
+        maxValue = float(i + 1) / nbCols;
 
         if (value >= minValue && value <= maxValue)
         {
-            col = mix(colorPalette[i], colorPalette[i + 1], (value - minValue) * nbCols);
+            color = mix(colorPalette[i], colorPalette[i + 1], (value - minValue) * nbCols);
             break;
         }
     }
 
-    return vec4(col, 1.0);
-}
-
-float length2(float x, float y)
-{
-    return sqrt(x * x + (y * y));
+    return vec4(color.xyz, 1.0);
 }
 
 vec4 getJuliaColor(float zx, float zy, float cx, float cy)
@@ -54,22 +48,27 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
     float currentx = zx;
     float currenty = zy;
 
+    float xTmp;
+
     float smoothValue = exp(-length2(currentx, currenty));
     float colorMod = float(maxIter) * 0.01 * colorRange;
 
     int nbIter = 0;
-    while (currentx * currentx + currenty * currenty < 4.0 && nbIter < maxIter)
+    float currentModule = fma(currentx, currentx, currenty * currenty);
+    while(currentModule < 4.0 && nbIter < maxIter)
     {
-        float xtmp = currentx;
-        currentx = (xtmp * xtmp - currenty * currenty) + cx;
-        currenty = 2.0 * xtmp * currenty + cy;
-
-        smoothValue += exp(-length2(currentx, currenty));
+        xTmp = currentx;
+        currentx = fma(xTmp, xTmp, -currenty * currenty) + cx;
+        currenty = fma(2.0 * xTmp, currenty, cy);
         nbIter++;
+        smoothValue += exp(-length2(currentx, currenty));
+        currentModule = fma(currentx, currentx, currenty * currenty);
     }
 
     if (nbIter >= maxIter)
-        return vec4(inColor, 1.0);
+    {
+        return vec4(inColor.xyz, 1.0);
+    }
 
     float floorSV = floor(smoothValue);
     float smoothFrac = smoothValue - floorSV;
@@ -80,14 +79,14 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
 
     return getColor(iter, hundredORange);
 }
-
+     
 void main()
 {
-    float posX = (vert_pos.x + 1.0) * 0.5 * (window.y - window.x) + window.x;
-    float posY = (vert_pos.y + 1.0) * 0.5 * (window.w - window.z) + window.z;
+    float posX = fma(0.5 * (vert_pos.x + 1.0), window.y - window.x, window.x);
+    float posY = fma(0.5 * (vert_pos.y + 1.0),  window.w - window.z, window.z);
 
     color = getJuliaColor(posX, posY, seed.x, seed.y);
-}
+};
 
 #shader vertex        
 #version 320 es

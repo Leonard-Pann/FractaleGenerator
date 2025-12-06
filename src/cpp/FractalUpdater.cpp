@@ -87,7 +87,8 @@ FractalUpdater::FractalUpdater()
 
 FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreyShader()
 {
-	params = FractaleParam({1.0, 0.23}, -2, 2, -2, 2, Vector3(0, 0, 0), colorPallets[0], 500, 4.0);
+	params = FractaleParam(Vector2(0.25, 0.5), -1.5, 1.5, -1.0, 1.0, Vector3(0, 0, 0), colorPallets[0], 750, 4.0);
+	return;
 
 	//params
 	yMin = -1.4f;
@@ -177,7 +178,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 
 #pragma region getter/utils
 
-const FractaleParam& FractalUpdater::getFractaleParam() const
+FractaleParam& FractalUpdater::getFractaleParam()
 {
 	return params;
 }

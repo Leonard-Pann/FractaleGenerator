@@ -12,6 +12,12 @@
 
 using namespace std;
 
+int windowWidth = 1600;
+int windowHeight = 900;
+const bool fullscreen = false;
+Vector2 mousePosition;
+Vector2 normalizeMousePosition;
+
 static void errorCallback(int error, const char* description)
 {
     cout << "GLFW error " << error << " : " << description;
@@ -37,13 +43,18 @@ void onFrameBufferResize(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-int windowWidth = 1600;
-int windowHeight = 900;
-const bool fullscreen = false;
+void onMouseMove(GLFWwindow* window, double x, double y)
+{
+   mousePosition.x = x;
+   mousePosition.y = y;
+   normalizeMousePosition.x = (mousePosition.x / (windowWidth - 1.0f)) * 2.0f - 1.0f; //between -1 and 1
+   normalizeMousePosition.y = ((mousePosition.y / (windowHeight - 1.0f)) * -2.0f + 1.0f); //between -1 and 1
+}
 
 int main()
 {
     Random::setRandomSeed();
+    Random::setSeed(42);
 
     glfwSetErrorCallback(errorCallback);
 
@@ -55,7 +66,7 @@ int main()
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 
 
@@ -73,13 +84,16 @@ int main()
 	}
     
 	glfwMakeContextCurrent(window);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    glfwSwapInterval(1); // enable v-sync
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    glfwSwapInterval(0); // disable v-sync
 
 	glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
+    glfwSetCursorPosCallback(window, onMouseMove);
 
     JuliaFractal juliaFractal;
     FractalUpdater fractalUpdater(windowWidth, windowHeight);
+    float totalTime(0.0);
+    int nbFrame(0);
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput(window);
@@ -88,9 +102,10 @@ int main()
 
         float dt = getDeltaTime();
 
-        fractalUpdater.update(dt);
+        // fractalUpdater.update(dt);
 
-        const FractaleParam& fp = fractalUpdater.getFractaleParam();
+        FractaleParam& fp = fractalUpdater.getFractaleParam();
+        // fp.origin = normalizeMousePosition;
 
         juliaFractal.setGenerationParam(fp);
 
@@ -98,7 +113,14 @@ int main()
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+        nbFrame++;
+        totalTime += dt;
 	}
+
+    ofstream outfile("bench.txt");
+    outfile << static_cast<float>(nbFrame) / totalTime << endl;
+    outfile.close();
 
     glfwDestroyWindow(window);
 	glfwTerminate();

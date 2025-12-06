@@ -139,7 +139,7 @@ private:
 public:
 	FractalUpdater();
 	FractalUpdater(int screenWidth, int screenHeight);
-	const FractaleParam& getFractaleParam() const;
+	FractaleParam& getFractaleParam();
 	void update(float dt);
 };
 
