@@ -15,7 +15,7 @@ uniform float colorRange;
 
 float length(float x, float y)
 {
-    return sqrt(x * x + (y * y));
+    return sqrt(fma(x, x,  y * y));
 }
 
 vec4 getColor(float nbIter, float maxIter)
