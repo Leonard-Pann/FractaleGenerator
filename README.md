@@ -9,7 +9,8 @@ Install process :
 
 OpenGL 4.6 :
 Windows :
-Clone the main branch and open the solution with visual studio and build the projet (require Desktop developement with C++ module).
+Clone the main branch and open the solution with visual studio and build the projet (require Desktop developement with C++ module in visual studio).
+
 Linux :
 Clone the linux branch and make sure all dependancy are install on your system:
 sudo apt install clang
@@ -17,9 +18,14 @@ sudo apt install make
 sudo apt install libglew-dev
 sudo apt install libglfw3
 sudo apt install libglfw3-dev
-sudo apt install clang
 
 OpenGL SE 3.2:
 Clone the OpenGL 3.2 branch and make sure all dependancy are install on your system:
 sudo apt install clang
 sudo apt install make
+sudo apt install cmake
+sudo apt install libwayland-dev wayland-protocols libwayland-egl1
+sudo apt install build-essential //verify if this package is mandatory
+
+sudo apt install libgbm-dev // if use gbm.h
+sudo apt install libdrm-dev // if use xf86drm.h

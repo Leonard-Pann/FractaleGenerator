@@ -86,7 +86,7 @@ void main()
     float posY = fma(0.5 * (vert_pos.y + 1.0),  window.w - window.z, window.z);
 
     color = getJuliaColor(posX, posY, seed.x, seed.y);
-};
+}
 
 #shader vertex        
 #version 320 es

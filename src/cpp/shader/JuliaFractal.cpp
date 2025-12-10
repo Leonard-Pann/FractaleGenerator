@@ -42,7 +42,7 @@ void JuliaFractal::setGenerationParam(const FractaleParam& params)
     shader.setUniform1f("colorRange", params.colorRange);
 }
 
-void JuliaFractal::draw(GLFWwindow* window)
+void JuliaFractal::draw()
 {
     glUseProgram(shader.shaderId());
 

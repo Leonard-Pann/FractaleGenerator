@@ -33,7 +33,7 @@ public:
 
 	JuliaFractal();
     void setGenerationParam(const FractaleParam& params);
-    void draw(GLFWwindow* window);
+    void draw();
     ~JuliaFractal();
 };
 
