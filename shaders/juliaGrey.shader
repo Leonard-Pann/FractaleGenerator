@@ -1,5 +1,5 @@
 #shader fragment
-#version 320 es
+#version 310 es
 precision highp float;
 
 in vec2 texCoord;
@@ -51,7 +51,7 @@ void main()
 }
 
 #shader vertex
-#version 320 es
+#version 310 es
 precision highp float;
 
 layout(location = 0) in vec2 position;

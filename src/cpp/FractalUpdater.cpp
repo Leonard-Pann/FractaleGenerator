@@ -87,9 +87,6 @@ FractalUpdater::FractalUpdater()
 
 FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreyShader()
 {
-	params = FractaleParam(Vector2(0.25, 0.5), -1.5, 1.5, -1.0, 1.0, Vector3(0, 0, 0), colorPallets[0], 750, 4.0);
-	return;
-
 	//params
 	yMin = -1.4f;
 	yMax = 1.4f;
@@ -102,15 +99,15 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 
 	// Zoom
 	zoomStartOffset = -0.4f;
-	zoomMinDuration = 17.5f; 
-	zoomMaxDuration = 17.5f;
+	zoomMinDuration = 25.0f; 
+	zoomMaxDuration = 25.0f;
 	minZoom = 1.0f;
 	maxZoom = 1.0f;
 	zoomTweenIntensity = 0.0007f;
 
 	// Dezoom
-	dezoomMinDuration = 5.0f;
-	dezoomMaxDuration = 5.0f;
+	dezoomMinDuration = 15.0f;
+	dezoomMaxDuration = 15.0f;
 
 	// For findJuliaOrigin method
 	greyTextureWidth = 1920;
@@ -124,10 +121,10 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	refiningPointToZoomIter = Math::ceil(((float)screenWidth / 1920.0f) * refineZoomIterOn1080pScreen);
 
 	// Change Fractal
-	changeFractalDuration = 15.0f;
+	changeFractalDuration = 25.0f;
 	changeFractalStartOffset = -0.2f;
-	minNbOrigines = 4; // min 3
-	maxNbOrigines = 4;
+	minNbOrigines = 6; // min 3
+	maxNbOrigines = 6;
 
 	//target
 	millisecondToSleepAfterCallComputerSharder = 75;
@@ -154,7 +151,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	dezoomColorsSplines = colorsSplines;
 
 	Vector3 colorIn(0.0f, 0.0f, 0.0f);
-	int maxIter = 1000;
+	int maxIter = 750;
 
 	Vector2 startZoomPoint = target->getZoomPoint(0.0f);
 	int xMin = startZoomPoint.x - (maxSize.x * 0.5f);

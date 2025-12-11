@@ -68,12 +68,16 @@ int main()
     eglChooseConfig(eglDpy, cfg_attribs, &cfg, 1, &num_cfg);
 
     EGLSurface surf = eglCreateWindowSurface(eglDpy, cfg, win, nullptr);
+    if(surf == nullptr)
+    {
+        cout << "Error during window surface creation" << endl;
+    }
 
     eglBindAPI(EGL_OPENGL_ES_API);
 
     EGLint ctx_attribs[] = {
         EGL_CONTEXT_CLIENT_VERSION, 3,
-		EGL_CONTEXT_MINOR_VERSION, 2,
+		EGL_CONTEXT_MINOR_VERSION, 1,
         EGL_NONE
     };
     EGLContext ctx = eglCreateContext(eglDpy, cfg, EGL_NO_CONTEXT, ctx_attribs);
@@ -91,6 +95,7 @@ int main()
     lastTime = std_clock::now();
     while (running) 
     {
+        //Don't remove this loop, mandatory for EGL event
         while (XPending(xdisp)) 
         {
 
@@ -100,15 +105,11 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
-        // fractalUpdater.update(dt);
+        fractalUpdater.update(dt);
 
         juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
 
         juliaFractal.draw();
-
-        // // Draw fullscreen triangle
-        // glUseProgram(prog);
-        // glDrawArrays(GL_TRIANGLES, 0, 3);
 
         eglSwapBuffers(eglDpy, surf);
 
@@ -121,6 +122,7 @@ int main()
             outfile << static_cast<float>(nbFrame) / totalTime << endl;
             outfile.close();
             cout << "Benchmark Done" << endl;
+            totalTime = -999999.0;
         }
     }
 
