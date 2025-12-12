@@ -127,6 +127,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	maxNbOrigines = 6;
 
 	//target
+	useGPUAcceleration = false;
 	millisecondToSleepAfterCallComputerSharder = 75;
 	generateNewTarget(nullptr);
 
@@ -487,6 +488,61 @@ vector<Vector3>* FractalUpdater::getCurrentColorPallet(vector<CatmulRomSpline<Ve
 
 #pragma region getJuliaTotalGreyVariation
 
+static float pow64(float x)
+{
+	float tmp = x * x;
+	x = tmp * tmp;
+	tmp = x * x;
+	x = tmp * tmp;
+	tmp = x * x;
+	return tmp * tmp;
+}
+
+static vector<float>* computeGreyTexture(int maxIter, Vector2 seed, Vector4 window, int greyTextureWidth, int greyTextureHeight)
+{
+	vector<float>* pixels = new vector<float>(greyTextureWidth * greyTextureHeight);
+
+	float cx(seed.x);
+	float cy(seed.y);
+
+	float xStep((window.y - window.x) / static_cast<float>(greyTextureWidth - 1));
+	float yStep((window.w - window.z) / static_cast<float>(greyTextureHeight - 1));
+
+	for(int row = 0; row < greyTextureHeight; row++)
+	{
+		for(int col = 0; col < greyTextureWidth; col++)
+		{
+			float x = static_cast<float>(col) * xStep + window.x;
+			float y = static_cast<float>(row) * yStep + window.z;
+			float currentx = x;
+    		float currenty = y;
+			float xTmp;
+			int nbIter(0);
+			while (currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
+			{
+				xTmp = currentx;
+				currentx = (xTmp * xTmp) - (currenty * currenty) + cx;
+				currenty = 2.0 * xTmp * currenty + cy;
+				nbIter++;
+			}
+
+			int index = (row * greyTextureWidth) + col;
+			if (nbIter >= maxIter)
+			{
+				(*pixels)[index] = 0.0f;
+			}
+			else
+			{
+				float v = static_cast<float>(nbIter) / static_cast<float>(maxIter);
+				float value = pow64(1.0 - v);
+				(*pixels)[index] = value;
+			}
+		}
+	}
+
+	return pixels;
+}
+
 static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, int greyTextureHeight)
 {
 	const float oneO8 = 1.0 / 8.0;
@@ -535,7 +591,15 @@ static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, i
 
 tuple<float, vector<float>*> FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
 {
-	vector<float>* pixels = juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
+	vector<float>* pixels(nullptr);
+	if(useGPUAcceleration)
+	{
+		pixels = juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
+	}
+	else
+	{
+		pixels = computeGreyTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
+	}
 
 	float meanCPU = computeGreyVariation(pixels, greyTextureWidth, greyTextureHeight);
 

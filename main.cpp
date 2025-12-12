@@ -38,8 +38,8 @@ int main()
         return -1;
     }
 
-    int windowWidth = 1280;
-    int windowHeight = 720;
+    int windowWidth = 1920;
+    int windowHeight = 1080;
     Window root = DefaultRootWindow(xdisp);
     Window win = XCreateSimpleWindow(
         xdisp, root, 0, 0, windowWidth, windowHeight, 0,
@@ -90,9 +90,9 @@ int main()
     XEvent event;
     JuliaFractal juliaFractal;
     FractalUpdater fractalUpdater(windowWidth, windowHeight);
-    float totalTime(0.0);
-    int nbFrame(0);
-    lastTime = std_clock::now();
+    // float totalTime(0.0);
+    // int nbFrame(0);
+    // lastTime = std_clock::now();
     while (running) 
     {
         //Don't remove this loop, mandatory for EGL event
@@ -113,17 +113,17 @@ int main()
 
         eglSwapBuffers(eglDpy, surf);
 
-        nbFrame++;
-        totalTime += dt;
+        // nbFrame++;
+        // totalTime += dt;
 
-        if(totalTime > 60.0)
-        {
-            ofstream outfile("bench.txt");
-            outfile << static_cast<float>(nbFrame) / totalTime << endl;
-            outfile.close();
-            cout << "Benchmark Done" << endl;
-            totalTime = -999999.0;
-        }
+        // if(totalTime > 60.0)
+        // {
+        //     ofstream outfile("bench.txt");
+        //     outfile << static_cast<float>(nbFrame) / totalTime << endl;
+        //     outfile.close();
+        //     cout << "Benchmark Done" << endl;
+        //     totalTime = -999999.0;
+        // }
     }
 
     eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);

@@ -47,7 +47,6 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
 {
     float currentx = zx;
     float currenty = zy;
-
     float xTmp;
 
     float smoothValue = exp(-length2(currentx, currenty));
@@ -57,7 +56,7 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
     while(currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
     {
         xTmp = currentx;
-        currentx = (xTmp * xTmp - (currenty * currenty)) + cx;
+        currentx = (xTmp * xTmp) - (currenty * currenty) + cx;
         currenty = 2.0 * xTmp * currenty + cy;
         nbIter++;
         smoothValue += exp(-length2(currentx, currenty));
@@ -88,9 +87,9 @@ void main()
 
 #shader vertex        
 #version 310 es
+precision highp float;
 
 layout(location = 0) in vec2 position;
-
 out vec2 vert_pos;
 
 void main()
