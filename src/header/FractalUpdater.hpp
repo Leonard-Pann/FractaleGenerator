@@ -98,7 +98,6 @@ private:
 	bool isNewTargetReady;
 
 	//multi thread
-	bool useGPUAcceleration;
 	bool isAFunctionToCallInMainThread;
 	std::mutex mutexName;
 	std::function<void*(void*)> callback;

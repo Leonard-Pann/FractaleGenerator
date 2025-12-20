@@ -90,9 +90,10 @@ int main()
     XEvent event;
     JuliaFractal juliaFractal;
     FractalUpdater fractalUpdater(windowWidth, windowHeight);
+    lastTime = std_clock::now();
+
     // float totalTime(0.0);
     // int nbFrame(0);
-    // lastTime = std_clock::now();
     while (running) 
     {
         //Don't remove this loop, mandatory for EGL event

@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #include <thread>
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
@@ -127,7 +129,6 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	maxNbOrigines = 6;
 
 	//target
-	useGPUAcceleration = false;
 	millisecondToSleepAfterCallComputerSharder = 75;
 	generateNewTarget(nullptr);
 
@@ -340,6 +341,7 @@ void FractalUpdater::dezoom(float dt)
 	{
 		while (!isNewTargetReady)
 		{
+			cout << "Next Target not generated!, Waiting for it" << endl;
 			this_thread::sleep_for(chrono::milliseconds(1));
 		}
 
@@ -498,10 +500,82 @@ static float pow64(float x)
 	return tmp * tmp;
 }
 
+static void comptureTextureGreyscale(vector<float>& pixels, vector<int> rows, int maxIter, Vector2 seed, Vector4 window, int greyTextureWidth)
+{
+	for(int row : rows)
+	{
+		float baseY((static_cast<float>(row) / static_cast<float>(window.w - window.z)) + window.z);
+		float factor(1.0f / static_cast<float>(window.y - window.x));
+
+		for(int col = 0; col < greyTextureWidth; col++)
+		{
+			float currentx(static_cast<float>(col) * factor + window.x);
+			float currenty(baseY);
+			float xTmp;
+			int nbIter(0);
+			while (currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
+			{
+				xTmp = currentx;
+				currentx = (xTmp * xTmp) - (currenty * currenty) + seed.x;
+				currenty = 2.0 * xTmp * currenty + seed.y;
+				nbIter++;
+			}
+
+			int index = (row * greyTextureWidth) + col;
+			if (nbIter >= maxIter)
+			{
+				pixels[index] = 0.0f;
+			}
+			else
+			{
+				float v = static_cast<float>(nbIter) / static_cast<float>(maxIter);
+				float value = pow64(1.0 - v);
+				pixels[index] = value;
+			}
+		}
+	}
+}
+
+static void test(int i)
+{
+	cout << i << endl;
+}
+
 static vector<float>* computeGreyTexture(int maxIter, Vector2 seed, Vector4 window, int greyTextureWidth, int greyTextureHeight)
 {
 	vector<float>* pixels = new vector<float>(greyTextureWidth * greyTextureHeight);
 
+	// int numThread = (int)thread::hardware_concurrency();
+
+	// vector<vector<int>> threadsRows(numThread);
+	// int nbRowByThread = ceil(static_cast<float>(greyTextureHeight) / static_cast<float>(numThread));
+	// int threadIndex(0);
+	// for(threadIndex = 0; threadIndex < numThread; threadIndex++)
+	// {
+	// 	threadsRows[threadIndex].reserve(nbRowByThread);
+	// }
+
+	// threadIndex = 0;
+	// for(int row = 0; row < greyTextureHeight; row++)
+	// {
+	// 	threadsRows[threadIndex].push_back(row);
+	// 	threadIndex = (threadIndex + 1) % numThread;
+	// }
+
+	// vector<thread> threads;
+	// threads.reserve(numThread);
+	// for(int i = 0; i < numThread; i++)
+	// {
+	// 	// threads.emplace_back(comptureTextureGreyscale, ref(*pixels), cref(threadsRows[i]), maxIter, seed, window, greyTextureWidth);
+	// 	threads.emplace_back(test, i);
+	// }
+
+	// for(thread& t : threads)
+	// {
+	// 	t.join();
+	// }
+
+	// Non parallel version
 	float cx(seed.x);
 	float cy(seed.y);
 
@@ -591,15 +665,7 @@ static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, i
 
 tuple<float, vector<float>*> FractalUpdater::getJuliaTotalGreyVariation(int maxIter, Vector2 origin, const Vector4& window)
 {
-	vector<float>* pixels(nullptr);
-	if(useGPUAcceleration)
-	{
-		pixels = juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
-	}
-	else
-	{
-		pixels = computeGreyTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
-	}
+	vector<float>* pixels = juliaGreyShader.computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
 
 	float meanCPU = computeGreyVariation(pixels, greyTextureWidth, greyTextureHeight);
 
@@ -670,14 +736,6 @@ void* getJuliaTotalGreyVariationOtherThread(void* params)
 // return a random c € |C such that the absolute difference of gray scale julia fractale is >= threshold
 tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread()
 {
-	JuliaTotalGreyVariationOtherThreadParams params;
-	params.maxIter = greyMaxIter;
-	params.window = Vector4(xMin, xMax, yMin, yMax);
-	params.greyTextureHeight = greyTextureHeight;
-	params.greyTextureWidth = greyTextureWidth;
-	params.juliaGreyShader = &juliaGreyShader;
-	JuliaTotalGreyVariationOtherThreadReturn* result;
-
 	Vector2 randonPoint;
 	vector<float>* juliaGreyTexture = nullptr;
 	float mean;
@@ -691,30 +749,8 @@ tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread(
 		}
 
 		randonPoint = randomPoint();
-		params.origin = randonPoint;
-
-		{
-			lock_guard<mutex> lock(mutexName);
-			callbackArg = &params;
-			callback = getJuliaTotalGreyVariationOtherThread;
-			isCallFinish = false;
-			isAFunctionToCallInMainThread = true;
-		}
-
-		while (!isCallFinish)
-		{
-			this_thread::sleep_for(std::chrono::milliseconds(1));
-			lock_guard<mutex> lock(mutexName);
-			isCallFinish = !isAFunctionToCallInMainThread;
-		}
-
-		result = (JuliaTotalGreyVariationOtherThreadReturn*)callbackResult;
-		mean = computeGreyVariation(result->texture, greyTextureWidth, greyTextureHeight);
-		juliaGreyTexture = result->texture;
-
-		delete result;
-
-		this_thread::sleep_for(chrono::milliseconds(millisecondToSleepAfterCallComputerSharder));
+		juliaGreyTexture = computeGreyTexture(greyMaxIter, randonPoint, Vector4(xMin, xMax, yMin, yMax), greyTextureWidth, greyTextureHeight);
+		mean = computeGreyVariation(juliaGreyTexture, greyTextureWidth, greyTextureHeight);
 
 	} while (mean < juliaOriginThreshold);
 
@@ -869,6 +905,7 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 	if (value > 0.0f)
 	{
 		cout << "Pixel initialisation by initRandomPointToZoom function must have a value of 0, line: " << __LINE__ << " in function: " << __FUNCTION__ << " in file: " << __FILE__ << endl;
+		return findRandomPointToZoomInJuliaInternal(origin, initJuliaGreyText, otherThread);
 	}
 
 	float scaleFactor = 0.5f;
@@ -894,28 +931,7 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 		vector<float>* texture;
 		if (otherThread)
 		{
-			params.window = window;
-
-			bool isCallFinish = false;
-			{
-				lock_guard<mutex> lock(mutexName);
-				callbackArg = &params;
-				callback = computeJuliaTexture;
-				isAFunctionToCallInMainThread = true;
-			}
-
-			while (!isCallFinish)
-			{
-				this_thread::sleep_for(std::chrono::milliseconds(1));
-				lock_guard<mutex> lock(mutexName);
-				isCallFinish = !isAFunctionToCallInMainThread;
-			}
-
-			ComputeJuliaTextureReturn* result = (ComputeJuliaTextureReturn*)this->callbackResult;
-			texture = result->texture;
-			delete result;
-
-			this_thread::sleep_for(chrono::milliseconds(millisecondToSleepAfterCallComputerSharder));
+			texture = computeGreyTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
 		}
 		else
 		{
@@ -1188,7 +1204,49 @@ void sortOrigin(vector<Vector2>& origins, vector<vector<float>*>& textures)
 
 void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 {
+	// temp code
+	int nbOrigins = 1000;
+	ofstream outfile("initOrigins.txt");
+	outfile << "[";
+	for(int i = 0; i < nbOrigins; i++)
+	{
+		tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOrigin();
+		Vector2 origin = get<0>(originTuple);
+		outfile << origin.x << "," << origin.y;
+		if(i != nbOrigins - 1)
+		{
+			outfile << ",";
+		}
+		cout << "origin " << i + 1 << "/" << nbOrigins << endl;
+	}
+	outfile << "]";
+	outfile.close();
+
 	isNewTargetReady = false;
+
+	//Read precompute origins
+	string originsStr;
+	{
+		ifstream file("initOrigins.txt");
+		stringstream ss;
+		string line;
+		while (getline(file, line))
+		{
+			ss << line << '\n';
+		}
+		originsStr = ss.str();
+	}
+
+	if(originsStr.size() <= 0)
+	{
+
+	}
+	else
+	{
+		originsStr = originsStr.substr(1, originsStr.size() - 1);
+		cout << "end string : " << originsStr[originsStr.size() - 1] << endl;
+	}
+
 
 	int nbOrigines = Random::rand(minNbOrigines, maxNbOrigines - 1);
 	vector<Vector2> origines;
@@ -1209,6 +1267,7 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 	for (int i = 0; i < nbOrigines; i++)
 	{
 		tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOrigin();
+		cout << "Julia origin " << i + 1 << "/" << nbOrigines << " generated!" << endl;
 		origines.push_back(get<0>(originTuple));
 		textures.push_back(get<1>(originTuple));
 	}
@@ -1216,6 +1275,7 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 	sortOrigin(origines, textures);
 
 	Vector2 randZoomPoint = findRandomPointToZoomInJulia(origines[origines.size() - 1], *textures[textures.size() - 1]);
+	cout << "Julia zoom point generated" << endl;
 
 	for (int i = 1; i < textures.size(); i++)
 	{
@@ -1240,7 +1300,7 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 	isNewTargetReady = false;
 	Vector2 finalOrigin = oldTarget == nullptr ? Vector2() : oldTarget->finalOrigin();
 	Vector2 startZoom = oldTarget == nullptr ? Vector2() : oldTarget->finalZoomPoint();
-	auto lambda = [this, finalOrigin, startZoom]()
+	auto lambda = [this](Vector2 finalOrigin, Vector2 startZoom)
 	{
 		Random::setRandomSeed();
 		int nbOrigines = Random::rand(minNbOrigines, maxNbOrigines - 1);
@@ -1254,13 +1314,20 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 		for (int i = 0; i < nbOrigines; i++)
 		{
 			tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOriginOtherThread();
+			cout << "Second thread : Julia origin " << i + 1 << "/" << nbOrigines << " generated!" << endl;
+
 			origines.push_back(get<0>(originTuple));
 			textures.push_back(get<1>(originTuple));
 		}
 
+		cout << "Second thread : Sorting Origins" << endl;
 		sortOrigin(origines, textures);
 
+		cout << "Second thread: Start generate Julia zoom point" << endl;
+
 		Vector2 randZoomPoint = findRandomPointToZoomInJuliaOtherThread(origines[origines.size() - 1], *textures[textures.size() - 1]);
+
+		cout << "Second thread: Julia zoom point generated" << endl;
 
 		for (int i = 1; i < textures.size(); i++)
 		{
@@ -1278,7 +1345,7 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 		this->newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
 	};
 
-	thread thread(lambda);
+	thread thread(lambda, finalOrigin, startZoom);
 	thread.detach();
 
 	isNewTargetReady = true;
