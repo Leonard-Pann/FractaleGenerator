@@ -5,9 +5,11 @@
 #include <sstream>
 #include <fstream>
 #include <thread>
+#include <algorithm>
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
 #include "Math.hpp"
+#include "fractalOrigins.hpp"
 
 using namespace std;
 
@@ -125,8 +127,8 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	// Change Fractal
 	changeFractalDuration = 25.0f;
 	changeFractalStartOffset = -0.2f;
-	minNbOrigines = 6; // min 3
-	maxNbOrigines = 6;
+	minNbOrigines = 8; // min 3
+	maxNbOrigines = 8;
 
 	//target
 	millisecondToSleepAfterCallComputerSharder = 75;
@@ -341,7 +343,6 @@ void FractalUpdater::dezoom(float dt)
 	{
 		while (!isNewTargetReady)
 		{
-			cout << "Next Target not generated!, Waiting for it" << endl;
 			this_thread::sleep_for(chrono::milliseconds(1));
 		}
 
@@ -617,6 +618,70 @@ static vector<float>* computeGreyTexture(int maxIter, Vector2 seed, Vector4 wind
 	return pixels;
 }
 
+static float tmp(vector<float>* pixels, int greyTextureWidth, int greyTextureHeight)
+{
+	vector<thread> threads;
+	int numThread = (int)thread::hardware_concurrency();
+	threads.reserve(numThread);
+
+	float totalSum(0.0f);
+	mutex mutexLock;
+	auto threadComputeGreyVariation = [&pixels, greyTextureWidth, greyTextureHeight, &totalSum](int beg, int end)
+	{
+		float partialSum(0.0f);
+		for(int i = beg; i < end; i++)
+		{
+			int col = i % greyTextureWidth;
+			if(col <= 0 || col >= greyTextureWidth - 1)
+			{
+				continue;
+			}
+
+			int row = i / greyTextureWidth;
+			if(row <= 0 || col >= greyTextureHeight - 1)
+			{
+				continue;
+			}
+
+			int colM1 = col - 1;
+			int colP1 = col + 1;
+			int wTRowM1 = greyTextureWidth * (row - 1);
+			int wTRow = wTRowM1 + greyTextureWidth; 
+			int wTRowP1 = wTRow + greyTextureWidth; 
+
+			float currentGreyscale = (*pixels)[wTRow + col];
+			partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colM1]);
+			partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + col]);
+			partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colP1]);
+			partialSum += abs(currentGreyscale - (*pixels)[wTRow + colM1]);
+			partialSum += abs(currentGreyscale - (*pixels)[wTRow + colP1]);
+			partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colM1]);
+			partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + col]);
+			partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colP1]);
+		}
+
+		totalSum += partialSum / 8.0f; // data race
+	};
+
+	int start = greyTextureWidth + 1;
+	int end = greyTextureWidth * (greyTextureHeight - 1) - 1;
+	int nbPixelsPerThread = ceil((end - start) / numThread);
+
+	for(int i = 0; i < numThread - 1; i++)
+	{
+		threads.emplace_back(threadComputeGreyVariation, start + (i * nbPixelsPerThread), start + ((i + 1) * nbPixelsPerThread));
+	}
+	threads.emplace_back(threadComputeGreyVariation, start + ((numThread - 1) * nbPixelsPerThread), end);
+
+	for(thread& t : threads)
+	{
+		t.join();
+	}
+
+	float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
+	return meanCPU;
+}
+
 static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, int greyTextureHeight)
 {
 	const float oneO8 = 1.0 / 8.0;
@@ -659,6 +724,71 @@ static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, i
 
 	totalSum += partialSum * oneO8;
 	float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
+
+
+	// //Multi thread version
+	// vector<thread> threads;
+	// int numThread = (int)thread::hardware_concurrency();
+	// threads.reserve(numThread);
+
+	// float totalSum(0.0f);
+	// mutex mutexLock;
+	// auto threadComputeGreyVariation = [&pixels, greyTextureWidth, greyTextureHeight, &totalSum](int beg, int end)
+	// {
+	// 	float partialSum(0.0f);
+	// 	for(int i = beg; i < end; i++)
+	// 	{
+	// 		int col = i % greyTextureWidth;
+	// 		if(col <= 0 || col >= greyTextureWidth - 1)
+	// 		{
+	// 			continue;
+	// 		}
+
+	// 		int row = i / greyTextureWidth;
+	// 		if(row <= 0 || col >= greyTextureHeight - 1)
+	// 		{
+	// 			continue;
+	// 		}
+
+	// 		int colM1 = col - 1;
+	// 		int colP1 = col + 1;
+	// 		int wTRowM1 = greyTextureWidth * (row - 1);
+	// 		int wTRow = wTRowM1 + greyTextureWidth; 
+	// 		int wTRowP1 = wTRow + greyTextureWidth; 
+
+	// 		float currentGreyscale = (*pixels)[wTRow + col];
+	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colM1]);
+	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + col]);
+	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colP1]);
+	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRow + colM1]);
+	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRow + colP1]);
+	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colM1]);
+	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + col]);
+	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colP1]);
+	// 	}
+
+	// 	totalSum += partialSum * oneO8; // data race
+	// };
+
+	// int start = greyTextureWidth + 1;
+	// int end = greyTextureWidth * (greyTextureHeight - 1) - 1;
+	// int nbPixelsPerThread = ceil((end - start) / numThread);
+
+	// for(int i = 0; i < numThread - 1; i++)
+	// {
+	// 	threads.emplace_back(threadComputeGreyVariation, start + (i * nbPixelsPerThread), start + ((i + 1) * nbPixelsPerThread));
+	// }
+	// threads.emplace_back(threadComputeGreyVariation, start + ((numThread - 1) * nbPixelsPerThread), end);
+
+	// for(thread& t : threads)
+	// {
+	// 	t.join();
+	// }
+
+	// float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
+
+	float meanCpu2 = tmp(pixels, greyTextureWidth, greyTextureHeight);
+	cout << "meanCPU: " << meanCPU << " delta: " << abs(meanCPU - meanCpu2) << endl;
 
 	return meanCPU;
 }
@@ -1204,49 +1334,28 @@ void sortOrigin(vector<Vector2>& origins, vector<vector<float>*>& textures)
 
 void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 {
-	// temp code
-	int nbOrigins = 1000;
-	ofstream outfile("initOrigins.txt");
-	outfile << "[";
-	for(int i = 0; i < nbOrigins; i++)
-	{
-		tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOrigin();
-		Vector2 origin = get<0>(originTuple);
-		outfile << origin.x << "," << origin.y;
-		if(i != nbOrigins - 1)
-		{
-			outfile << ",";
-		}
-		cout << "origin " << i + 1 << "/" << nbOrigins << endl;
-	}
-	outfile << "]";
-	outfile.close();
+	// // code to precompute initOrigins size
+	// int nbOrigins = 50;
+	// ofstream outfile("initOrigins.txt");
+	// outfile << "[";
+	// for(int i = 0; i < nbOrigins; i++)
+	// {
+	// 	tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOrigin();
+	// 	Vector2 origin = get<0>(originTuple);
+	// 	outfile << origin.x << "," << origin.y;
+	// 	if(i != nbOrigins - 1)
+	// 	{
+	// 		outfile << ",";
+	// 	}
+	// 	cout << "origin " << i + 1 << "/" << nbOrigins << endl;
+	// }
+
+	// outfile << "]";
+	// outfile.close();
+
+	// exit(1);
 
 	isNewTargetReady = false;
-
-	//Read precompute origins
-	string originsStr;
-	{
-		ifstream file("initOrigins.txt");
-		stringstream ss;
-		string line;
-		while (getline(file, line))
-		{
-			ss << line << '\n';
-		}
-		originsStr = ss.str();
-	}
-
-	if(originsStr.size() <= 0)
-	{
-
-	}
-	else
-	{
-		originsStr = originsStr.substr(1, originsStr.size() - 1);
-		cout << "end string : " << originsStr[originsStr.size() - 1] << endl;
-	}
-
 
 	int nbOrigines = Random::rand(minNbOrigines, maxNbOrigines - 1);
 	vector<Vector2> origines;
@@ -1264,18 +1373,28 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 	}
 	textures.push_back(nullptr);
 
-	for (int i = 0; i < nbOrigines; i++)
 	{
-		tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOrigin();
-		cout << "Julia origin " << i + 1 << "/" << nbOrigines << " generated!" << endl;
-		origines.push_back(get<0>(originTuple));
-		textures.push_back(get<1>(originTuple));
+		vector<int> alreadyPickIndex;
+		alreadyPickIndex.reserve(nbOrigines + 1);
+		Vector4 window(xMin, xMax, yMin, yMax);
+		for (int i = 0; i < nbOrigines; i++)
+		{
+			int randIndex = Random::rand(0, (FractalOrigin::startJuliaOriginsSize >> 1) - 1) * 2;
+			while(find(alreadyPickIndex.begin(), alreadyPickIndex.end(), randIndex) != alreadyPickIndex.end())
+			{
+				randIndex = Random::rand(0, (FractalOrigin::startJuliaOriginsSize >> 1) - 1) * 2;
+			}
+
+			Vector2 origin(FractalOrigin::startJuliaOrigins[randIndex], FractalOrigin::startJuliaOrigins[randIndex + 1]);
+			vector<float>* texture = juliaGreyShader.computeTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
+			origines.push_back(origin);
+			textures.push_back(texture);
+		}
 	}
 
 	sortOrigin(origines, textures);
 
 	Vector2 randZoomPoint = findRandomPointToZoomInJulia(origines[origines.size() - 1], *textures[textures.size() - 1]);
-	cout << "Julia zoom point generated" << endl;
 
 	for (int i = 1; i < textures.size(); i++)
 	{
@@ -1342,13 +1461,17 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 		float dezoomDuration = Random::rand(dezoomMinDuration, dezoomMaxDuration);
 		float zoom = Random::rand(minZoom, maxZoom);
 
-		this->newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
+		{
+			lock_guard<mutex> lock(mutexName);
+			this->newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
+			cout << "next tardet generated" << endl;
+			isNewTargetReady = true;
+		}
+
 	};
 
 	thread thread(lambda, finalOrigin, startZoom);
 	thread.detach();
-
-	isNewTargetReady = true;
 }
 
 #pragma endregion
