@@ -12,12 +12,12 @@ uniform ivec2 textureSize;
 
 float pow64(float x)
 {
-    float tmp = x * x;
-    x = tmp * tmp;
-    tmp = x * x;
-    x = tmp * tmp;
-    tmp = x * x;
-    return tmp * tmp;
+    x = x * x;
+    x = x * x;
+    x = x * x;
+    x = x * x;
+    x = x * x;
+    return x * x;
 }
 
 float getJuliaGreyScale(float zx, float zy, float cx, float cy)

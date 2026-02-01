@@ -9,7 +9,7 @@
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
 #include "Math.hpp"
-#include "fractalOrigins.hpp"
+#include "FractalOrigins.hpp"
 
 using namespace std;
 
@@ -493,12 +493,12 @@ vector<Vector3>* FractalUpdater::getCurrentColorPallet(vector<CatmulRomSpline<Ve
 
 static float pow64(float x)
 {
-	float tmp = x * x;
-	x = tmp * tmp;
-	tmp = x * x;
-	x = tmp * tmp;
-	tmp = x * x;
-	return tmp * tmp;
+	x = x * x;
+	x = x * x;
+	x = x * x;
+	x = x * x;
+	x = x * x;
+	return x * x;
 }
 
 static void comptureTextureGreyscale(vector<float>& pixels, vector<int> rows, int maxIter, Vector2 seed, Vector4 window, int greyTextureWidth)
@@ -537,55 +537,17 @@ static void comptureTextureGreyscale(vector<float>& pixels, vector<int> rows, in
 	}
 }
 
-static void test(int i)
+static void computeGreyTextureRange(vector<float>* texture, int startRow, int endRow, int width, int height, int maxIter, Vector2 seed, Vector4 window)
 {
-	cout << i << endl;
-}
-
-static vector<float>* computeGreyTexture(int maxIter, Vector2 seed, Vector4 window, int greyTextureWidth, int greyTextureHeight)
-{
-	vector<float>* pixels = new vector<float>(greyTextureWidth * greyTextureHeight);
-
-	// int numThread = (int)thread::hardware_concurrency();
-
-	// vector<vector<int>> threadsRows(numThread);
-	// int nbRowByThread = ceil(static_cast<float>(greyTextureHeight) / static_cast<float>(numThread));
-	// int threadIndex(0);
-	// for(threadIndex = 0; threadIndex < numThread; threadIndex++)
-	// {
-	// 	threadsRows[threadIndex].reserve(nbRowByThread);
-	// }
-
-	// threadIndex = 0;
-	// for(int row = 0; row < greyTextureHeight; row++)
-	// {
-	// 	threadsRows[threadIndex].push_back(row);
-	// 	threadIndex = (threadIndex + 1) % numThread;
-	// }
-
-	// vector<thread> threads;
-	// threads.reserve(numThread);
-	// for(int i = 0; i < numThread; i++)
-	// {
-	// 	// threads.emplace_back(comptureTextureGreyscale, ref(*pixels), cref(threadsRows[i]), maxIter, seed, window, greyTextureWidth);
-	// 	threads.emplace_back(test, i);
-	// }
-
-	// for(thread& t : threads)
-	// {
-	// 	t.join();
-	// }
-
-	// Non parallel version
 	float cx(seed.x);
 	float cy(seed.y);
 
-	float xStep((window.y - window.x) / static_cast<float>(greyTextureWidth - 1));
-	float yStep((window.w - window.z) / static_cast<float>(greyTextureHeight - 1));
+	float xStep((window.y - window.x) / static_cast<float>(width - 1));
+	float yStep((window.w - window.z) / static_cast<float>(height - 1));
 
-	for(int row = 0; row < greyTextureHeight; row++)
+	for(int row = startRow; row < endRow; row++)
 	{
-		for(int col = 0; col < greyTextureWidth; col++)
+		for(int col = 0; col < width; col++)
 		{
 			float x = static_cast<float>(col) * xStep + window.x;
 			float y = static_cast<float>(row) * yStep + window.z;
@@ -601,106 +563,100 @@ static vector<float>* computeGreyTexture(int maxIter, Vector2 seed, Vector4 wind
 				nbIter++;
 			}
 
-			int index = (row * greyTextureWidth) + col;
+			int index = (row * width) + col;
 			if (nbIter >= maxIter)
 			{
-				(*pixels)[index] = 0.0f;
+				(*texture)[index] = 0.0f;
 			}
 			else
 			{
 				float v = static_cast<float>(nbIter) / static_cast<float>(maxIter);
 				float value = pow64(1.0 - v);
-				(*pixels)[index] = value;
+				(*texture)[index] = value;
 			}
 		}
 	}
-
-	return pixels;
 }
 
-static float tmp(vector<float>* pixels, int greyTextureWidth, int greyTextureHeight)
+static vector<float>* computeGreyTexture(int maxIter, Vector2 seed, Vector4 window, int greyTextureWidth, int greyTextureHeight)
 {
-	vector<thread> threads;
-	int numThread = (int)thread::hardware_concurrency();
-	threads.reserve(numThread);
+	// parralel verison
+	vector<float>* pixels = new vector<float>(greyTextureWidth * greyTextureHeight);
+	uint32_t threadCount = thread::hardware_concurrency();
+	vector<thread> workers;
+	int rowsPerThread(greyTextureHeight / threadCount);
 
-	float totalSum(0.0f);
-	mutex mutexLock;
-	auto threadComputeGreyVariation = [&pixels, greyTextureWidth, greyTextureHeight, &totalSum](int beg, int end)
+	for (int i = 0; i < threadCount; i++)
 	{
-		float partialSum(0.0f);
-		for(int i = beg; i < end; i++)
-		{
-			int col = i % greyTextureWidth;
-			if(col <= 0 || col >= greyTextureWidth - 1)
-			{
-				continue;
-			}
-
-			int row = i / greyTextureWidth;
-			if(row <= 0 || col >= greyTextureHeight - 1)
-			{
-				continue;
-			}
-
-			int colM1 = col - 1;
-			int colP1 = col + 1;
-			int wTRowM1 = greyTextureWidth * (row - 1);
-			int wTRow = wTRowM1 + greyTextureWidth; 
-			int wTRowP1 = wTRow + greyTextureWidth; 
-
-			float currentGreyscale = (*pixels)[wTRow + col];
-			partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colM1]);
-			partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + col]);
-			partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colP1]);
-			partialSum += abs(currentGreyscale - (*pixels)[wTRow + colM1]);
-			partialSum += abs(currentGreyscale - (*pixels)[wTRow + colP1]);
-			partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colM1]);
-			partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + col]);
-			partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colP1]);
-		}
-
-		totalSum += partialSum / 8.0f; // data race
-	};
-
-	int start = greyTextureWidth + 1;
-	int end = greyTextureWidth * (greyTextureHeight - 1) - 1;
-	int nbPixelsPerThread = ceil((end - start) / numThread);
-
-	for(int i = 0; i < numThread - 1; i++)
-	{
-		threads.emplace_back(threadComputeGreyVariation, start + (i * nbPixelsPerThread), start + ((i + 1) * nbPixelsPerThread));
+		int startRow = i * rowsPerThread;
+		int endRow = i == threadCount - 1 ? greyTextureHeight : startRow + rowsPerThread;
+		workers.emplace_back(computeGreyTextureRange, pixels, startRow, endRow, greyTextureWidth, greyTextureHeight, maxIter, seed, window);
 	}
-	threads.emplace_back(threadComputeGreyVariation, start + ((numThread - 1) * nbPixelsPerThread), end);
-
-	for(thread& t : threads)
+	
+	for(thread& t : workers)
 	{
 		t.join();
 	}
 
-	float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
-	return meanCPU;
+	return pixels;
+
+	// !parralel version
+	// vector<float>* pixels = new vector<float>(greyTextureWidth * greyTextureHeight);
+
+	// float cx(seed.x);
+	// float cy(seed.y);
+
+	// float xStep((window.y - window.x) / static_cast<float>(greyTextureWidth - 1));
+	// float yStep((window.w - window.z) / static_cast<float>(greyTextureHeight - 1));
+
+	// for(int row = 0; row < greyTextureHeight; row++)
+	// {
+	// 	for(int col = 0; col < greyTextureWidth; col++)
+	// 	{
+	// 		float x = static_cast<float>(col) * xStep + window.x;
+	// 		float y = static_cast<float>(row) * yStep + window.z;
+	// 		float currentx = x;
+    // 		float currenty = y;
+	// 		float xTmp;
+	// 		int nbIter(0);
+	// 		while (currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
+	// 		{
+	// 			xTmp = currentx;
+	// 			currentx = (xTmp * xTmp) - (currenty * currenty) + cx;
+	// 			currenty = 2.0 * xTmp * currenty + cy;
+	// 			nbIter++;
+	// 		}
+
+	// 		int index = (row * greyTextureWidth) + col;
+	// 		if (nbIter >= maxIter)
+	// 		{
+	// 			(*pixels)[index] = 0.0f;
+	// 		}
+	// 		else
+	// 		{
+	// 			float v = static_cast<float>(nbIter) / static_cast<float>(maxIter);
+	// 			float value = pow64(1.0 - v);
+	// 			(*pixels)[index] = value;
+	// 		}
+	// 	}
+	// }
+
+	// return pixels;
 }
 
-static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, int greyTextureHeight)
+static void computeGreyVariationRange(vector<float>* pixels, int start, int end, int greyTextureWidth, int greyTextureHeight, float* totalSum)
 {
 	const float oneO8 = 1.0 / 8.0;
 
 	float currentGreyscale(0.0);
-	float totalSum(0.0);
 	float partialSum(0.0);
 
-	int start = greyTextureWidth + 1;
-	int end = greyTextureWidth * (greyTextureHeight - 1) - 1;
-	
 	for (int i = start; i < end; i++)
 	{
 		int col = i % greyTextureWidth;
 		if(col == greyTextureWidth - 1)
 		{
 			i++;
-			totalSum += partialSum * oneO8;
-			partialSum = 0.0;
 			continue;
 		}
 
@@ -712,84 +668,84 @@ static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, i
 		int wTRowP1 = wTRow + greyTextureWidth; 
 
 		float currentGreyscale = (*pixels)[wTRow + col];
-		partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colM1]);
-		partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + col]);
-		partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colP1]);
-		partialSum += abs(currentGreyscale - (*pixels)[wTRow + colM1]);
-		partialSum += abs(currentGreyscale - (*pixels)[wTRow + colP1]);
-		partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colM1]);
-		partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + col]);
-		partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colP1]);
+		float localSum(0.0f);
+		localSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colM1]);
+		localSum += abs(currentGreyscale - (*pixels)[wTRowM1 + col]);
+		localSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colP1]);
+		localSum += abs(currentGreyscale - (*pixels)[wTRow + colM1]);
+		localSum += abs(currentGreyscale - (*pixels)[wTRow + colP1]);
+		localSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colM1]);
+		localSum += abs(currentGreyscale - (*pixels)[wTRowP1 + col]);
+		localSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colP1]);
+		partialSum += localSum * oneO8;
 	}
 
-	totalSum += partialSum * oneO8;
-	float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
+	(*totalSum) += partialSum;
+}
 
+static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, int greyTextureHeight)
+{
+	//parallel version
+	uint32_t threadCount = thread::hardware_concurrency();
+	vector<thread> workers;
+	int start(greyTextureWidth + 1);
+	int end(greyTextureWidth * (greyTextureHeight - 1) - 1);
 
-	// //Multi thread version
-	// vector<thread> threads;
-	// int numThread = (int)thread::hardware_concurrency();
-	// threads.reserve(numThread);
+	int variationsPerThread((end - start) / threadCount);
+	float totalSum(0.0f);
+	for (int i = 0; i < threadCount; i++)
+	{
+		int threadStart = start + (i * variationsPerThread);
+		int threadEnd = i == threadCount - 1 ? end : threadStart + variationsPerThread;
+		workers.emplace_back(computeGreyVariationRange, pixels, threadStart, threadEnd, greyTextureWidth, greyTextureHeight, &totalSum);
+	}
+	
+	for(thread& t : workers)
+	{
+		t.join();
+	}
 
-	// float totalSum(0.0f);
-	// mutex mutexLock;
-	// auto threadComputeGreyVariation = [&pixels, greyTextureWidth, greyTextureHeight, &totalSum](int beg, int end)
-	// {
-	// 	float partialSum(0.0f);
-	// 	for(int i = beg; i < end; i++)
-	// 	{
-	// 		int col = i % greyTextureWidth;
-	// 		if(col <= 0 || col >= greyTextureWidth - 1)
-	// 		{
-	// 			continue;
-	// 		}
+	//!parrallel version
+	// const float oneO8 = 1.0 / 8.0;
 
-	// 		int row = i / greyTextureWidth;
-	// 		if(row <= 0 || col >= greyTextureHeight - 1)
-	// 		{
-	// 			continue;
-	// 		}
-
-	// 		int colM1 = col - 1;
-	// 		int colP1 = col + 1;
-	// 		int wTRowM1 = greyTextureWidth * (row - 1);
-	// 		int wTRow = wTRowM1 + greyTextureWidth; 
-	// 		int wTRowP1 = wTRow + greyTextureWidth; 
-
-	// 		float currentGreyscale = (*pixels)[wTRow + col];
-	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colM1]);
-	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + col]);
-	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colP1]);
-	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRow + colM1]);
-	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRow + colP1]);
-	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colM1]);
-	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + col]);
-	// 		partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colP1]);
-	// 	}
-
-	// 	totalSum += partialSum * oneO8; // data race
-	// };
+	// float currentGreyscale(0.0);
+	// float totalSum(0.0);
+	// float partialSum(0.0);
 
 	// int start = greyTextureWidth + 1;
 	// int end = greyTextureWidth * (greyTextureHeight - 1) - 1;
-	// int nbPixelsPerThread = ceil((end - start) / numThread);
-
-	// for(int i = 0; i < numThread - 1; i++)
+	
+	// for (int i = start; i < end; i++)
 	// {
-	// 	threads.emplace_back(threadComputeGreyVariation, start + (i * nbPixelsPerThread), start + ((i + 1) * nbPixelsPerThread));
+	// 	int col = i % greyTextureWidth;
+	// 	if(col == greyTextureWidth - 1)
+	// 	{
+	// 		i++;
+	// 		totalSum += partialSum * oneO8;
+	// 		partialSum = 0.0;
+	// 		continue;
+	// 	}
+
+	// 	int row = i / greyTextureWidth;
+	// 	int colM1 = col - 1;
+	// 	int colP1 = col + 1;
+	// 	int wTRowM1 = greyTextureWidth * (row - 1);
+	// 	int wTRow = wTRowM1 + greyTextureWidth; 
+	// 	int wTRowP1 = wTRow + greyTextureWidth; 
+
+	// 	float currentGreyscale = (*pixels)[wTRow + col];
+	// 	partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colM1]);
+	// 	partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + col]);
+	// 	partialSum += abs(currentGreyscale - (*pixels)[wTRowM1 + colP1]);
+	// 	partialSum += abs(currentGreyscale - (*pixels)[wTRow + colM1]);
+	// 	partialSum += abs(currentGreyscale - (*pixels)[wTRow + colP1]);
+	// 	partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colM1]);
+	// 	partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + col]);
+	// 	partialSum += abs(currentGreyscale - (*pixels)[wTRowP1 + colP1]);
 	// }
-	// threads.emplace_back(threadComputeGreyVariation, start + ((numThread - 1) * nbPixelsPerThread), end);
 
-	// for(thread& t : threads)
-	// {
-	// 	t.join();
-	// }
-
-	// float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
-
-	float meanCpu2 = tmp(pixels, greyTextureWidth, greyTextureHeight);
-	cout << "meanCPU: " << meanCPU << " delta: " << abs(meanCPU - meanCpu2) << endl;
-
+	// totalSum += partialSum * oneO8;
+	float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
 	return meanCPU;
 }
 
@@ -869,7 +825,6 @@ tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread(
 	Vector2 randonPoint;
 	vector<float>* juliaGreyTexture = nullptr;
 	float mean;
-	bool isCallFinish = false;
 
 	do
 	{
@@ -1467,7 +1422,6 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 			cout << "next tardet generated" << endl;
 			isNewTargetReady = true;
 		}
-
 	};
 
 	thread thread(lambda, finalOrigin, startZoom);

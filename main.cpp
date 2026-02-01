@@ -38,8 +38,8 @@ int main()
         return -1;
     }
 
-    int windowWidth = 1920;
-    int windowHeight = 1080;
+    int windowWidth = 1600;
+    int windowHeight = 900;
     Window root = DefaultRootWindow(xdisp);
     Window win = XCreateSimpleWindow(
         xdisp, root, 0, 0, windowWidth, windowHeight, 0,
