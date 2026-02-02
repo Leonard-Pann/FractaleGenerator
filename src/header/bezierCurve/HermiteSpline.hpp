@@ -75,7 +75,6 @@ public:
 		for (int i = 1; i < velocities.size() - 1; i++)
 		{
 			velocities[i] = points[i + 1] - points[i - 1];
-			//velocities[i] = Vector2(points[i + 1].x - points[i - 1].x, points[i + 1].y - points[i - 1].y);
 		}
 
 		velocities[0] = 2.0f * (points[1] - points[0]);

@@ -98,12 +98,7 @@ private:
 	bool isNewTargetReady;
 
 	//multi thread
-	bool isAFunctionToCallInMainThread;
 	std::mutex mutexName;
-	std::function<void*(void*)> callback;
-	void* callbackArg;
-	void* callbackResult;
-	int millisecondToSleepAfterCallComputerSharder;
 
 	//colors
 	int nbColorsInPalet;
