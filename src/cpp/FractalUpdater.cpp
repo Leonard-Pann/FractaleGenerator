@@ -649,7 +649,7 @@ static tuple<vector<float>*, int64_t> computeGreyTextureAndCost(int maxIter, Vec
 	int threadCount = (int)max(1u, thread::hardware_concurrency() - 2u);
 	vector<thread> workers;
 	int rowsPerThread(greyTextureHeight / threadCount);
-	std::atomic<float> cost {0.0f};
+	atomic<int64_t> cost {0.0f};
 
 	for (int i = 0; i < threadCount; i++)
 	{
