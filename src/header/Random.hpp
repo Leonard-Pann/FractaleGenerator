@@ -23,7 +23,7 @@ public:
         srand(time(0));
     }
 
-        static inline float rand()
+    static inline float rand()
     {
         return (float)((double)c_rand() / (double)RAND_MAX);
     }
@@ -47,9 +47,10 @@ public:
 
     static inline int randExclude(int a, int b)
     {
-        if (a == b || abs(b - a) == 1)
+        int delta = abs(b - a);
+        if (delta <= 1)
             return a;
-        return (c_rand() % (abs(b - a) - 1)) + a;
+        return (c_rand() % (delta - 1)) + a;
     }
 
     static inline float randExclude(float a, float b)

@@ -136,6 +136,8 @@ public:
 	FractalUpdater();
 	FractalUpdater(int screenWidth, int screenHeight);
 	FractaleParam& getFractaleParam();
+	//DEBUG
+	int64_t getJuliaFractalCost(Vector2 origin);
 	void update(float dt);
 };
 

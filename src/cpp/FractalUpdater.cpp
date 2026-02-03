@@ -667,6 +667,13 @@ static tuple<vector<float>*, int64_t> computeGreyTextureAndCost(int maxIter, Vec
 	return maske_tuple(pixels, (int64_t)cost);
 }
 
+int64_t FractalUpdater::getJuliaFractalCost(Vector2 origin)
+{
+	tuple<vector<float>*, int64_t> tuple = computeGreyTextureAndCost(greyMaxIter, origin, Vector4(xMin, xMax, yMin, yMax), greyTextureWidth, greyTextureHeight);
+	delete get<0>(tuple);
+	return get<1>(tuple)
+}
+
 static void computeGreyVariationRange(vector<float>* pixels, int start, int end, int greyTextureWidth, int greyTextureHeight, atomic<float>* totalSum)
 {
 	const float oneO8 = 1.0 / 8.0;
@@ -842,7 +849,7 @@ tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread(
 
 #pragma region findRandomPointToZoomInJulia
 
-tuple<bool, Vector2> FractalUpdater::initRandomPointToZoom(Vector2 origin, vector<float>& initJuliaGreyText)
+tuple<bool, int, int> FractalUpdater::initRandomPointToZoom(Vector2 origin, vector<float>& initJuliaGreyText)
 {
 	vector<int> zeroPoints = vector<int>();
 	zeroPoints.reserve(initJuliaGreyText.size());
@@ -880,21 +887,21 @@ tuple<bool, Vector2> FractalUpdater::initRandomPointToZoom(Vector2 origin, vecto
 				find = true;
 			}
 
-			if (initJuliaGreyText[(greyTextureWidth * (row - 1)) + col] > 0.0f)
+			if (!find && initJuliaGreyText[(greyTextureWidth * (row - 1)) + col] > 0.0f)
 			{
 				randomRow = row;
 				randomCol = col;
 				find = true;
 			}
 
-			if (initJuliaGreyText[(greyTextureWidth * row) + (col + 1)] > 0.0f)
+			if (!find && initJuliaGreyText[(greyTextureWidth * row) + (col + 1)] > 0.0f)
 			{
 				randomRow = row;
 				randomCol = col;
 				find = true;
 			}
 
-			if (initJuliaGreyText[(greyTextureWidth * (row + 1)) + (col - 1)] > 0.0f)
+			if (!find && initJuliaGreyText[(greyTextureWidth * (row + 1)) + (col - 1)] > 0.0f)
 			{
 				randomRow = row;
 				randomCol = col;
@@ -907,9 +914,9 @@ tuple<bool, Vector2> FractalUpdater::initRandomPointToZoom(Vector2 origin, vecto
 
 		if (randomRow >= 0 && randomCol >= 0)
 		{
-			float x = Math::lerp(xMin, xMax, (float)randomCol / (float)(greyTextureWidth - 1));
-			float y = Math::lerp(yMin, yMax, (float)randomRow / (float)(greyTextureHeight - 1));
-			return make_tuple(true, Vector2(x, y));
+			// float x = Math::lerp(xMin, xMax, (float)randomCol / (float)(greyTextureWidth - 1));
+			// float y = Math::lerp(yMin, yMax, (float)randomRow / (float)(greyTextureHeight - 1));
+			return make_tuple(true, randomRow, randomCol);
 		}
 	}
 
@@ -928,10 +935,10 @@ tuple<bool, Vector2> FractalUpdater::initRandomPointToZoom(Vector2 origin, vecto
 
 	int col = minIndex % greyTextureWidth;
 	int row = minIndex / greyTextureWidth;
-	float x = Math::lerp(xMin, xMax, (float)col / (float)(greyTextureWidth - 1));
-	float y = Math::lerp(yMin, yMax, (float)row / (float)(greyTextureHeight - 1));
+	// float x = Math::lerp(xMin, xMax, (float)col / (float)(greyTextureWidth - 1));
+	// float y = Math::lerp(yMin, yMax, (float)row / (float)(greyTextureHeight - 1));
 
-	return make_tuple(false, Vector2(x, y));
+	return make_tuple(false, randomRow, randomCol);
 }
 
 struct ComputeJuliaTextureParams
@@ -970,9 +977,14 @@ void* computeJuliaTexture(void* params)
 // Find a random z € |C such that Julia(c)(z) = 0 && it exist a neighborhood of z name zi such as Julia(c)(zi) > 0
 Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vector<float>& initJuliaGreyText, bool otherThread)
 {
-	tuple<bool, Vector2> tuple = initRandomPointToZoom(origin, initJuliaGreyText);
+	tuple<bool, int, int> tuple = initRandomPointToZoom(origin, initJuliaGreyText);
 	bool isFrontier = get<0>(tuple);
-	Vector2 currentPoint = get<1>(tuple);
+	int row = get<1>(tuple);
+	int col = get<2>(tuple);
+
+	float x = Math::lerp(xMin, xMax, (float)col / (float)(greyTextureWidth - 1));
+	float y = Math::lerp(yMin, yMax, (float)row / (float)(greyTextureHeight - 1));
+	Vector2 currentPoint(x, y);
 
 	if (!isFrontier)
 	{
@@ -980,26 +992,13 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 		return currentPoint;
 	}
 
-	int verifRow = (int)(((currentPoint.y - yMin) / (yMax - yMin)) * (float)(greyTextureHeight - 1));
-	int verifCol = (int)(((currentPoint.x - xMin) / (xMax - xMin)) * (float)(greyTextureWidth - 1));
-	float value = initJuliaGreyText[(greyTextureWidth * verifRow) + verifCol];
-	if (value > 0.0f)
-	{
-		cout << "Pixel initialisation by initRandomPointToZoom function must have a value of 0, line: " << __LINE__ << " in function: " << __FUNCTION__ << " in file: " << __FILE__ << endl;
-		return findRandomPointToZoomInJuliaInternal(origin, initJuliaGreyText, otherThread);
-	}
-
-	float scaleFactor = 0.5f;
+	float value = initJuliaGreyText[(greyTextureWidth * row) + col];
+	const float scaleFactor = 0.5f;
 	Vector2 size = Vector2(xMax - xMin, yMax - yMin);
 
-	ComputeJuliaTextureParams params;
-	params.greyTextureWidth = greyTextureWidth;
-	params.greyTextureHeight = greyTextureHeight;
-	params.juliaGreyShader = &juliaGreyShader;
-	params.maxIter = greyMaxIter;
-	params.origin = origin;
-
 	int nbIter = refiningPointToZoomIter;
+	col = greyTextureWidth >> 1;
+	row = greyTextureHeight >> 1;
 	while (nbIter > 0)
 	{
 		size = Vector2(size.x * scaleFactor, size.y * scaleFactor);
@@ -1019,12 +1018,9 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 			texture = juliaGreyShader.computeTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
 		}
 
-		int col = greyTextureWidth / 2;
-		int row = greyTextureHeight / 2;
-
 		int radius = 1;
 		int newRow, newCol;
-		int textSize = greyTextureWidth * greyTextureHeight;
+		int texSize = greyTextureWidth * greyTextureHeight;
 
 		float currentValue = (*texture)[(greyTextureWidth * row) + col];
 		if (currentValue <= 0.0f)
@@ -1080,7 +1076,7 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 					for (int i = 1 - radius; i <= radius - 1; i++)
 					{
 						int index = (greyTextureWidth * newRow1) + (col + i);
-						if (index >= 0 && index < textSize && (*texture)[index] > 0.0f)
+						if (index >= 0 && index < texSize && (*texture)[index] > 0.0f)
 						{
 							newRow = newRow1 - 1;
 							newCol = col + i;
@@ -1089,7 +1085,7 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 						}
 
 						index = (greyTextureWidth * newRow2) + (col + i);
-						if (index >= 0 && index < textSize && (*texture)[index] > 0.0f)
+						if (index >= 0 && index < texSize && (*texture)[index] > 0.0f)
 						{
 							newRow = newRow2 + 1;
 							newCol = col + i;
@@ -1115,7 +1111,7 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 						}
 
 						index = (greyTextureWidth * (row + i)) + newCol2;
-						if (index >= 0 && index < textSize && (*texture)[index] > 0.0f)
+						if (index >= 0 && index < texSize && (*texture)[index] > 0.0f)
 						{
 							newRow = row + i;
 							newCol = newCol2 + 1;
@@ -1170,7 +1166,7 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 				for (int i = -radius; i <= radius; i++)
 				{
 					int index = (greyTextureWidth * newRow1) + (col + i);
-					if (index >= 0 && index < textSize && (*texture)[index] <= 0.0f)
+					if (index >= 0 && index < texSize && (*texture)[index] <= 0.0f)
 					{
 						newRow = newRow1;
 						newCol = col + i;
@@ -1179,7 +1175,7 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 					}
 
 					index = (greyTextureWidth * newRow2) + (col + i);
-					if (index >= 0 && index < textSize && (*texture)[index] <= 0.0f)
+					if (index >= 0 && index < texSize && (*texture)[index] <= 0.0f)
 					{
 						newRow = newRow2;
 						newCol = col + i;
@@ -1205,7 +1201,7 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 					}
 
 					index = (greyTextureWidth * (row + i)) + newCol2;
-					if (index >= 0 && index < textSize && (*texture)[index] <= 0.0f)
+					if (index >= 0 && index < texSize && (*texture)[index] <= 0.0f)
 					{
 						newRow = row + i;
 						newCol = newCol2;
@@ -1227,9 +1223,8 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 			cout << "New pixel found must have a value of 0, line: " << __LINE__ << " in function: " << __FUNCTION__ << " in file: " << __FILE__ << endl;
 		}
 
-		float x = Math::lerp(xMin, xMax, (float)newCol / (float)(greyTextureWidth - 1));
-		float y = Math::lerp(yMin, yMax, (float)newRow / (float)(greyTextureHeight - 1));
-		currentPoint = Vector2(x, y);
+		currentPoint.x = Math::lerp(xMin, xMax, (float)newCol / (float)(greyTextureWidth - 1));
+		currentPoint.y = Math::lerp(yMin, yMax, (float)newRow / (float)(greyTextureHeight - 1));
 
 		delete texture;
 		nbIter--;

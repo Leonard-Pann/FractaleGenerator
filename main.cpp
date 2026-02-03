@@ -92,6 +92,16 @@ int main()
     FractalUpdater fractalUpdater(windowWidth, windowHeight);
     lastTime = std_clock::now();
 
+    // Compute juliaCostThreshold
+    float juliaFractalTestDuration(5f);
+    float timer(0f);
+    int nbFrame(0);
+    Vector2 origin(Random::rand(-2.5f, 2.5f), Random::rand(-1.4f, 1.4f));
+    int64_t cost(fractalUpdater.getJuliaFractalCost(origin));
+    FractaleParam fp = fractalUpdater.getFractaleParam();
+    fp.origin = origin;
+
+    // // Bench
     // float totalTime(0.0);
     // int nbFrame(0);
     while (running) 
@@ -106,17 +116,30 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
-        fractalUpdater.update(dt);
+        // fractalUpdater.update(dt);
 
-        juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
+        // juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
+        juliaFractal.setGenerationParam(fp);
+        nbFrame++;
 
         juliaFractal.draw();
 
         eglSwapBuffers(eglDpy, surf);
 
+        timer += dt;
+        if(timer > juliaFractalTestDuration)
+        {
+            cout << "Cost: " << cost << ", mean fps: " << static_cast<double>(nbFrame) / static_cast<double>(timer) << endl;
+            timer = 0f;
+            origin.x = Random::rand(-2.5f, 2.5f);
+            origin.y = Random::rand(-1.4f, 1.4f);
+            cost = fractalUpdater.getJuliaFractalCost(origin);
+            fp.origin = origin;
+        }
+
+        // // Bench
         // nbFrame++;
         // totalTime += dt;
-
         // if(totalTime > 60.0)
         // {
         //     ofstream outfile("bench.txt");
