@@ -64,6 +64,7 @@ private:
 	float xMin, xMax, yMin, yMax;
 	Vector2 minSize, maxSize;
 	float juliaOriginThreshold;
+	int juliaOriginCostThreshold;
 
 	float zoomMinDuration, zoomMaxDuration;
 	float minZoom, maxZoom; // 0 => display julia of size maxSize, 1 => display of size minSize

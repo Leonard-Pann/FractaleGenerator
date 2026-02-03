@@ -119,6 +119,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	juliaGreyShader.load();
 	greyMaxIter = 1000;
 	juliaOriginThreshold = 0.0018f;
+	juliaOriginCostThreshold = 1_036_800_000;
 
 	// for findRandomPointToZoomInJulia
 	float refineZoomIterOn1080pScreen = 10.0f;
@@ -597,7 +598,7 @@ static vector<float>* computeGreyTexture(int maxIter, Vector2 seed, Vector4 wind
 	// return pixels;
 }
 
-static void computeGreyTextureRangeAndCost(vector<float>* texture, int startRow, int endRow, int width, int height, int maxIter, Vector2 seed, Vector4 window, atomic<int64_t>* cost)
+static void computeGreyTextureRangeAndCost(vector<float>* texture, int startRow, int endRow, int width, int height, int maxIter, Vector2 seed, Vector4 window, atomic<int64_t> cost)
 {
 	float cx(seed.x);
 	float cy(seed.y);
@@ -616,7 +617,7 @@ static void computeGreyTextureRangeAndCost(vector<float>* texture, int startRow,
     		float currenty = y;
 			float xTmp;
 			int nbIter(0);
-			while (currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
+			while (currentx * currentx + (currenty * currenty) < 4.0f && nbIter < maxIter)
 			{
 				xTmp = currentx;
 				currentx = (xTmp * xTmp) - (currenty * currenty) + cx;
@@ -634,12 +635,12 @@ static void computeGreyTextureRangeAndCost(vector<float>* texture, int startRow,
 			else
 			{
 				float v = static_cast<float>(nbIter) / static_cast<float>(maxIter);
-				float value = pow64(1.0 - v);
+				float value = pow64(1.0f - v);
 				(*texture)[index] = value;
 			}
 		}
 	}
-	(*cost).fetch_add(partialCost);
+	(*cost).fetch_add(partialCost, memory_order_relaxed);
 }
 
 static tuple<vector<float>*, int64_t> computeGreyTextureAndCost(int maxIter, Vector2 seed, Vector4 window, int greyTextureWidth, int greyTextureHeight)
@@ -663,7 +664,7 @@ static tuple<vector<float>*, int64_t> computeGreyTextureAndCost(int maxIter, Vec
 		t.join();
 	}
 
-	return maske_tuple(pixels, 0);
+	return maske_tuple(pixels, (int64_t)cost);
 }
 
 static void computeGreyVariationRange(vector<float>* pixels, int start, int end, int greyTextureWidth, int greyTextureHeight, atomic<float>* totalSum)
@@ -702,7 +703,7 @@ static void computeGreyVariationRange(vector<float>* pixels, int start, int end,
 		partialSum += localSum * oneO8;
 	}
 
-	(*totalSum).fetch_add(partialSum);
+	(*totalSum).fetch_add(partialSum, memory_order_relaxed);
 }
 
 static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, int greyTextureHeight)
@@ -767,7 +768,7 @@ static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, i
 	// }
 
 	// totalSum += partialSum * oneO8;
-	float meanCPU = totalSum / (greyTextureWidth * greyTextureHeight);
+	float meanCPU = (float)totalSum / (greyTextureWidth * greyTextureHeight);
 	return meanCPU;
 }
 
@@ -825,6 +826,11 @@ tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread(
 		tuple<vector<float>*, int64_t> tuple = computeGreyTextureAndCost(greyMaxIter, randonPoint, Vector4(xMin, xMax, yMin, yMax), greyTextureWidth, greyTextureHeight);
 		juliaGreyTexture = get<0>(tuple);
 		int64_t cost = get<1>(tuple);
+		if(cost > juliaOriginCostThreshold)
+		{
+			continue;
+		}
+
 		mean = computeGreyVariation(juliaGreyTexture, greyTextureWidth, greyTextureHeight);
 
 	} while (mean < juliaOriginThreshold);
