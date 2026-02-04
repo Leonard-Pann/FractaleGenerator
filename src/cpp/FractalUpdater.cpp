@@ -117,7 +117,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	greyTextureWidth = 1920;
 	greyTextureHeight = 1080;
 	juliaGreyShader.load();
-	greyMaxIter = 1000;
+	greyMaxIter = 750;
 	juliaOriginThreshold = 0.0018f;
 	juliaOriginCostThreshold = 1_036_800_000;
 
@@ -155,7 +155,6 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	dezoomColorsSplines = colorsSplines;
 
 	Vector3 colorIn(0.0f, 0.0f, 0.0f);
-	int maxIter = 750;
 
 	Vector2 startZoomPoint = target->getZoomPoint(0.0f);
 	int xMin = startZoomPoint.x - (maxSize.x * 0.5f);
@@ -164,7 +163,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	int yMax = startZoomPoint.y + (maxSize.y * 0.5f);
 
 	float a = colorRangeSpline.getStart();
-	params = FractaleParam(target->getOrigin(0.0f), xMin, xMax, yMin, yMax, colorIn, *currentPallet, maxIter, colorRangeSpline.getStart().value());
+	params = FractaleParam(target->getOrigin(0.0f), xMin, xMax, yMin, yMax, colorIn, *currentPallet, colorRangeSpline.getStart().value());
 	delete currentPallet;
 
 	isChangingFractal = true;

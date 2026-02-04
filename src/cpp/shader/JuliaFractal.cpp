@@ -8,7 +8,6 @@ JuliaFractal::JuliaFractal() : shader("shaders/julia.shader")
 
     shader.addUniform("seed");
     shader.addUniform("window");
-    shader.addUniform("maxIter");
     shader.addUniform("inColor");
     shader.addUniform("colorPalette");
     shader.addUniform("nbColors");
@@ -33,7 +32,6 @@ JuliaFractal::JuliaFractal() : shader("shaders/julia.shader")
 void JuliaFractal::setGenerationParam(const FractaleParam& params)
 {
     glUseProgram(shader.shaderId());
-    shader.setUniform1i("maxIter", params.maxIter);
     shader.setUniform1i("nbColors", (int)params.colorPalette.size());
     shader.setUniform2f("seed", params.origin);
     shader.setUniform3f("inColor", params.inColor);

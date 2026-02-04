@@ -5,67 +5,57 @@ precision highp float;
 in vec2 vert_pos;
 layout(location = 0) out vec4 color;
 
+#define MAX_ITER 750
+
 uniform vec2 seed;
 uniform vec4 window;
-uniform int maxIter;
 uniform vec3 inColor;
 uniform vec3 colorPalette[6];
 uniform int nbColors;
 uniform float colorRange;
 
-float length2(float x, float y)
+vec4 getJuliaColor(float currentx, float currenty, float cx, float cy)
 {
-    return sqrt(x * x + (y * y));
-}
+    float xSquare = currentx * currentx;
+    float ySquare = currenty * currenty;
+    float smoothValue = exp(-sqrt(xSquare + ySquare));
 
-vec4 getColor(float nbIter, float maxIter)
-{
-    float value = nbIter / maxIter;
-    vec3 color;
-
-    float minValue;
-    float maxValue;
-    int end = nbColors - 1;
-    float nbCols = float(end);
-
-    for (int i = 0; i < end; i++)
+    int nbIter;
+    for(nbIter = 0; nbIter < MAX_ITER; nbIter++)
     {
-        minValue = float(i) / nbCols;
-        maxValue = float(i + 1) / nbCols;
-
-        if (value >= minValue && value <= maxValue)
+        if(xSquare + ySquare >= 4.0)
         {
-            color = mix(colorPalette[i], colorPalette[i + 1], (value - minValue) * nbCols);
             break;
         }
+
+        currenty = 2.0 * currentx * currenty + cy;
+        currentx = xSquare - ySquare + cx;
+        xSquare = currentx * currentx;
+        ySquare = currenty * currenty;
+        smoothValue += exp(-sqrt(xSquare + ySquare));
     }
 
-    return vec4(color.xyz, 1.0);
-}
-
-vec4 getJuliaColor(float zx, float zy, float cx, float cy)
-{
-    float currentx = zx;
-    float currenty = zy;
-    float xTmp;
-
-    float smoothValue = exp(-length2(currentx, currenty));
-    float colorMod = float(maxIter) * 0.01 * colorRange;
-
-    int nbIter = 0;
-    while(currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
-    {
-        xTmp = currentx;
-        currentx = (xTmp * xTmp) - (currenty * currenty) + cx;
-        currenty = 2.0 * xTmp * currenty + cy;
-        nbIter++;
-        smoothValue += exp(-length2(currentx, currenty));
-    }
-
-    if (nbIter >= maxIter)
+    if (nbIter >= MAX_ITER)
     {
         return vec4(inColor.xyz, 1.0);
     }
+
+    // other smoothing function : 
+    // float log_zn = log(xSquare + ySquare) * 0.5;
+    // float oneOlog2 = 1.0 / log(2.0);
+    // float nu = log(log_zn * oneOlog2) * oneOlog2;
+    // float smoothIter = float(nbIter) + 1.0 - nu;
+    // float normalized = smoothIter / float(MAX_ITER);
+    // normalized = mod(normalized * colorRange, 1.0);
+    // float end = float(nbColors - 1);
+    // float scaled = normalized * end;
+    // int i = int(floor(scaled));
+    // float t = scaled - float(i);
+    // vec3 c0 = colorPalette[i];
+    // vec3 c1 = colorPalette[min(i + 1, nbColors - 1)];
+    // return vec4(mix(c0, c1, t), 1.0);
+
+
 
     float floorSV = floor(smoothValue);
     float smoothFrac = smoothValue - floorSV;
@@ -74,9 +64,13 @@ vec4 getJuliaColor(float zx, float zy, float cx, float cy)
     float hundredORange = 100.0 / colorRange;
     float iter = mod(shifted, hundredORange);
 
-    return getColor(iter, hundredORange);
+    float value = iter / hundredORange;
+    float end = float(nbColors - 1);
+    int i = floor(value * end);
+    vec3 color = mix(colorPalette[i], colorPalette[i + 1], (value - (float(i) / end)) * end);
+    return vec4(color.xyz, 1.0);
 }
-     
+
 void main()
 {
     float posX = 0.5 * (vert_pos.x + 1.0) * (window.y - window.x) + window.x;
