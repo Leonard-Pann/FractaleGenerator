@@ -143,8 +143,8 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	colorsSplines = generateNewPallets();
 	colorTimer = 0.0f;
 	vector<Vector3>* currentPallet = getCurrentColorPallet(colorsSplines);
-	minColorRange = 2.0f;
-	maxColorRange = 6.0f;
+	minColorRange = 0.2f;
+	maxColorRange = 0.6f;
 	colorRangeDuration = 300.0f;
 	nbColorRangeInSpline = 15;
 	colorRangeTimer = 0.0f;

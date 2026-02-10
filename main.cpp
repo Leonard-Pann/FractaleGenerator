@@ -58,7 +58,8 @@ int main()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 #endif
 {
-    Random::setRandomSeed();
+    //Random::setRandomSeed();
+    Random::setSeed(42);
 
     if (glfwInit() == 0)
         return -1;
