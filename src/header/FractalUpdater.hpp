@@ -10,7 +10,6 @@
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
 #include "shader/JuliaGreyComputeShader.hpp"
-#include "shader/TextureVariationShader.hpp"
 #include "bezierCurve/CatmulRomSpline.hpp"
 #include "Number.hpp"
 
@@ -65,6 +64,7 @@ private:
 	float xMin, xMax, yMin, yMax;
 	Vector2 minSize, maxSize;
 	float juliaOriginThreshold;
+	int juliaOriginCostThreshold;
 
 	float zoomMinDuration, zoomMaxDuration;
 	float minZoom, maxZoom; // 0 => display julia of size maxSize, 1 => display of size minSize
@@ -74,10 +74,9 @@ private:
 	int greyTextureWidth, greyTextureHeight, greyMaxIter;
 	int refiningPointToZoomIter;
 	JuliaGreyComputeShader juliaGreyShader;
-	TextureVariationShader textureVariationShader;
 
-	StateTarget* target = nullptr;
-	StateTarget* newTarget = nullptr;
+	StateTarget* target;
+	StateTarget* newTarget;
 
 	// zoom
 	float zoomTime;
@@ -88,7 +87,7 @@ private:
 	// dezoom
 	bool isDezooming;
 	StateTarget* dezoomTarget;
-	std::vector<CatmulRomSpline<Vector3>>* dezoomColorsSplines = nullptr;
+	std::vector<CatmulRomSpline<Vector3>>* dezoomColorsSplines;
 
 	// changeFractal
 	Vector2 changeFractalSize;
@@ -100,12 +99,7 @@ private:
 	bool isNewTargetReady;
 
 	//multi thread
-	bool isAFunctionToCallInMainThread;
 	std::mutex mutexName;
-	std::function<void*(void*)> callback;
-	void* callbackArg;
-	void* callbackResult;
-	int millisecondToSleepAfterCallComputerSharder;
 
 	//colors
 	int nbColorsInPalet;
@@ -122,7 +116,7 @@ private:
 	std::tuple<Vector2, std::vector<float>*> findRandomJuliaOrigin();
 	std::tuple<Vector2, std::vector<float>*> findRandomJuliaOriginOtherThread();
 	std::tuple<float, std::vector<float>*> getJuliaTotalGreyVariation(int maxIter, const Vector2 origin, const Vector4& window);
-	std::tuple<bool, Vector2> initRandomPointToZoom(Vector2 origin, std::vector<float>& initJuliaGreyText);
+	std::tuple<bool, int, int> initRandomPointToZoom(Vector2 origin, std::vector<float>& initJuliaGreyText);
 	Vector2 findRandomPointToZoomInJuliaInternal(Vector2 origin, std::vector<float>& juliaGreyText, bool otherThread);
 	Vector2 findRandomPointToZoomInJulia(Vector2 origin, std::vector<float>& juliaGreyText);
 	Vector2 findRandomPointToZoomInJuliaOtherThread(Vector2 origin, std::vector<float>& juliaGreyText);
@@ -141,7 +135,9 @@ private:
 public:
 	FractalUpdater();
 	FractalUpdater(int screenWidth, int screenHeight);
-	const FractaleParam& getFractaleParam() const;
+	FractaleParam& getFractaleParam();
+	//DEBUG
+	int64_t getJuliaFractalCost(Vector2 origin);
 	void update(float dt);
 };
 
