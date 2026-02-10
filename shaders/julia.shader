@@ -66,8 +66,9 @@ vec4 getJuliaColor(float currentx, float currenty, float cx, float cy)
 
     float value = iter / hundredORange;
     float end = float(nbColors - 1);
-    int i = floor(value * end);
-    vec3 color = mix(colorPalette[i], colorPalette[i + 1], (value - (float(i) / end)) * end);
+    float valueTEnd = value * end;
+    int i = int(floor(valueTEnd));
+    vec3 color = mix(colorPalette[i], colorPalette[i + 1], valueTEnd - float(i));
     return vec4(color.xyz, 1.0);
 }
 
