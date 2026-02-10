@@ -4,7 +4,7 @@
 in vec2 vert_pos;
 layout(location = 0) out vec4 color;
 
-#define MAX_ITER 750
+#define MAX_ITER 650
 
 uniform vec2 seed;
 uniform vec4 window;
@@ -37,7 +37,7 @@ vec4 getJuliaColor(float currentx, float currenty, float cx, float cy)
         return vec4(inColor.xyz, 1.0);
     }
 
-    float sn = float(nbIter) - log2(log2(xSquare + ySquare));// + 4.0;
+    float sn = float(nbIter) - log2(log2(xSquare + ySquare)) + 0.75;
     float value = mod(sn * colorRange, float(nbColors - 1));
     float fv = floor(value);
     float fraction = value - fv;
