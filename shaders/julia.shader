@@ -21,7 +21,7 @@ vec4 getJuliaColor(float currentx, float currenty, float cx, float cy)
 
     for(nbIter = 0; nbIter < MAX_ITER; nbIter++)
     {
-        if(xSquare + ySquare >= 200.0)
+        if(xSquare + ySquare >= 16.0)
         {
             break;
         }
@@ -38,7 +38,7 @@ vec4 getJuliaColor(float currentx, float currenty, float cx, float cy)
     }
 
     float smoothIter = float(nbIter) + 2.52876637294 - log2(log2(xSquare + ySquare)); // 2.52876637294 = 2 - log2(ln(2.0))
-    float t = fract(smoothIter / 100.0);
+    float t = fract(smoothIter * 0.01);
     float colF = float(nbColors - 1);
     float tCol = t * colF;
     int index = int(floor(tCol));
@@ -49,26 +49,6 @@ vec4 getJuliaColor(float currentx, float currenty, float cx, float cy)
 
     // float maxModSquare = 16.0 + (cx * cx) + (cy * cy) + (8.0 * (abs(cx) + abs(cy)));
     // float t = (xSquare + ySquare) / maxModSquare;
-
-    // float sn = float(nbIter) + 0.75;
-    // float logNorm = log2(xSquare + ySquare);
-    // if(logNorm > 0.0)
-    // {
-    //     sn = sn - log2(logNorm);
-    // }
-    // else
-    // {
-    //     sn = sn - logNorm;
-    // }
-
-    // float value = mod(sn * colorRange, float(nbColors - 1));
-    // float fv = floor(value);
-    // float fraction = value - fv;
-    // int i = int(fv);
-    // vec3 color = mix(colorPalette[i], colorPalette[i + 1], fraction);
-    // return vec4(color.xyz, 1.0);
-
-
 
     // float floorSV = floor(smoothValue);
     // float smoothFrac = smoothValue - floorSV;
