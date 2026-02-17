@@ -34,9 +34,9 @@ vector<vector<Vector3>> FractalUpdater::colorPallets =
 		Vector3(20.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f),
 		Vector3(255.0f / 255.0f,  20.0f / 255.0f,   0.0f / 255.0f),
 		Vector3(255.0f / 255.0f, 175.0f / 255.0f,   0.0f / 255.0f),
-		Vector3(255.0f / 255.0f,  20.0f / 255.0f,   0.0f / 255.0f),
-		Vector3(60.0f / 255.0f,   40.0f / 255.0f,   0.0f / 255.0f),
-		Vector3(40.0f / 255.0f,   20.0f / 255.0f,   0.0f / 255.0f)
+		Vector3(255.0f / 255.0f,  100.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(120.0f / 255.0f,   70.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(20.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f)
 	},
 
 	// Electric
@@ -51,34 +51,25 @@ vector<vector<Vector3>> FractalUpdater::colorPallets =
 
 	// Gold
 	{
-		Vector3(85.f / 255.0f,  47.f / 255.0f,   0.0f / 255.0f),
-		Vector3(255.0f / 255.0f, 171.f / 255.0f,  12.f / 255.0f),
-		Vector3(255.0f / 255.0f, 247.f / 255.0f, 127.f / 255.0f),
-		Vector3(255.0f / 255.0f, 171.f / 255.0f,  12.f / 255.0f),
-		Vector3(85.0f / 255.0f,  47.f / 255.0f,   0.0f / 255.0f),
-		Vector3(40.0f / 255.0f,  40.0f / 255.0f,   40.0f / 255.0f),
+		Vector3(85.0f / 255.0f,  47.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 171.0f / 255.0f,  12.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 247.0f / 255.0f, 127.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 171.0f / 255.0f,  24.0f / 255.0f),
+		Vector3(85.0f / 255.0f,  47.0f / 255.0f,   12.0f / 255.0f),
+		Vector3(85.0f / 255.0f,  47.0f / 255.0f,   0.0f / 255.0f),
 	},
 
-	//// Black and white gradient
-	//{
-	//	Vector3(0.0f, 0.0f, 0.0f),
-	//	Vector3(1.0f, 1.0f, 1.0f),
-	//	Vector3(0.5f, 0.5f, 0.5f),
-	//	Vector3(0.25f, 0.25f, 0.25f),
-	//	Vector3(0.0f, 0.0f, 0.0f),
-	//	Vector3(0.0f, 0.0f, 0.0f)
-	//},
-
-	//// Radoactive
-	//{
-	//	Vector3(40.0f / 255.0f,  90.0f / 255.0f,   25.0f / 255.0f),
-	//	Vector3(40.0f / 255.0f,  255.0f / 255.0f,   0.0f / 255.0f),
-	//	Vector3(40.0f / 255.0f,  150.0f / 255.0f,   35.0f / 255.0f),
-	//	Vector3(40.0f / 255.0f,  255.0f / 255.0f,   0.0f / 255.0f),
-	//	Vector3(40.0f / 255.0f,  90 / 255.0f,   25.0f / 255.0f),
-	//	Vector3(40.0f / 255.0f,  40.0f / 255.0f,   40.0f / 255.0f)
-	//}
+	// Sky
+	{
+		Vector3(4.0f / 255.0f,  12.0f / 255.0f,   90.0f / 255.0f),
+		Vector3(75.0f / 255.0f,  150.0f / 255.0f,   200.0f / 255.0f),
+		Vector3(170.0f / 255.0f,  230.0f / 255.0f,   250.0f / 255.0f),
+		Vector3(150.0f / 255.0f,  200.0f / 255.0f,   225.0f / 255.0f),
+		Vector3(75.0f / 255.0f,  150.0f / 255.0f,   200.0f / 255.0f),
+		Vector3(4.0f / 255.0f,  12.0f / 255.0f,   90.0f / 255.0f),
+	}
 };
+
 
 #pragma endregion
 
@@ -119,7 +110,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	juliaGreyShader.load();
 	greyMaxIter = 750;
 	juliaOriginThreshold = 0.0018f;
-	juliaOriginCostThreshold = 1_036_800_000;
+	juliaOriginCostThreshold = 1036800000;
 
 	// for findRandomPointToZoomInJulia
 	float refineZoomIterOn1080pScreen = 10.0f;
@@ -143,8 +134,8 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	colorsSplines = generateNewPallets();
 	colorTimer = 0.0f;
 	vector<Vector3>* currentPallet = getCurrentColorPallet(colorsSplines);
-	minColorRange = 2.0f;
-	maxColorRange = 6.0f;
+	minColorRange = 0.02f;
+	maxColorRange = 0.10f;
 	colorRangeDuration = 300.0f;
 	nbColorRangeInSpline = 15;
 	colorRangeTimer = 0.0f;
