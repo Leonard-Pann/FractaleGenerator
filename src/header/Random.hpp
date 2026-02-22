@@ -4,9 +4,17 @@
 #include <stdlib.h>
 #include <vector>
 
-static inline int c_rand()
+static constexpr unsigned int rand_max = 4294967292;
+static constexpr double one_o_rand_max = 1.0 / static_cast<double>(rand_max);
+static constexpr double one_o_rand_max_p1 = 1.0 / static_cast<double>(rand_max + 1);
+
+static inline uint32_t c_rand()
 {
-    return rand();
+    // 2^32 > 4294967292 = 131076 * 32767
+    uint32_t r = rand() % 32767; // in [0, 32767]
+    r = r * 131075; // in [0, 4294967292 - 32767]
+    uint32_t r2 = rand() % 32767;
+    return r + r2;
 }
 
 class Random
@@ -25,19 +33,19 @@ public:
 
     static inline float rand()
     {
-        return (float)((double)c_rand() / (double)RAND_MAX);
+        return static_cast<float>(static_cast<double>(c_rand()) * one_o_rand_max);
     }
 
     static inline float randExclude()
     {
-        return (float)((double)c_rand() / ((double)RAND_MAX + 1.0));
+        return static_cast<float>(static_cast<double>(c_rand()) * one_o_rand_max_p1);
     }
 
     static inline int rand(int a, int b)
     {
         if (a == b)
             return a;
-        return (c_rand() % abs(b - a)) + a;
+        return (c_rand() % abs(b - a + 1)) + a;
     }
 
     static inline float rand(float a, float b)
@@ -47,10 +55,9 @@ public:
 
     static inline int randExclude(int a, int b)
     {
-        int delta = abs(b - a);
-        if (delta <= 1)
+        if (abs(b - a) <= 1)
             return a;
-        return (c_rand() % (delta - 1)) + a;
+        return (c_rand() % (abs(b - a))) + a;
     }
 
     static inline float randExclude(float a, float b)
