@@ -34,9 +34,9 @@ vector<vector<Vector3>> FractalUpdater::colorPallets =
 		Vector3(20.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f),
 		Vector3(255.0f / 255.0f,  20.0f / 255.0f,   0.0f / 255.0f),
 		Vector3(255.0f / 255.0f, 175.0f / 255.0f,   0.0f / 255.0f),
-		Vector3(255.0f / 255.0f,  20.0f / 255.0f,   0.0f / 255.0f),
-		Vector3(60.0f / 255.0f,   40.0f / 255.0f,   0.0f / 255.0f),
-		Vector3(40.0f / 255.0f,   20.0f / 255.0f,   0.0f / 255.0f)
+		Vector3(255.0f / 255.0f,  100.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(120.0f / 255.0f,   70.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(20.0f / 255.0f,   0.0f / 255.0f,   0.0f / 255.0f)
 	},
 
 	// Electric
@@ -51,33 +51,23 @@ vector<vector<Vector3>> FractalUpdater::colorPallets =
 
 	// Gold
 	{
-		Vector3(85.f / 255.0f,  47.f / 255.0f,   0.0f / 255.0f),
-		Vector3(255.0f / 255.0f, 171.f / 255.0f,  12.f / 255.0f),
-		Vector3(255.0f / 255.0f, 247.f / 255.0f, 127.f / 255.0f),
-		Vector3(255.0f / 255.0f, 171.f / 255.0f,  12.f / 255.0f),
-		Vector3(85.0f / 255.0f,  47.f / 255.0f,   0.0f / 255.0f),
-		Vector3(40.0f / 255.0f,  40.0f / 255.0f,   40.0f / 255.0f),
+		Vector3(85.0f / 255.0f,  47.0f / 255.0f,   0.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 171.0f / 255.0f,  12.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 247.0f / 255.0f, 127.0f / 255.0f),
+		Vector3(255.0f / 255.0f, 171.0f / 255.0f,  24.0f / 255.0f),
+		Vector3(85.0f / 255.0f,  47.0f / 255.0f,   12.0f / 255.0f),
+		Vector3(85.0f / 255.0f,  47.0f / 255.0f,   0.0f / 255.0f),
 	},
 
-	//// Black and white gradient
-	//{
-	//	Vector3(0.0f, 0.0f, 0.0f),
-	//	Vector3(1.0f, 1.0f, 1.0f),
-	//	Vector3(0.5f, 0.5f, 0.5f),
-	//	Vector3(0.25f, 0.25f, 0.25f),
-	//	Vector3(0.0f, 0.0f, 0.0f),
-	//	Vector3(0.0f, 0.0f, 0.0f)
-	//},
-
-	//// Radoactive
-	//{
-	//	Vector3(40.0f / 255.0f,  90.0f / 255.0f,   25.0f / 255.0f),
-	//	Vector3(40.0f / 255.0f,  255.0f / 255.0f,   0.0f / 255.0f),
-	//	Vector3(40.0f / 255.0f,  150.0f / 255.0f,   35.0f / 255.0f),
-	//	Vector3(40.0f / 255.0f,  255.0f / 255.0f,   0.0f / 255.0f),
-	//	Vector3(40.0f / 255.0f,  90 / 255.0f,   25.0f / 255.0f),
-	//	Vector3(40.0f / 255.0f,  40.0f / 255.0f,   40.0f / 255.0f)
-	//}
+	// Sky
+	{
+		Vector3(4.0f / 255.0f,  12.0f / 255.0f,   90.0f / 255.0f),
+		Vector3(75.0f / 255.0f,  150.0f / 255.0f,   200.0f / 255.0f),
+		Vector3(170.0f / 255.0f,  230.0f / 255.0f,   250.0f / 255.0f),
+		Vector3(150.0f / 255.0f,  200.0f / 255.0f,   225.0f / 255.0f),
+		Vector3(75.0f / 255.0f,  150.0f / 255.0f,   200.0f / 255.0f),
+		Vector3(4.0f / 255.0f,  12.0f / 255.0f,   90.0f / 255.0f),
+	}
 };
 
 #pragma endregion
@@ -117,7 +107,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	greyTextureWidth = 1920;
 	greyTextureHeight = 1080;
 	juliaGreyShader.load();
-	greyMaxIter = 750;
+	greyMaxIter = 650;
 	juliaOriginThreshold = 0.0018f;
 	juliaOriginCostThreshold = 1036800000;
 
@@ -143,8 +133,8 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	colorsSplines = generateNewPallets();
 	colorTimer = 0.0f;
 	vector<Vector3>* currentPallet = getCurrentColorPallet(colorsSplines);
-	minColorRange = 0.03f;
-	maxColorRange = 0.09f;
+	minColorRange = 0.02f;
+	maxColorRange = 0.10f;
 	colorRangeDuration = 300.0f;
 	nbColorRangeInSpline = 15;
 	colorRangeTimer = 0.0f;
@@ -745,7 +735,7 @@ static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, i
 	// int end = greyTextureWidth * (greyTextureHeight - 1) - 1;
 
 	// for (int i = start; i < end; i++)
-	// {
+	//
 	// 	int col = i % greyTextureWidth;
 	// 	if(col == greyTextureWidth - 1)
 	// 	{
@@ -1302,7 +1292,7 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 
 	isNewTargetReady = false;
 
-	int nbOrigines = Random::rand(minNbOrigines, maxNbOrigines - 1);
+	int nbOrigines = Random::rand(min(minNbOrigines, maxNbOrigines - 1), maxNbOrigines - 1);
 	vector<Vector2> origines;
 	vector<vector<float>*> textures;
 	origines.reserve(nbOrigines + 1);
@@ -1364,57 +1354,58 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 	isNewTargetReady = false;
 	Vector2 finalOrigin = oldTarget == nullptr ? Vector2() : oldTarget->finalOrigin();
 	Vector2 startZoom = oldTarget == nullptr ? Vector2() : oldTarget->finalZoomPoint();
-	auto lambda = [this](Vector2 finalOrigin, Vector2 startZoom)
+	auto lambda = [this](Vector2 finalOrigin, Vector2 startZoom, uint32_t randSeed)
+	{
+		Random::setSeed(randSeed);
+		int nbOrigines = Random::rand(min(minNbOrigines, maxNbOrigines - 1), maxNbOrigines - 1);
+		vector<Vector2> origines;
+		vector<vector<float>*> textures;
+		origines.reserve(nbOrigines + 1);
+		origines.push_back(finalOrigin);
+		textures.reserve(nbOrigines + 1);
+		textures.push_back(nullptr);
+
+		for (int i = 0; i < nbOrigines; i++)
 		{
-			Random::setRandomSeed();
-			int nbOrigines = Random::rand(minNbOrigines, maxNbOrigines - 1);
-			vector<Vector2> origines;
-			vector<vector<float>*> textures;
-			origines.reserve(nbOrigines + 1);
-			origines.push_back(finalOrigin);
-			textures.reserve(nbOrigines + 1);
-			textures.push_back(nullptr);
+			tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOriginOtherThread();
+			cout << "Second thread : Julia origin " << i + 1 << "/" << nbOrigines << " generated!" << endl;
 
-			for (int i = 0; i < nbOrigines; i++)
-			{
-				tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOriginOtherThread();
-				cout << "Second thread : Julia origin " << i + 1 << "/" << nbOrigines << " generated!" << endl;
+			origines.push_back(get<0>(originTuple));
+			textures.push_back(get<1>(originTuple));
+		}
 
-				origines.push_back(get<0>(originTuple));
-				textures.push_back(get<1>(originTuple));
-			}
+		cout << "Second thread : Sorting Origins" << endl;
+		sortOrigin(origines, textures);
 
-			cout << "Second thread : Sorting Origins" << endl;
-			sortOrigin(origines, textures);
+		cout << "Second thread: Start generate Julia zoom point" << endl;
 
-			cout << "Second thread: Start generate Julia zoom point" << endl;
+		Vector2 randZoomPoint = findRandomPointToZoomInJuliaOtherThread(origines[origines.size() - 1], *textures[textures.size() - 1]);
 
-			Vector2 randZoomPoint = findRandomPointToZoomInJuliaOtherThread(origines[origines.size() - 1], *textures[textures.size() - 1]);
+		cout << "Second thread: Julia zoom point generated" << endl;
 
-			cout << "Second thread: Julia zoom point generated" << endl;
+		for (int i = 1; i < textures.size(); i++)
+		{
+			delete textures[i];
+		}
 
-			for (int i = 1; i < textures.size(); i++)
-			{
-				delete textures[i];
-			}
+		vector<Vector2> zoomPoints(3);
+		zoomPoints[0] = startZoom;
+		zoomPoints[2] = randZoomPoint;
 
-			vector<Vector2> zoomPoints(3);
-			zoomPoints[0] = startZoom;
-			zoomPoints[2] = randZoomPoint;
+		float zoomDuration = Random::rand(zoomMinDuration, zoomMaxDuration);
+		float dezoomDuration = Random::rand(dezoomMinDuration, dezoomMaxDuration);
+		float zoom = Random::rand(minZoom, maxZoom);
 
-			float zoomDuration = Random::rand(zoomMinDuration, zoomMaxDuration);
-			float dezoomDuration = Random::rand(dezoomMinDuration, dezoomMaxDuration);
-			float zoom = Random::rand(minZoom, maxZoom);
+		{
+			lock_guard<mutex> lock(mutexName);
+			this->newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
+			cout << "next tardet generated" << endl;
+			isNewTargetReady = true;
+		}
+	};
 
-			{
-				lock_guard<mutex> lock(mutexName);
-				this->newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
-				cout << "next tardet generated" << endl;
-				isNewTargetReady = true;
-			}
-		};
-
-	thread thread(lambda, finalOrigin, startZoom);
+	int randSeed = Random::rand(0, 2147483648);
+	thread thread(lambda, finalOrigin, startZoom, randSeed);
 	thread.detach();
 }
 

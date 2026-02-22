@@ -10,7 +10,6 @@ uniform vec2 seed;
 uniform vec4 window;
 uniform vec3 inColor;
 uniform vec3 colorPalette[6];
-uniform int nbColors;
 uniform float colorRange;
 
 vec4 getJuliaColor(float currentx, float currenty, float cx, float cy)
@@ -38,12 +37,10 @@ vec4 getJuliaColor(float currentx, float currenty, float cx, float cy)
     }
 
     float smoothIter = float(nbIter) + 2.52876637294 - log2(log2(xSquare + ySquare)); // 2.52876637294 = 2 - log2(ln(2.0))
-    float t = fract(smoothIter * 0.01);
-    float colF = float(nbColors - 1);
-    float tCol = t * colF;
-    int index = int(floor(tCol));
+    float t = fract(smoothIter * colorRange);
+    int index = int(floor(t * 5.0));
 
-    float t2 = t * colF - float(index);
+    float t2 = 5.0 * t - float(index);
     vec3 color = mix(colorPalette[index], colorPalette[index + 1], t2);
     return vec4(color.xyz, 1.0);
 

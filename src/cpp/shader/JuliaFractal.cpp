@@ -11,7 +11,6 @@ JuliaFractal::JuliaFractal() : shader("shaders/julia.shader")
     shader.addUniform("maxIter");
     shader.addUniform("inColor");
     shader.addUniform("colorPalette");
-    shader.addUniform("nbColors");
     shader.addUniform("colorRange");
 
     glGenBuffers(1, &positionBuffer);
@@ -30,36 +29,26 @@ JuliaFractal::JuliaFractal() : shader("shaders/julia.shader")
     glEnableVertexAttribArray(0);
 }
 
-vector<Vector3> currentPalette =
-{
-    Vector3(85.f / 255.0f,  47.f / 255.0f,   0.0f / 255.0f),
-    Vector3(255.0f / 255.0f, 171.f / 255.0f,  12.f / 255.0f),
-    Vector3(255.0f / 255.0f, 247.f / 255.0f, 127.f / 255.0f),
-    Vector3(255.0f / 255.0f, 171.f / 255.0f,  12.f / 255.0f),
-    Vector3(85.0f / 255.0f,  47.f / 255.0f,   0.0f / 255.0f),
-    Vector3(40.0f / 255.0f,  40.0f / 255.0f,   40.0f / 255.0f),
-};
-
 //vector<Vector3> currentPalette =
 //{
-//    Vector3(1.0f, 0, 0),
-//    Vector3(0, 1.0f, 0),
-//    Vector3(0, 0, 1),
-//    Vector3(1.0, 1.0, 1.0),
-//    Vector3(0, 0, 0),
-//    Vector3(0.5, 0.5, 0.5),
+//    Vector3(4 / 255.0f,  12 / 255.0f,   90 / 255.0f),
+//    Vector3(75 / 255.0f,  150 / 255.0f,   200 / 255.0f),
+//    Vector3(170.0f / 255.0f,  230 / 255.0f,   250 / 255.0f),
+//    Vector3(150.0f / 255.0f,  200 / 255.0f,   225 / 255.0f),
+//    Vector3(75 / 255.0f,  150 / 255.0f,   200 / 255.0f),
+//    Vector3(4 / 255.0f,  12 / 255.0f,   90 / 255.0f),
 //};
 
 void JuliaFractal::setGenerationParam(const FractaleParam& params)
 {
     glUseProgram(shader.shaderId());
     shader.setUniform1i("maxIter", params.maxIter);
-    shader.setUniform1i("nbColors", (int)params.colorPalette.size());
     shader.setUniform2f("seed", params.origin);
     shader.setUniform3f("inColor", params.inColor);
     shader.setUniform4f("window", Vector4(params.xMin, params.xMax, params.yMin, params.yMax));
     //shader.setUniform3fv("colorPalette", currentPalette);
     shader.setUniform3fv("colorPalette", params.colorPalette);
+    //shader.setUniform1f("colorRange", 0.01 * 14.0f);
     shader.setUniform1f("colorRange", params.colorRange);
 }
 
@@ -81,4 +70,5 @@ JuliaFractal::~JuliaFractal()
 {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &positionBuffer);
+    glDeleteBuffers(1, &indicesBuffer);
 }
