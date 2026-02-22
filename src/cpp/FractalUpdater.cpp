@@ -1293,7 +1293,7 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 
 	isNewTargetReady = false;
 
-	int nbOrigines = Random::rand(minNbOrigines, maxNbOrigines - 1);
+	int nbOrigines = Random::rand(min(minNbOrigines, maxNbOrigines - 1), maxNbOrigines - 1);
 	vector<Vector2> origines;
 	vector<vector<float>*> textures;
 	origines.reserve(nbOrigines + 1);
@@ -1358,7 +1358,7 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 	auto lambda = [this](Vector2 finalOrigin, Vector2 startZoom)
 	{
 		Random::setRandomSeed();
-		int nbOrigines = Random::rand(minNbOrigines, maxNbOrigines - 1);
+		int nbOrigines = Random::rand(min(minNbOrigines, maxNbOrigines - 1), maxNbOrigines - 1);
 		vector<Vector2> origines;
 		vector<vector<float>*> textures;
 		origines.reserve(nbOrigines + 1);
