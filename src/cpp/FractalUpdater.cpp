@@ -108,7 +108,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	greyTextureWidth = 1920;
 	greyTextureHeight = 1080;
 	juliaGreyShader.load();
-	greyMaxIter = 750;
+	greyMaxIter = 650;
 	juliaOriginThreshold = 0.0018f;
 	juliaOriginCostThreshold = 1036800000;
 
