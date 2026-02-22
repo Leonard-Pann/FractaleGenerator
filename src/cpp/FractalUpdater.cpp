@@ -588,7 +588,7 @@ static vector<float>* computeGreyTexture(int maxIter, Vector2 seed, Vector4 wind
 	// return pixels;
 }
 
-static void computeGreyTextureRangeAndCost(vector<float>* texture, int startRow, int endRow, int width, int height, int maxIter, Vector2 seed, Vector4 window, atomic<int64_t> cost)
+static void computeGreyTextureRangeAndCost(vector<float>* texture, int startRow, int endRow, int width, int height, int maxIter, Vector2 seed, Vector4 window, atomic<int64_t>* cost)
 {
 	float cx(seed.x);
 	float cy(seed.y);
@@ -640,7 +640,7 @@ static tuple<vector<float>*, int64_t> computeGreyTextureAndCost(int maxIter, Vec
 	int threadCount = (int)max(1u, thread::hardware_concurrency() - 2u);
 	vector<thread> workers;
 	int rowsPerThread(greyTextureHeight / threadCount);
-	atomic<int64_t> cost {0.0f};
+	atomic<int64_t> cost (0);
 
 	for (int i = 0; i < threadCount; i++)
 	{
@@ -654,14 +654,14 @@ static tuple<vector<float>*, int64_t> computeGreyTextureAndCost(int maxIter, Vec
 		t.join();
 	}
 
-	return maske_tuple(pixels, (int64_t)cost);
+	return make_tuple(pixels, (int64_t)cost);
 }
 
 int64_t FractalUpdater::getJuliaFractalCost(Vector2 origin)
 {
 	tuple<vector<float>*, int64_t> tuple = computeGreyTextureAndCost(greyMaxIter, origin, Vector4(xMin, xMax, yMin, yMax), greyTextureWidth, greyTextureHeight);
 	delete get<0>(tuple);
-	return get<1>(tuple)
+	return get<1>(tuple);
 }
 
 static void computeGreyVariationRange(vector<float>* pixels, int start, int end, int greyTextureWidth, int greyTextureHeight, atomic<float>* totalSum)
@@ -928,7 +928,7 @@ tuple<bool, int, int> FractalUpdater::initRandomPointToZoom(Vector2 origin, vect
 	// float x = Math::lerp(xMin, xMax, (float)col / (float)(greyTextureWidth - 1));
 	// float y = Math::lerp(yMin, yMax, (float)row / (float)(greyTextureHeight - 1));
 
-	return make_tuple(false, randomRow, randomCol);
+	return make_tuple(false, row, col);
 }
 
 struct ComputeJuliaTextureParams

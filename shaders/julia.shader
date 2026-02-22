@@ -52,7 +52,7 @@ void main()
     float posX = 0.5 * (vert_pos.x + 1.0) * (window.y - window.x) + window.x;
     float posY = 0.5 * (vert_pos.y + 1.0) * (window.w - window.z) + window.z;
 
-    color = getJuliaColor(posX, posY, seed.x, seed.y);
+    color = getJuliaColor(posX, posY);
 }
 
 #shader vertex        
