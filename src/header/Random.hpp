@@ -12,7 +12,7 @@ static constexpr double one_o_rand_max_p1 = 1.0 / (static_cast<double>(rand_max)
 static inline uint32_t c_rand()
 {
     // 4294967296 = 131072 * (32767 + 1)
-    uint32_t r = (rand() % 32768) << 17; // 131072 = 2^17
+    uint32_t r = ((uint32_t)rand() % 32768) << 17; // 131072 = 2^17
     // 131072 = 32768 * 4
     uint32_t r2 = (rand() % 32768) << 2; // 4 = 2^2
     uint32_t r3 = rand() % 32768; // no ajustement because (32767 + 1) % 4 == 0
