@@ -1,20 +1,22 @@
 #ifndef RANDOM_HPP
 #define RANDOM_HPP
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <vector>
 
-static constexpr unsigned int rand_max = 4294967292;
+static constexpr unsigned int rand_max = 4294967295;
 static constexpr double one_o_rand_max = 1.0 / static_cast<double>(rand_max);
-static constexpr double one_o_rand_max_p1 = 1.0 / static_cast<double>(rand_max + 1);
+static constexpr double one_o_rand_max_p1 = 1.0 / (static_cast<double>(rand_max) + 1.0);
 
+// return a random number between 0 and rand_max=4294967295, aka in [0, rand_max]
 static inline uint32_t c_rand()
 {
-    // 2^32 > 4294967292 = 131076 * 32767
-    uint32_t r = rand() % 32767; // in [0, 32767]
-    r = r * 131075; // in [0, 4294967292 - 32767]
-    uint32_t r2 = rand() % 32767;
-    return r + r2;
+    // 4294967296 = 131072 * (32767 + 1)
+    uint32_t r = (rand() % 32768) << 17; // 131072 = 2^17
+    // 131072 = 32768 * 4
+    uint32_t r2 = (rand() % 32768) << 2; // 4 = 2^2
+    uint32_t r3 = rand() % 32768; // no ajustement because (32767 + 1) % 4 == 0
+    return r + r2 + (r3 % 4);
 }
 
 class Random
@@ -81,4 +83,3 @@ public:
 };
 
 #endif
-
