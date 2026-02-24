@@ -64,7 +64,7 @@ private:
 	float xMin, xMax, yMin, yMax;
 	Vector2 minSize, maxSize;
 	float juliaOriginThreshold;
-	int juliaOriginCostThreshold;
+	int zoomJuliaOriginCostThreshold;
 
 	float zoomMinDuration, zoomMaxDuration;
 	float minZoom, maxZoom; // 0 => display julia of size maxSize, 1 => display of size minSize
@@ -114,15 +114,13 @@ private:
 
 	Vector2 randomPoint() const;
 	std::tuple<Vector2, std::vector<float>*> findRandomJuliaOrigin();
-	std::tuple<Vector2, std::vector<float>*> findRandomJuliaOriginOtherThread();
+	std::tuple<Vector2, vector<float>*> findRandomJuliaOriginOtherThread();
 	std::tuple<float, std::vector<float>*> getJuliaTotalGreyVariation(int maxIter, const Vector2 origin, const Vector4& window);
-	std::tuple<bool, int, int> initRandomPointToZoom(Vector2 origin, std::vector<float>& initJuliaGreyText);
-	Vector2 findRandomPointToZoomInJuliaInternal(Vector2 origin, std::vector<float>& juliaGreyText, bool otherThread);
-	Vector2 findRandomPointToZoomInJulia(Vector2 origin, std::vector<float>& juliaGreyText);
-	Vector2 findRandomPointToZoomInJuliaOtherThread(Vector2 origin, std::vector<float>& juliaGreyText);
+	std::tuple<bool, int, int> initRandomPointToZoom(const Vector2& origin, const std::vector<float>& initJuliaGreyText);
+	std::tuple<Vector2, Vector2> findRandomOriginAndZoomPointInternal(bool otherThread);
 	std::tuple<Vector2, Vector2> findRandomOriginAndZoomPoint();
 	std::tuple<Vector2, Vector2> findRandomOriginAndZoomPointOtherThread();
-	void generateNewTarget(StateTarget* oldTarget);
+	void generateFirstTarget();
 	void generateNewTargetOtherThread(StateTarget* oldTarget);
 	std::vector<Vector3>* getCurrentColorPallet(std::vector<CatmulRomSpline<Vector3>>* pallet);
 	std::vector<CatmulRomSpline<Vector3>>* generateNewPallets();
@@ -136,8 +134,9 @@ public:
 	FractalUpdater();
 	FractalUpdater(int screenWidth, int screenHeight);
 	FractaleParam& getFractaleParam();
-	//DEBUG
+#ifdef _DEBUG
 	int64_t getJuliaFractalCost(Vector2 origin);
+#endif
 	void update(float dt);
 };
 

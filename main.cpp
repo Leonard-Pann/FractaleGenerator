@@ -39,14 +39,15 @@ void onFrameBufferResize(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-//void onMouseMove(GLFWwindow* window, double x, double y)
-//{
-//    mousePosition.x = x;
-//    mousePosition.y = y;
-//    normalizeMousePosition.x = (mousePosition.x / (windowWidth - 1.0f)) * 2.0f - 1.0f; //between -1 and 1
-//    normalizeMousePosition.y = ((mousePosition.y / (windowHeight - 1.0f)) * -2.0f + 1.0f); //between -1 and 1
-//}
-//
+Vector2 mousePosition, normalizeMousePosition;
+void onMouseMove(GLFWwindow* window, double x, double y)
+{
+    mousePosition.x = x;
+    mousePosition.y = y;
+    normalizeMousePosition.x = (mousePosition.x / (windowWidth - 1.0f)) * 2.0f - 1.0f; //between -1 and 1
+    normalizeMousePosition.y = ((mousePosition.y / (windowHeight - 1.0f)) * -2.0f + 1.0f); //between -1 and 1
+}
+
 //void onMouseScroll(GLFWwindow* window, double deltaX, double deltaY)
 //{
 //     //nothing yet
@@ -58,7 +59,10 @@ int main()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 #endif
 {
-    Random::setRandomSeed();
+    //Random::setRandomSeed();
+    uint32_t seed = (uint32_t)time(NULL);
+    cout << "seed: " << seed << endl;
+    //Random::setSeed(seed);
     Random::setSeed(42);
 
     if (glfwInit() == 0)
@@ -78,17 +82,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     glfwMakeContextCurrent(window);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     glewInit();
 
     glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
     //glfwSetScrollCallback(window, onMouseScroll);
-    //glfwSetCursorPosCallback(window, onMouseMove);
+    glfwSetCursorPosCallback(window, onMouseMove);
     //glfwSwapInterval(0); // disable VSync
 
     JuliaFractal juliaFractal;
     FractalUpdater fractalUpdater(windowWidth, windowHeight);
+
+
+    float yMin = -1.4f;
+    float yMax = 1.4f;
+    float horizontalSize = ((yMax - yMin) * (float)windowWidth) / (float)windowHeight;
+    float xMin = -horizontalSize * 0.5f;
+    float xMax = horizontalSize * 0.5f;
+    float costTimer(0.0f);
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -97,9 +111,34 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
-        fractalUpdater.update(dt);
+        //fractalUpdater.update(dt);
 
-        juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
+
+        float x = Math::lerp(xMin, xMax, (normalizeMousePosition.x * 0.5f) + 0.5f);
+        float y = Math::lerp(yMin, yMax, (normalizeMousePosition.y * 0.5f) + 0.5f);
+        Vector2 seed(x, y);
+        auto params = fractalUpdater.getFractaleParam();
+        params.origin = seed;
+        params.xMin = xMin;
+        params.xMax = xMax;
+        params.yMin = yMin;
+        params.yMax = yMax;
+
+        costTimer += dt;
+        if (costTimer > 3.0f)
+        {
+            costTimer -= 3.0f;
+            double cost = static_cast<double>(fractalUpdater.getJuliaFractalCost(seed));
+            int exponent = (int)log10(fabs(cost));
+            double mantissa = cost / pow(10, exponent);
+
+            cout << "cost: " << mantissa << " x 10^" << exponent << endl;
+        }
+
+        juliaFractal.setGenerationParam(params);
+
+
+        //juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
 
         juliaFractal.draw(window);
 

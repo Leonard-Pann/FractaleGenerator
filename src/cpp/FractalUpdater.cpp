@@ -88,20 +88,21 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	xMin = -horizontalSize * 0.5f;
 	xMax = horizontalSize * 0.5f;
 
+	float zoomLevel(30000.0f);
 	maxSize = Vector2(xMax - xMin, yMax - yMin);
-	minSize = Vector2(maxSize.x / 30000.0f, maxSize.y / 30000.0f);
+	minSize = Vector2(maxSize.x / zoomLevel, maxSize.y / zoomLevel);
 
 	// Zoom
 	zoomStartOffset = -0.4f;
-	zoomMinDuration = 25.0f;
-	zoomMaxDuration = 25.0f;
+	zoomMinDuration = 30.0f;
+	zoomMaxDuration = 30.0f;
 	minZoom = 1.0f;
 	maxZoom = 1.0f;
 	zoomTweenIntensity = 0.0007f;
 
 	// Dezoom
-	dezoomMinDuration = 15.0f;
-	dezoomMaxDuration = 15.0f;
+	dezoomMinDuration = 10.0f;
+	dezoomMaxDuration = 10.0f;
 
 	// For findJuliaOrigin method
 	greyTextureWidth = 1920;
@@ -109,7 +110,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	juliaGreyShader.load();
 	greyMaxIter = 650;
 	juliaOriginThreshold = 0.0018f;
-	juliaOriginCostThreshold = 1036800000;
+	zoomJuliaOriginCostThreshold = 40000000;
 
 	// for findRandomPointToZoomInJulia
 	float refineZoomIterOn1080pScreen = 10.0f;
@@ -122,7 +123,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	maxNbOrigines = 8;
 
 	//target
-	generateNewTarget(nullptr);
+	generateFirstTarget();
 
 	target = newTarget;
 	generateNewTargetOtherThread(target);
@@ -133,9 +134,9 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	colorsSplines = generateNewPallets();
 	colorTimer = 0.0f;
 	vector<Vector3>* currentPallet = getCurrentColorPallet(colorsSplines);
-	minColorRange = 0.02f;
-	maxColorRange = 0.10f;
-	colorRangeDuration = 300.0f;
+	minColorRange = 0.01f;
+	maxColorRange = 0.05f;
+	colorRangeDuration = 520.0f;
 	nbColorRangeInSpline = 15;
 	colorRangeTimer = 0.0f;
 	generateColorRangeSpline();
@@ -492,18 +493,23 @@ static void computeGreyTextureRange(vector<float>* texture, int startRow, int en
 	{
 		for (int col = 0; col < width; col++)
 		{
-			float x = static_cast<float>(col) * xStep + window.x;
-			float y = static_cast<float>(row) * yStep + window.z;
-			float currentx = x;
-			float currenty = y;
-			float xTmp;
-			int nbIter(0);
-			while (currentx * currentx + (currenty * currenty) < 4.0 && nbIter < maxIter)
+			float currentx = static_cast<float>(col) * xStep + window.x;;
+			float currenty = static_cast<float>(row) * yStep + window.z;
+			float xSquare = currentx * currentx;
+			float ySquare = currenty * currenty;
+			int nbIter;
+
+			for (nbIter = 0; nbIter < maxIter; nbIter++)
 			{
-				xTmp = currentx;
-				currentx = (xTmp * xTmp) - (currenty * currenty) + cx;
-				currenty = 2.0 * xTmp * currenty + cy;
-				nbIter++;
+				if (xSquare + ySquare >= 4.0f)
+				{
+					break;
+				}
+
+				currenty = 2.0 * currentx * currenty + cy;
+				currentx = xSquare - ySquare + cx;
+				xSquare = currentx * currentx;
+				ySquare = currenty * currenty;
 			}
 
 			int index = (row * width) + col;
@@ -514,7 +520,7 @@ static void computeGreyTextureRange(vector<float>* texture, int startRow, int en
 			else
 			{
 				float v = static_cast<float>(nbIter) / static_cast<float>(maxIter);
-				float value = pow64(1.0 - v);
+				float value = pow64(1.0f - v);
 				(*texture)[index] = value;
 			}
 		}
@@ -600,18 +606,23 @@ static void computeGreyTextureRangeAndCost(vector<float>* texture, int startRow,
 	{
 		for (int col = 0; col < width; col++)
 		{
-			float x = static_cast<float>(col) * xStep + window.x;
-			float y = static_cast<float>(row) * yStep + window.z;
-			float currentx = x;
-			float currenty = y;
-			float xTmp;
-			int nbIter(0);
-			while (currentx * currentx + (currenty * currenty) < 4.0f && nbIter < maxIter)
+			float currentx = static_cast<float>(col) * xStep + window.x;;
+			float currenty = static_cast<float>(row) * yStep + window.z;
+			float xSquare = currentx * currentx;
+			float ySquare = currenty * currenty;
+			int nbIter;
+
+			for (nbIter = 0; nbIter < maxIter; nbIter++)
 			{
-				xTmp = currentx;
-				currentx = (xTmp * xTmp) - (currenty * currenty) + cx;
-				currenty = 2.0 * xTmp * currenty + cy;
-				nbIter++;
+				if (xSquare + ySquare >= 4.0f)
+				{
+					break;
+				}
+
+				currenty = 2.0 * currentx * currenty + cy;
+				currentx = xSquare - ySquare + cx;
+				xSquare = currentx * currentx;
+				ySquare = currenty * currenty;
 			}
 
 			partialCost += nbIter;
@@ -656,12 +667,16 @@ static tuple<vector<float>*, int64_t> computeGreyTextureAndCost(int maxIter, Vec
 	return make_tuple(pixels, (int64_t)cost);
 }
 
+#ifdef _DEBUG
+
 int64_t FractalUpdater::getJuliaFractalCost(Vector2 origin)
 {
 	tuple<vector<float>*, int64_t> tuple = computeGreyTextureAndCost(greyMaxIter, origin, Vector4(xMin, xMax, yMin, yMax), greyTextureWidth, greyTextureHeight);
 	delete get<0>(tuple);
 	return get<1>(tuple);
 }
+
+#endif
 
 static void computeGreyVariationRange(vector<float>* pixels, int start, int end, int greyTextureWidth, int greyTextureHeight, atomic<float>* totalSum)
 {
@@ -784,11 +799,8 @@ tuple<float, vector<float>*> FractalUpdater::getJuliaTotalGreyVariation(int maxI
 tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOrigin()
 {
 	Vector4 window(xMin, xMax, yMin, yMax);
-
 	Vector2 randPoint = randomPoint();
-
 	tuple<float, vector<float>*> tuple = getJuliaTotalGreyVariation(greyMaxIter, randPoint, window);
-
 	float mean = get<0>(tuple);
 	vector<float>* juliaGreyTexture = get<1>(tuple);
 
@@ -807,38 +819,28 @@ tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOrigin()
 
 tuple<Vector2, vector<float>*> FractalUpdater::findRandomJuliaOriginOtherThread()
 {
-	Vector2 randonPoint;
-	vector<float>* juliaGreyTexture = nullptr;
-	float mean;
+	Vector4 window(xMin, xMax, yMin, yMax);
+	Vector2 randPoint = randomPoint();
+	vector<float>* juliaGreyTexture = computeGreyTexture(greyMaxIter, randPoint, window, greyTextureWidth, greyTextureHeight);
+	float mean = computeGreyVariation(juliaGreyTexture, greyTextureWidth, greyTextureHeight);
 
-	do
+	while (mean < juliaOriginThreshold)
 	{
-		if (juliaGreyTexture != nullptr)
-		{
-			delete juliaGreyTexture;
-		}
+		delete juliaGreyTexture;
 
-		randonPoint = randomPoint();
-		tuple<vector<float>*, int64_t> tuple = computeGreyTextureAndCost(greyMaxIter, randonPoint, Vector4(xMin, xMax, yMin, yMax), greyTextureWidth, greyTextureHeight);
-		juliaGreyTexture = get<0>(tuple);
-		int64_t cost = get<1>(tuple);
-		if (cost > juliaOriginCostThreshold)
-		{
-			continue;
-		}
-
+		randPoint = randomPoint();
+		juliaGreyTexture = computeGreyTexture(greyMaxIter, randPoint, window, greyTextureWidth, greyTextureHeight);
 		mean = computeGreyVariation(juliaGreyTexture, greyTextureWidth, greyTextureHeight);
+	};
 
-	} while (mean < juliaOriginThreshold);
-
-	return make_tuple(randonPoint, juliaGreyTexture);
+	return make_tuple(randPoint, juliaGreyTexture);
 }
 
 #pragma endregion
 
 #pragma region findRandomPointToZoomInJulia
 
-tuple<bool, int, int> FractalUpdater::initRandomPointToZoom(Vector2 origin, vector<float>& initJuliaGreyText)
+tuple<bool, int, int> FractalUpdater::initRandomPointToZoom(const Vector2& origin, const vector<float>& initJuliaGreyText)
 {
 	vector<int> zeroPoints = vector<int>();
 	zeroPoints.reserve(initJuliaGreyText.size());
@@ -903,8 +905,6 @@ tuple<bool, int, int> FractalUpdater::initRandomPointToZoom(Vector2 origin, vect
 
 		if (randomRow >= 0 && randomCol >= 0)
 		{
-			// float x = Math::lerp(xMin, xMax, (float)randomCol / (float)(greyTextureWidth - 1));
-			// float y = Math::lerp(yMin, yMax, (float)randomRow / (float)(greyTextureHeight - 1));
 			return make_tuple(true, randomRow, randomCol);
 		}
 	}
@@ -924,49 +924,27 @@ tuple<bool, int, int> FractalUpdater::initRandomPointToZoom(Vector2 origin, vect
 
 	int col = minIndex % greyTextureWidth;
 	int row = minIndex / greyTextureWidth;
-	// float x = Math::lerp(xMin, xMax, (float)col / (float)(greyTextureWidth - 1));
-	// float y = Math::lerp(yMin, yMax, (float)row / (float)(greyTextureHeight - 1));
-
 	return make_tuple(false, row, col);
 }
 
-struct ComputeJuliaTextureParams
+tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointInternal(bool otherThread)
 {
-	int maxIter;
 	Vector2 origin;
-	Vector4 window;
-	JuliaGreyComputeShader* juliaGreyShader;
-	int greyTextureWidth;
-	int greyTextureHeight;
-};
-
-struct ComputeJuliaTextureReturn
-{
 	vector<float>* texture;
-};
+	if (otherThread)
+	{
+		tuple<Vector2, vector<float>*> tuple = findRandomJuliaOriginOtherThread();
+		origin = get<0>(tuple);
+		texture = get<1>(tuple);
+	}
+	else
+	{
+		tuple<Vector2, vector<float>*> tuple = findRandomJuliaOrigin();
+		origin = get<0>(tuple);
+		texture = get<1>(tuple);
+	}
 
-void* computeJuliaTexture(void* params)
-{
-	ComputeJuliaTextureParams* paramsCast = (ComputeJuliaTextureParams*)params;
-	int maxIter = paramsCast->maxIter;
-	Vector2 origin = paramsCast->origin;
-	Vector4 window = paramsCast->window;
-	JuliaGreyComputeShader* juliaGreyShader = paramsCast->juliaGreyShader;
-	int greyTextureWidth = paramsCast->greyTextureWidth;
-	int greyTextureHeight = paramsCast->greyTextureHeight;
-
-	vector<float>* pixels = juliaGreyShader->computeTexture(maxIter, origin, window, greyTextureWidth, greyTextureHeight);
-
-	ComputeJuliaTextureReturn* res = new ComputeJuliaTextureReturn();
-	res->texture = pixels;
-	return res;
-}
-
-
-// Find a random z € |C such that Julia(c)(z) = 0 && it exist a neighborhood of z name zi such as Julia(c)(zi) > 0
-Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vector<float>& initJuliaGreyText, bool otherThread)
-{
-	tuple<bool, int, int> tuple = initRandomPointToZoom(origin, initJuliaGreyText);
+	tuple<bool, int, int> tuple = initRandomPointToZoom(origin, *texture);
 	bool isFrontier = get<0>(tuple);
 	int row = get<1>(tuple);
 	int col = get<2>(tuple);
@@ -998,15 +976,17 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 		Vector4 window = Vector4(xMin, xMax, yMin, yMax);
 
 		vector<float>* texture;
-		if (otherThread)
-		{
-			texture = computeGreyTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
-		}
-		else
-		{
-			texture = juliaGreyShader.computeTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
-		}
 
+		//if (nbIter == 1)
+		//{
+		//	std::tuple<vector<float>*, int64_t> tuple = computeGreyTextureAndCost(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
+		//}
+		//else
+		//{
+		//	texture = juliaGreyShader.computeTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
+		//}
+
+		texture = computeGreyTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
 		int radius = 1;
 		int newRow, newCol;
 		int texSize = greyTextureWidth * greyTextureHeight;
@@ -1222,21 +1202,21 @@ Vector2 FractalUpdater::findRandomPointToZoomInJuliaInternal(Vector2 origin, vec
 	return currentPoint;
 }
 
-Vector2 FractalUpdater::findRandomPointToZoomInJulia(Vector2 origin, vector<float>& initJuliaGreyText)
+tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPoint()
 {
-	return findRandomPointToZoomInJuliaInternal(origin, initJuliaGreyText, false);
+	return findRandomOriginAndZoomPointInternal(false);
 }
 
-Vector2 FractalUpdater::findRandomPointToZoomInJuliaOtherThread(Vector2 origin, vector<float>& initJuliaGreyText)
+tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointOtherThread()
 {
-	return findRandomPointToZoomInJuliaInternal(origin, initJuliaGreyText, true);
+	return findRandomOriginAndZoomPointInternal(true);
 }
 
 #pragma endregion
 
 #pragma region generateNewTarget
 
-void sortOrigin(vector<Vector2>& origins, vector<vector<float>*>& textures)
+void sortOrigin(vector<Vector2>& origins)
 {
 	for (int i = 3; i < origins.size(); i++)
 	{
@@ -1260,14 +1240,61 @@ void sortOrigin(vector<Vector2>& origins, vector<vector<float>*>& textures)
 			Vector2 tmp = origins[j];
 			origins[j] = origins[j + 1];
 			origins[j + 1] = tmp;
-			vector<float>* tmpText = textures[j];
-			textures[j] = textures[j + 1];
-			textures[j + 1] = tmpText;
 		}
 	}
 }
 
-void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
+static bool compareVector2(const Vector2& a, const Vector2& b)
+{
+	if (a.x != b.x)
+	{
+		return a.x < b.x;
+	}
+	return a.y < b.y;
+}
+
+void sortOrigin2(const Vector2& start, const Vector2& end, vector<Vector2> origins)
+{
+	if (origins.empty()) 
+	{
+		return;
+	}
+
+	sort(origins.begin(), origins.end(), compareVector2);
+
+	double minTotalDistance = numeric_limits<double>::infinity();
+	vector<Vector2> bestPath = origins;
+
+	do 
+	{
+		double currentTotalDistance = 0.0;
+		Vector2 currentPoint(start);
+
+		for (const Vector2& point : origins)
+		{
+			currentTotalDistance += Vector2::distance(currentPoint, point);
+			currentPoint = point;
+
+			if (currentTotalDistance >= minTotalDistance) 
+			{
+				break;
+			}
+		}
+
+		currentTotalDistance += Vector2::distance(currentPoint, end);
+
+		if (currentTotalDistance < minTotalDistance) 
+		{
+			minTotalDistance = currentTotalDistance;
+			bestPath = origins;
+		}
+
+	} while (next_permutation(origins.begin(), origins.end(), compareVector2));
+
+	origins = bestPath;
+}
+
+void FractalUpdater::generateFirstTarget()
 {
 	// // code to precompute initOrigins size
 	// int nbOrigins = 50;
@@ -1294,19 +1321,8 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 
 	int nbOrigines = Random::rand(min(minNbOrigines, maxNbOrigines - 1), maxNbOrigines - 1);
 	vector<Vector2> origines;
-	vector<vector<float>*> textures;
 	origines.reserve(nbOrigines + 1);
-	textures.reserve(nbOrigines + 1);
-
-	if (oldTarget == nullptr)
-	{
-		origines.push_back(Vector2());
-	}
-	else
-	{
-		origines.push_back(oldTarget->finalOrigin());
-	}
-	textures.push_back(nullptr);
+	Vector2 startOrigin;
 
 	{
 		vector<int> alreadyPickIndex;
@@ -1323,22 +1339,20 @@ void FractalUpdater::generateNewTarget(FractalUpdater::StateTarget* oldTarget)
 			Vector2 origin(FractalOrigin::startJuliaOrigins[randIndex], FractalOrigin::startJuliaOrigins[randIndex + 1]);
 			vector<float>* texture = juliaGreyShader.computeTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
 			origines.push_back(origin);
-			textures.push_back(texture);
 		}
 	}
 
-	sortOrigin(origines, textures);
+	// to precompute
+	tuple<Vector2, Vector2> originAndZoomPoint = findRandomOriginAndZoomPoint();
 
-	Vector2 randZoomPoint = findRandomPointToZoomInJulia(origines[origines.size() - 1], *textures[textures.size() - 1]);
+	Vector2 endOrigin = get<0>(originAndZoomPoint);
+	Vector2 zoomPoint = get<1>(originAndZoomPoint);
+	sortOrigin2(startOrigin, endOrigin, origines);
 
-	for (int i = 1; i < textures.size(); i++)
-	{
-		delete textures[i];
-	}
 
 	vector<Vector2> zoomPoints(3);
-	zoomPoints[0] = oldTarget == nullptr ? Vector2() : oldTarget->finalZoomPoint();
-	zoomPoints[2] = randZoomPoint;
+	zoomPoints[0] = Vector2();
+	zoomPoints[2] = zoomPoint;
 
 	float zoomDuration = Random::rand(zoomMinDuration, zoomMaxDuration);
 	float dezoomDuration = Random::rand(dezoomMinDuration, dezoomMaxDuration);
@@ -1354,43 +1368,36 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 	isNewTargetReady = false;
 	Vector2 finalOrigin = oldTarget == nullptr ? Vector2() : oldTarget->finalOrigin();
 	Vector2 startZoom = oldTarget == nullptr ? Vector2() : oldTarget->finalZoomPoint();
-	auto lambda = [this](Vector2 finalOrigin, Vector2 startZoom, uint32_t randSeed)
+	auto lambda = [this](Vector2 startOrigin, Vector2 startZoom, uint32_t randSeed)
 	{
 		Random::setSeed(randSeed);
 		int nbOrigines = Random::rand(min(minNbOrigines, maxNbOrigines - 1), maxNbOrigines - 1);
 		vector<Vector2> origines;
-		vector<vector<float>*> textures;
 		origines.reserve(nbOrigines + 1);
-		origines.push_back(finalOrigin);
-		textures.reserve(nbOrigines + 1);
-		textures.push_back(nullptr);
 
-		for (int i = 0; i < nbOrigines; i++)
+		for (int i = 0; i < nbOrigines - 1; i++)
 		{
-			tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOriginOtherThread();
+			tuple<Vector2, vector<float>*> tuple = findRandomJuliaOriginOtherThread();
+			Vector2 origin = get<0>(tuple);
+			delete get<1>(tuple);
 			cout << "Second thread : Julia origin " << i + 1 << "/" << nbOrigines << " generated!" << endl;
-
-			origines.push_back(get<0>(originTuple));
-			textures.push_back(get<1>(originTuple));
+			origines.push_back(origin);
 		}
 
-		cout << "Second thread : Sorting Origins" << endl;
-		sortOrigin(origines, textures);
+		tuple<Vector2, Vector2> originAndZoomPoint = findRandomOriginAndZoomPointOtherThread();
+		Vector2 endOrigin = get<0>(originAndZoomPoint);
+		Vector2 zoomPoint = get<1>(originAndZoomPoint);
+		cout << "Last Julia origin and zoom point generated!" << endl;
 
-		cout << "Second thread: Start generate Julia zoom point" << endl;
+		cout << "Sorting origin" << endl;
+		sortOrigin2(startOrigin, endOrigin, origines);
+		origines.insert(origines.begin(), startOrigin);
+		origines.push_back(endOrigin);
 
-		Vector2 randZoomPoint = findRandomPointToZoomInJuliaOtherThread(origines[origines.size() - 1], *textures[textures.size() - 1]);
-
-		cout << "Second thread: Julia zoom point generated" << endl;
-
-		for (int i = 1; i < textures.size(); i++)
-		{
-			delete textures[i];
-		}
-
+		// weird ????
 		vector<Vector2> zoomPoints(3);
 		zoomPoints[0] = startZoom;
-		zoomPoints[2] = randZoomPoint;
+		zoomPoints[2] = zoomPoint;
 
 		float zoomDuration = Random::rand(zoomMinDuration, zoomMaxDuration);
 		float dezoomDuration = Random::rand(dezoomMinDuration, dezoomMaxDuration);

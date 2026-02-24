@@ -1,4 +1,5 @@
 #include "shader/JuliaFractal.hpp"
+#include <iostream>
 
 using namespace std;
 
@@ -48,7 +49,7 @@ void JuliaFractal::setGenerationParam(const FractaleParam& params)
     shader.setUniform4f("window", Vector4(params.xMin, params.xMax, params.yMin, params.yMax));
     //shader.setUniform3fv("colorPalette", currentPalette);
     shader.setUniform3fv("colorPalette", params.colorPalette);
-    //shader.setUniform1f("colorRange", 0.01 * 14.0f);
+    //shader.setUniform1f("colorRange", 0.01f);
     shader.setUniform1f("colorRange", params.colorRange);
 }
 
