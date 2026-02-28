@@ -5,7 +5,6 @@
 #include <sstream>
 #include <fstream>
 #include <thread>
-#include <algorithm>
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
 #include "Math.hpp"
@@ -105,16 +104,15 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	dezoomMaxDuration = 10.0f;
 
 	// For findJuliaOrigin method
-	greyTextureWidth = 1920;
-	greyTextureHeight = 1080;
+	greyTextureWidth = screenWidth;
+	greyTextureHeight = screenHeight;
 	juliaGreyShader.load();
 	greyMaxIter = 650;
 	juliaOriginThreshold = 0.0018f;
 	zoomJuliaOriginCostThreshold = 40000000;
 
 	// for findRandomPointToZoomInJulia
-	float refineZoomIterOn1080pScreen = 10.0f;
-	refiningPointToZoomIter = Math::ceil(((float)screenWidth / 1920.0f) * refineZoomIterOn1080pScreen);
+	refiningPointToZoomIter = max(1, Math::floor(log2f(zoomLevel)) - 5);
 
 	// Change Fractal
 	changeFractalDuration = 25.0f;
@@ -130,12 +128,12 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 
 	//Colors
 	nbColorsInPalet = (int)colorPallets[0].size();
-	nbColorsInAnUpdateCircle = 3;
+	nbColorsInAnUpdateCircle = 2;
 	colorsSplines = generateNewPallets();
 	colorTimer = 0.0f;
 	vector<Vector3>* currentPallet = getCurrentColorPallet(colorsSplines);
 	minColorRange = 0.01f;
-	maxColorRange = 0.05f;
+	maxColorRange = 0.04f;
 	colorRangeDuration = 520.0f;
 	nbColorRangeInSpline = 15;
 	colorRangeTimer = 0.0f;
@@ -929,6 +927,11 @@ tuple<bool, int, int> FractalUpdater::initRandomPointToZoom(const Vector2& origi
 
 tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointInternal(bool otherThread)
 {
+	//int exponent = (int)log10(fabs(zoomJuliaOriginCostThreshold));
+	//double mantissa = zoomJuliaOriginCostThreshold / pow(10, exponent);
+	//cout << "Searching, max_cost= " << mantissa << " x 10^" << exponent  << endl;
+
+
 	Vector2 origin;
 	vector<float>* texture;
 	if (otherThread)
@@ -945,7 +948,9 @@ tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointInternal(boo
 	}
 
 	tuple<bool, int, int> tuple = initRandomPointToZoom(origin, *texture);
-	bool isFrontier = get<0>(tuple);
+	delete texture;
+
+	bool isZeroPoint = get<0>(tuple);
 	int row = get<1>(tuple);
 	int col = get<2>(tuple);
 
@@ -953,14 +958,6 @@ tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointInternal(boo
 	float y = Math::lerp(yMin, yMax, (float)row / (float)(greyTextureHeight - 1));
 	Vector2 currentPoint(x, y);
 
-	if (!isFrontier)
-	{
-		//cout << "No frontier" << endl;
-		return currentPoint;
-	}
-
-	float value = initJuliaGreyText[(greyTextureWidth * row) + col];
-	const float scaleFactor = 0.5f;
 	Vector2 size = Vector2(xMax - xMin, yMax - yMin);
 
 	int nbIter = refiningPointToZoomIter;
@@ -968,95 +965,198 @@ tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointInternal(boo
 	row = greyTextureHeight >> 1;
 	while (nbIter > 0)
 	{
-		size = Vector2(size.x * scaleFactor, size.y * scaleFactor);
+		size = Vector2(size.x * 0.5f, size.y * 0.5f);
 		float xMin = currentPoint.x - (size.x * 0.5f);
 		float xMax = currentPoint.x + (size.x * 0.5f);
 		float yMin = currentPoint.y - (size.x * 0.5f);
 		float yMax = currentPoint.y + (size.x * 0.5f);
 		Vector4 window = Vector4(xMin, xMax, yMin, yMax);
 
-		vector<float>* texture;
+		std::tuple<vector<float>*, int64_t> tuple = computeGreyTextureAndCost(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
+		vector<float>* texture = get<0>(tuple);
+		int64_t cost(get<1>(tuple));
 
-		//if (nbIter == 1)
-		//{
-		//	std::tuple<vector<float>*, int64_t> tuple = computeGreyTextureAndCost(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
-		//}
-		//else
-		//{
-		//	texture = juliaGreyShader.computeTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
-		//}
 
-		texture = computeGreyTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
-		int radius = 1;
-		int newRow, newCol;
-		int texSize = greyTextureWidth * greyTextureHeight;
+		//int exponent = (int)log10(fabs(cost));
+		//double mantissa = cost / pow(10, exponent);
+		//cout << "cost: " << mantissa << " x 10^" << exponent << endl;
 
-		float currentValue = (*texture)[(greyTextureWidth * row) + col];
-		if (currentValue <= 0.0f)
+
+		if (cost > zoomJuliaOriginCostThreshold)
 		{
-			bool find = false;
+			delete texture;
+			return findRandomOriginAndZoomPointInternal(otherThread);
+		}
 
-			if ((*texture)[(greyTextureWidth * (row + 1)) + col] > 0.0f ||
-				(*texture)[(greyTextureWidth * (row - 1)) + col] > 0.0f ||
-				(*texture)[(greyTextureWidth * row) + (col + 1)] > 0.0f ||
-				(*texture)[(greyTextureWidth * row) + (col - 1)] > 0.0f)
+		int newRow, newCol;
+
+		if (isZeroPoint)
+		{
+			int texSize = greyTextureWidth * greyTextureHeight;
+			float currentValue = (*texture)[(greyTextureWidth * row) + col];
+			int radius(1);
+			int maxRadius(100);
+			if (currentValue <= 0.0f)
 			{
-				newRow = row;
-				newCol = col;
-				find = true;
+				bool find = false;
+
+				if ((*texture)[(greyTextureWidth * (row + 1)) + col] > 0.0f ||
+					(*texture)[(greyTextureWidth * (row - 1)) + col] > 0.0f ||
+					(*texture)[(greyTextureWidth * row) + (col + 1)] > 0.0f ||
+					(*texture)[(greyTextureWidth * row) + (col - 1)] > 0.0f)
+				{
+					newRow = row;
+					newCol = col;
+					find = true;
+				}
+
+				if (!find && (*texture)[(greyTextureWidth * (row + 1)) + (col + 1)] > 0.0f)
+				{
+					newRow = row + 1;
+					newCol = col;
+					find = true;
+				}
+
+				if (!find && (*texture)[(greyTextureWidth * (row + 1)) + (col - 1)] > 0.0f)
+				{
+					newRow = row + 1;
+					newCol = col;
+					find = true;
+				}
+
+				if (!find && (*texture)[(greyTextureWidth * (row - 1)) + (col + 1)] > 0.0f)
+				{
+					newRow = row - 1;
+					newCol = col;
+					find = true;
+				}
+
+				if (!find && (*texture)[(greyTextureWidth * (row - 1)) + (col - 1)] > 0.0f)
+				{
+					newRow = row - 1;
+					newCol = col;
+					find = true;
+				}
+
+				if (!find)
+				{
+					radius = 2;
+
+					while (radius < maxRadius)
+					{
+						int newRow1 = row + radius;
+						int newRow2 = row - radius;
+						for (int i = 1 - radius; i <= radius - 1; i++)
+						{
+							int index = (greyTextureWidth * newRow1) + (col + i);
+							if (index >= 0 && index < texSize && (*texture)[index] > 0.0f)
+							{
+								newRow = newRow1 - 1;
+								newCol = col + i;
+								find = true;
+								break;
+							}
+
+							index = (greyTextureWidth * newRow2) + (col + i);
+							if (index >= 0 && index < texSize && (*texture)[index] > 0.0f)
+							{
+								newRow = newRow2 + 1;
+								newCol = col + i;
+								find = true;
+								break;
+							}
+						}
+
+						if (find)
+							break;
+
+						int newCol1 = col + radius;
+						int newCol2 = col - radius;
+						for (int i = 1 - radius; i <= radius - 1; i++)
+						{
+							int index = (greyTextureWidth * (row + i)) + newCol1;
+							if ((*texture)[index] > 0.0f)
+							{
+								newRow = row + i;
+								newCol = newCol1 - 1;
+								find = true;
+								break;
+							}
+
+							index = (greyTextureWidth * (row + i)) + newCol2;
+							if (index >= 0 && index < texSize && (*texture)[index] > 0.0f)
+							{
+								newRow = row + i;
+								newCol = newCol2 + 1;
+								find = true;
+								break;
+							}
+						}
+
+						if (find)
+							break;
+
+						if ((*texture)[(greyTextureWidth * (row + radius)) + (col + radius)] > 0.0f)
+						{
+							newRow = row + radius;
+							newCol = col + radius - 1;
+							break;
+						}
+
+						if ((*texture)[(greyTextureWidth * (row + radius)) + (col - radius)] > 0.0f)
+						{
+							newRow = row + radius;
+							newCol = col - radius + 1;
+							break;
+						}
+
+						if ((*texture)[(greyTextureWidth * (row - radius)) + (col + radius)] > 0.0f)
+						{
+							newRow = row - radius;
+							newCol = col + radius - 1;
+							break;
+						}
+
+						if ((*texture)[(greyTextureWidth * (row - radius)) + (col - radius)] > 0.0f)
+						{
+							newRow = row - radius;
+							newCol = col - radius + 1;
+							break;
+						}
+
+						radius++;
+					}
+
+					if (radius >= maxRadius)
+					{
+						delete texture;
+						return findRandomOriginAndZoomPointInternal(otherThread);
+					}
+				}
 			}
-
-			if (!find && (*texture)[(greyTextureWidth * (row + 1)) + (col + 1)] > 0.0f)
+			else
 			{
-				newRow = row + 1;
-				newCol = col;
-				find = true;
-			}
-
-			if (!find && (*texture)[(greyTextureWidth * (row + 1)) + (col - 1)] > 0.0f)
-			{
-				newRow = row + 1;
-				newCol = col;
-				find = true;
-			}
-
-			if (!find && (*texture)[(greyTextureWidth * (row - 1)) + (col + 1)] > 0.0f)
-			{
-				newRow = row - 1;
-				newCol = col;
-				find = true;
-			}
-
-			if (!find && (*texture)[(greyTextureWidth * (row - 1)) + (col - 1)] > 0.0f)
-			{
-				newRow = row - 1;
-				newCol = col;
-				find = true;
-			}
-
-			if (!find)
-			{
-				radius = 2;
-
-				while (true)
+				while (radius < maxRadius)
 				{
 					int newRow1 = row + radius;
 					int newRow2 = row - radius;
-					for (int i = 1 - radius; i <= radius - 1; i++)
+					bool find = false;
+
+					for (int i = -radius; i <= radius; i++)
 					{
 						int index = (greyTextureWidth * newRow1) + (col + i);
-						if (index >= 0 && index < texSize && (*texture)[index] > 0.0f)
+						if (index >= 0 && index < texSize && (*texture)[index] <= 0.0f)
 						{
-							newRow = newRow1 - 1;
+							newRow = newRow1;
 							newCol = col + i;
 							find = true;
 							break;
 						}
 
 						index = (greyTextureWidth * newRow2) + (col + i);
-						if (index >= 0 && index < texSize && (*texture)[index] > 0.0f)
+						if (index >= 0 && index < texSize && (*texture)[index] <= 0.0f)
 						{
-							newRow = newRow2 + 1;
+							newRow = newRow2;
 							newCol = col + i;
 							find = true;
 							break;
@@ -1068,22 +1168,22 @@ tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointInternal(boo
 
 					int newCol1 = col + radius;
 					int newCol2 = col - radius;
-					for (int i = 1 - radius; i <= radius - 1; i++)
+					for (int i = -radius; i <= radius; i++)
 					{
 						int index = (greyTextureWidth * (row + i)) + newCol1;
-						if ((*texture)[index] > 0.0f)
+						if ((*texture)[index] <= 0.0f)
 						{
 							newRow = row + i;
-							newCol = newCol1 - 1;
+							newCol = newCol1;
 							find = true;
 							break;
 						}
 
 						index = (greyTextureWidth * (row + i)) + newCol2;
-						if (index >= 0 && index < texSize && (*texture)[index] > 0.0f)
+						if (index >= 0 && index < texSize && (*texture)[index] <= 0.0f)
 						{
 							newRow = row + i;
-							newCol = newCol2 + 1;
+							newCol = newCol2;
 							find = true;
 							break;
 						}
@@ -1092,104 +1192,34 @@ tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointInternal(boo
 					if (find)
 						break;
 
-					if ((*texture)[(greyTextureWidth * (row + radius)) + (col + radius)] > 0.0f)
-					{
-						newRow = row + radius;
-						newCol = col + radius - 1;
-						break;
-					}
-
-					if ((*texture)[(greyTextureWidth * (row + radius)) + (col - radius)] > 0.0f)
-					{
-						newRow = row + radius;
-						newCol = col - radius + 1;
-						break;
-					}
-
-					if ((*texture)[(greyTextureWidth * (row - radius)) + (col + radius)] > 0.0f)
-					{
-						newRow = row - radius;
-						newCol = col + radius - 1;
-						break;
-					}
-
-					if ((*texture)[(greyTextureWidth * (row - radius)) + (col - radius)] > 0.0f)
-					{
-						newRow = row - radius;
-						newCol = col - radius + 1;
-						break;
-					}
-
 					radius++;
+				}
+
+				if (radius >= maxRadius)
+				{
+					delete texture;
+					return findRandomOriginAndZoomPointInternal(otherThread);
 				}
 			}
 		}
 		else
 		{
-			while (true)
+			int radius(3);
+			float minValue(2.0f);
+			float currentValue;
+			for (int i = -radius; i < radius; i++)
 			{
-				int newRow1 = row + radius;
-				int newRow2 = row - radius;
-				bool find = false;
-
-				for (int i = -radius; i <= radius; i++)
+				for (int j = -radius; j < radius; j++)
 				{
-					int index = (greyTextureWidth * newRow1) + (col + i);
-					if (index >= 0 && index < texSize && (*texture)[index] <= 0.0f)
-					{
-						newRow = newRow1;
-						newCol = col + i;
-						find = true;
-						break;
-					}
-
-					index = (greyTextureWidth * newRow2) + (col + i);
-					if (index >= 0 && index < texSize && (*texture)[index] <= 0.0f)
-					{
-						newRow = newRow2;
-						newCol = col + i;
-						find = true;
-						break;
-					}
-				}
-
-				if (find)
-					break;
-
-				int newCol1 = col + radius;
-				int newCol2 = col - radius;
-				for (int i = -radius; i <= radius; i++)
-				{
-					int index = (greyTextureWidth * (row + i)) + newCol1;
-					if ((*texture)[index] <= 0.0f)
+					currentValue = (*texture)[(greyTextureWidth * (row + i)) + (col + j)];
+					if (currentValue < minValue)
 					{
 						newRow = row + i;
-						newCol = newCol1;
-						find = true;
-						break;
-					}
-
-					index = (greyTextureWidth * (row + i)) + newCol2;
-					if (index >= 0 && index < texSize && (*texture)[index] <= 0.0f)
-					{
-						newRow = row + i;
-						newCol = newCol2;
-						find = true;
-						break;
+						newCol = col + j;
+						minValue = currentValue;
 					}
 				}
-
-				if (find)
-					break;
-
-				radius++;
 			}
-		}
-
-		float val = (*texture)[(greyTextureWidth * newRow) + newCol];
-		if (val > 0.0f)
-		{
-			cout << "New pixel found must have a value of 0, line: " << __LINE__ << " in function: " << __FUNCTION__ << " in file: " << __FILE__ << endl;
 		}
 
 		currentPoint.x = Math::lerp(xMin, xMax, (float)newCol / (float)(greyTextureWidth - 1));
@@ -1199,7 +1229,7 @@ tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointInternal(boo
 		nbIter--;
 	}
 
-	return currentPoint;
+	return make_tuple(origin, currentPoint);
 }
 
 tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPoint()
@@ -1216,7 +1246,7 @@ tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointOtherThread(
 
 #pragma region generateNewTarget
 
-void sortOrigin(vector<Vector2>& origins)
+static void sortOrigin(vector<Vector2>& origins)
 {
 	for (int i = 3; i < origins.size(); i++)
 	{
@@ -1236,7 +1266,6 @@ void sortOrigin(vector<Vector2>& origins)
 
 		for (int j = i - 1; j > minIndex; j--)
 		{
-			// swap j and j + 1
 			Vector2 tmp = origins[j];
 			origins[j] = origins[j + 1];
 			origins[j + 1] = tmp;
@@ -1253,7 +1282,7 @@ static bool compareVector2(const Vector2& a, const Vector2& b)
 	return a.y < b.y;
 }
 
-void sortOrigin2(const Vector2& start, const Vector2& end, vector<Vector2> origins)
+static void sortOrigin2(const Vector2& start, const Vector2& end, vector<Vector2> origins)
 {
 	if (origins.empty()) 
 	{
@@ -1296,26 +1325,52 @@ void sortOrigin2(const Vector2& start, const Vector2& end, vector<Vector2> origi
 
 void FractalUpdater::generateFirstTarget()
 {
-	// // code to precompute initOrigins size
-	// int nbOrigins = 50;
-	// ofstream outfile("initOrigins.txt");
-	// outfile << "[";
-	// for(int i = 0; i < nbOrigins; i++)
-	// {
-	// 	tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOrigin();
-	// 	Vector2 origin = get<0>(originTuple);
-	// 	outfile << origin.x << "," << origin.y;
-	// 	if(i != nbOrigins - 1)
-	// 	{
-	// 		outfile << ",";
-	// 	}
-	// 	cout << "origin " << i + 1 << "/" << nbOrigins << endl;
-	// }
+	 //// code to precompute startJuliaOrigins
+	 //int nbOrigins = 500;
+	 //ofstream outfile("initOrigins.txt");
+	 //outfile << "[";
+	 //Random::setRandomSeed();
+	 //for(int i = 0; i < nbOrigins; i++)
+	 //{
+	 //	tuple<Vector2, vector<float>*> originTuple = findRandomJuliaOrigin();
+	 //	Vector2 origin = get<0>(originTuple);
+		//delete get<1>(originTuple);
+	 //	outfile << origin.x << "," << origin.y;
+	 //	if(i != nbOrigins - 1)
+	 //	{
+	 //		outfile << ",";
+	 //	}
+	 //	cout << "Origin " << i + 1 << "/" << nbOrigins << endl;
+	 //}
 
-	// outfile << "]";
-	// outfile.close();
+	 //outfile << "]";
+	 //outfile.close();
 
-	// exit(1);
+	 //exit(1);
+
+
+	 // code to precompute startJuliaOriginsAndZoomPoint
+	 //int nbOrigins = 500;
+	 //ofstream outfile("initOriginsAndZoom.txt");
+	 //outfile << "[";
+	 //Random::setRandomSeed();
+	 //for(int i = 0; i < nbOrigins; i++)
+	 //{
+	 //	tuple<Vector2, Vector2> tuple = findRandomOriginAndZoomPoint();
+		//Vector2 origin = get<0>(tuple);
+		//Vector2 zoomPoint = get<1>(tuple);
+	 //	outfile << origin.x << "," << origin.y << "," << zoomPoint.x << "," << zoomPoint.y;
+	 //	if(i != nbOrigins - 1)
+	 //	{
+	 //		outfile << ",";
+	 //	}
+	 //	cout << "Found " << i + 1 << "/" << nbOrigins << endl;
+	 //}
+
+	 //outfile << "]";
+	 //outfile.close();
+
+	 //exit(1);
 
 	isNewTargetReady = false;
 
@@ -1342,16 +1397,16 @@ void FractalUpdater::generateFirstTarget()
 		}
 	}
 
-	// to precompute
-	tuple<Vector2, Vector2> originAndZoomPoint = findRandomOriginAndZoomPoint();
+	int randIndex = Random::rand(0, (FractalOrigin::startJuliaOriginsAndZoomPointSize >> 2) - 1) * 4;
+	Vector2 endOrigin(FractalOrigin::startJuliaOriginsAndZoomPoint[randIndex], FractalOrigin::startJuliaOriginsAndZoomPoint[randIndex + 1]);
+	Vector2 zoomPoint(FractalOrigin::startJuliaOriginsAndZoomPoint[randIndex + 2], FractalOrigin::startJuliaOriginsAndZoomPoint[randIndex + 3]);
 
-	Vector2 endOrigin = get<0>(originAndZoomPoint);
-	Vector2 zoomPoint = get<1>(originAndZoomPoint);
 	sortOrigin2(startOrigin, endOrigin, origines);
-
+	origines.insert(origines.begin(), startOrigin);
+	origines.push_back(endOrigin);
 
 	vector<Vector2> zoomPoints(3);
-	zoomPoints[0] = Vector2();
+	zoomPoints[1] = { 0.0f, 0.0f };
 	zoomPoints[2] = zoomPoint;
 
 	float zoomDuration = Random::rand(zoomMinDuration, zoomMaxDuration);
@@ -1394,9 +1449,9 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 		origines.insert(origines.begin(), startOrigin);
 		origines.push_back(endOrigin);
 
-		// weird ????
 		vector<Vector2> zoomPoints(3);
 		zoomPoints[0] = startZoom;
+		zoomPoints[1] = { 0.0f, 0.0f };
 		zoomPoints[2] = zoomPoint;
 
 		float zoomDuration = Random::rand(zoomMinDuration, zoomMaxDuration);
@@ -1406,7 +1461,7 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 		{
 			lock_guard<mutex> lock(mutexName);
 			this->newTarget = new StateTarget(origines, zoomPoints, zoomDuration, dezoomDuration, zoom);
-			cout << "next tardet generated" << endl;
+			cout << "next target generated" << endl;
 			isNewTargetReady = true;
 		}
 	};

@@ -114,7 +114,7 @@ private:
 
 	Vector2 randomPoint() const;
 	std::tuple<Vector2, std::vector<float>*> findRandomJuliaOrigin();
-	std::tuple<Vector2, vector<float>*> findRandomJuliaOriginOtherThread();
+	std::tuple<Vector2, std::vector<float>*> findRandomJuliaOriginOtherThread();
 	std::tuple<float, std::vector<float>*> getJuliaTotalGreyVariation(int maxIter, const Vector2 origin, const Vector4& window);
 	std::tuple<bool, int, int> initRandomPointToZoom(const Vector2& origin, const std::vector<float>& initJuliaGreyText);
 	std::tuple<Vector2, Vector2> findRandomOriginAndZoomPointInternal(bool otherThread);
