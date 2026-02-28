@@ -18,7 +18,7 @@ struct FractaleParam
     }
 
     FractaleParam(Vector2 origin, float xMin, float xMax, float yMin, float yMax, Vector3 inColor, const std::vector<Vector3>& colorPalette, float colorRange) :
-        origin(origin), xMin(xMin), xMax(xMax), yMin(yMin), yMax(yMax), inColor(inColor), colorPalette(colorPalette), maxIter(maxIter), colorRange(colorRange)
+        origin(origin), xMin(xMin), xMax(xMax), yMin(yMin), yMax(yMax), inColor(inColor), colorPalette(colorPalette), colorRange(colorRange)
     {
 
     }
