@@ -11,6 +11,7 @@
 #include "Vector.hpp"
 #include "shader/JuliaGreyComputeShader.hpp"
 #include "bezierCurve/CatmulRomSpline.hpp"
+#include "bezierCurve/HermiteSpline2D.hpp"
 #include "Number.hpp"
 
 class FractalUpdater
@@ -22,8 +23,9 @@ private:
 	class StateTarget
 	{
 	private:
-		HermiteSpline<Vector2> spline; // seed / c component of the julia fractal
-		HermiteSpline<Vector2> zoomSpline;
+		HermiteSpline2D spline; // seed / c component of the julia fractal
+		//HermiteSpline<Vector2> zoomSpline;
+		HermiteSpline2D zoomSpline;
 
 	public:
 		float zoomDuration;

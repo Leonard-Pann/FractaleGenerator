@@ -62,7 +62,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     uint32_t seed = (uint32_t)time(NULL);
     cout << "seed: " << seed << endl;
     Random::setSeed(seed);
-    //Random::setSeed(42);
+    Random::setSeed(42);
 
     if (glfwInit() == 0)
         return -1;
@@ -88,18 +88,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
     //glfwSetScrollCallback(window, onMouseScroll);
-    //glfwSetCursorPosCallback(window, onMouseMove);
+    glfwSetCursorPosCallback(window, onMouseMove);
     //glfwSwapInterval(0); // disable VSync
 
     JuliaFractal juliaFractal;
     FractalUpdater fractalUpdater(windowWidth, windowHeight);
 
-    //float yMin = -1.4f;
-    //float yMax = 1.4f;
-    //float horizontalSize = ((yMax - yMin) * (float)windowWidth) / (float)windowHeight;
-    //float xMin = -horizontalSize * 0.5f;
-    //float xMax = horizontalSize * 0.5f;
-    //float costTimer(0.0f);
+    float yMin = -1.4f;
+    float yMax = 1.4f;
+    float horizontalSize = ((yMax - yMin) * (float)windowWidth) / (float)windowHeight;
+    float xMin = -horizontalSize * 0.5f;
+    float xMax = horizontalSize * 0.5f;
+    float costTimer(0.0f);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -108,11 +108,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
-        fractalUpdater.update(dt);
-        juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
+        //fractalUpdater.update(dt);
+        //juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
 
-        //float x = Math::lerp(xMin, xMax, (normalizeMousePosition.x * 0.5f) + 0.5f);
-        //float y = Math::lerp(yMin, yMax, (normalizeMousePosition.y * 0.5f) + 0.5f);
+        float x = Math::lerp(xMin, xMax, (normalizeMousePosition.x * 0.5f) + 0.5f);
+        float y = Math::lerp(yMin, yMax, (normalizeMousePosition.y * 0.5f) + 0.5f);
+
+        auto a = fractalUpdater.getFractaleParam();
+        a.xMin = xMin;
+        a.xMax = xMax;
+        a.yMin = yMin;
+        a.yMax = yMax;
+        a.origin = { x, y };
+        cout << "x: " << Math::round(x, 2) << " y: " << Math::round(y, 2) << " r: " << Math::round(sqrtf(x * x + (y * y)), 2) << endl;
+        juliaFractal.setGenerationParam(a);
 
         juliaFractal.draw(window);
 

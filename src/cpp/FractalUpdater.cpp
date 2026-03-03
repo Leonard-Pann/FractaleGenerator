@@ -678,7 +678,7 @@ int64_t FractalUpdater::getJuliaFractalCost(Vector2 origin)
 
 static void computeGreyVariationRange(vector<float>* pixels, int start, int end, int greyTextureWidth, int greyTextureHeight, atomic<float>* totalSum)
 {
-	const float oneO8 = 1.0 / 8.0;
+	constexpr float oneO8 = 1.0 / 8.0;
 
 	float currentGreyscale(0.0);
 	float partialSum(0.0);
@@ -738,7 +738,7 @@ static float computeGreyVariation(vector<float>* pixels, int greyTextureWidth, i
 	}
 
 	//!parrallel version
-	// const float oneO8 = 1.0 / 8.0;
+	// constexpr float oneO8 = 1.0 / 8.0;
 
 	// float currentGreyscale(0.0);
 	// float totalSum(0.0);
@@ -1246,32 +1246,32 @@ tuple<Vector2, Vector2> FractalUpdater::findRandomOriginAndZoomPointOtherThread(
 
 #pragma region generateNewTarget
 
-static void sortOrigin(vector<Vector2>& origins)
-{
-	for (int i = 3; i < origins.size(); i++)
-	{
-		Vector2& newPoint = origins[i];
-		float minSqrDist = Math::linePointSqrDistance(origins[0], origins[1], origins[i]);
-		int minIndex = 0;
-
-		for (int j = 1; j < i; j++)
-		{
-			float sqrDist = Math::linePointSqrDistance(origins[j], origins[(j + 1) % i], origins[i]);
-			if (sqrDist < minSqrDist)
-			{
-				minSqrDist = sqrDist;
-				minIndex = j;
-			}
-		}
-
-		for (int j = i - 1; j > minIndex; j--)
-		{
-			Vector2 tmp = origins[j];
-			origins[j] = origins[j + 1];
-			origins[j + 1] = tmp;
-		}
-	}
-}
+//static void sortOrigin(vector<Vector2>& origins)
+//{
+//	for (int i = 3; i < origins.size(); i++)
+//	{
+//		Vector2& newPoint = origins[i];
+//		float minSqrDist = Math::linePointSqrDistance(origins[0], origins[1], origins[i]);
+//		int minIndex = 0;
+//
+//		for (int j = 1; j < i; j++)
+//		{
+//			float sqrDist = Math::linePointSqrDistance(origins[j], origins[(j + 1) % i], origins[i]);
+//			if (sqrDist < minSqrDist)
+//			{
+//				minSqrDist = sqrDist;
+//				minIndex = j;
+//			}
+//		}
+//
+//		for (int j = i - 1; j > minIndex; j--)
+//		{
+//			Vector2 tmp = origins[j];
+//			origins[j] = origins[j + 1];
+//			origins[j + 1] = tmp;
+//		}
+//	}
+//}
 
 static bool compareVector2(const Vector2& a, const Vector2& b)
 {

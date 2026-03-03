@@ -86,5 +86,8 @@
     <ClInclude Include="src\header\FractalOrigins.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="src\header\bezierCurve\HermiteSpline2D.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -20,6 +20,16 @@ public:
 		return value <= 0.0f ? 0.0f : (value >= 1.0f ? 1.0f : value);
 	}
 
+	static inline float clamp(float value, float min, float max)
+	{
+		return value <= min ? min : (value >= max ? max : value);
+	}
+
+	static inline int clamp(int value, int min, int max)
+	{
+		return value <= min ? min : (value >= max ? max : value);
+	}
+
 	static inline int floor(float value)
 	{
 		return (int)value;
@@ -28,6 +38,19 @@ public:
 	static inline int ceil(float value)
 	{
 		return (float)((int)value) ==  value ? (int)value : (int)value + 1;
+	}
+
+	static inline int round(float value)
+	{
+		int floor = (int)value;
+		return value - floor >= 0.5f ? floor + 1 : floor;
+	}
+
+	static inline float round(float value, int decimal)
+	{
+		decimal = clamp(decimal, 0, 8);
+		double exp = pow(10.0, decimal);
+		return ((double)(int64_t)(value * exp)) / exp;
 	}
 
 	static float linePointSqrDistance(const Vector2& A, const Vector2& B, const Vector2& point)

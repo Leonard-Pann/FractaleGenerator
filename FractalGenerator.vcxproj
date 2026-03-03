@@ -162,6 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\header\bezierCurve\CatmulRomSpline.hpp" />
+    <ClInclude Include="src\header\bezierCurve\HermiteSpline2D.hpp" />
     <ClInclude Include="src\header\FractalOrigins.hpp" />
     <ClInclude Include="src\header\shader\ComputeShader.hpp" />
     <ClInclude Include="src\header\FractaleParam.hpp" />
