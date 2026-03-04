@@ -22,6 +22,13 @@ struct Vector2
 ;
     }
 
+    void normalize()
+    {
+        float factor = 1.0f / sqrtf(x * x + (y * y));
+        x *= factor;
+        y *= factor;
+    }
+
     static float distance(const Vector2& v1, const Vector2& v2)
     {
         float tmpX = v1.x - v2.x;
@@ -74,6 +81,14 @@ struct Vector3
     Vector3(const Vector3& vector) : x(vector.x), y(vector.y), z(vector.z)
     {
 
+    }
+
+    void normalize()
+    {
+        float factor = 1.0f / sqrtf(x * x + (y * y) + (z * z));
+        x *= factor;
+        y *= factor;
+        z *= factor;
     }
 
     static float distance(const Vector3& v1, const Vector3& v2)
@@ -130,6 +145,15 @@ struct Vector4
     Vector4(const Vector4& vector) : x(vector.x), y(vector.y), z(vector.z), w(vector.w)
     {
 
+    }
+
+    void normalize()
+    {
+        float factor = 1.0f / sqrtf(x * x + (y * y) + (z * z) + (w * w));
+        x *= factor;
+        y *= factor;
+        z *= factor;
+        w *= factor;
     }
 
     static float distance(const Vector4& v1, const Vector4& v2)

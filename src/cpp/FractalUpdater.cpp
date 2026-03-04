@@ -119,6 +119,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	changeFractalStartOffset = -0.2f;
 	minNbOrigines = 8; // min 3
 	maxNbOrigines = 8;
+	avoidingBlackZoneOffset = 0.05f;
 
 	//target
 	generateFirstTarget();
@@ -174,7 +175,14 @@ FractaleParam& FractalUpdater::getFractaleParam()
 
 Vector2 FractalUpdater::randomPoint() const
 {
-	return Vector2(Random::rand(xMin, xMax), Random::rand(yMin, yMax));
+	while (true)
+	{
+		Vector2 randPoint(Random::rand(xMin, xMax), Random::rand(yMin, yMax));
+		if (!Math::polygoneContains(blackZone, randPoint))
+		{
+			return randPoint;
+		}
+	}
 }
 
 void FractalUpdater::generateColorRangeSpline()
@@ -1323,6 +1331,74 @@ static void sortOrigin2(const Vector2& start, const Vector2& end, vector<Vector2
 	origins = bestPath;
 }
 
+void FractalUpdater::completeOriginToAvoidBlackZone(vector<Vector2> origines)
+{
+	int bzSize = blackZone.size();
+	int i(0);
+	Vector2 inter1, inter2;
+	while (i < origines.size() - 1)
+	{
+		Vector2 p1(origines[i]);
+		Vector2 p2(origines[i + 1]);
+		bool haveIntersect = false;
+		bool haveInsectedOrigin = false;
+
+		for (int j = 0; j < bzSize; j++)
+		{
+			Vector2 v1(blackZone[j]);
+			Vector2 v2(blackZone[(j + 1) % bzSize]);
+
+			if (haveIntersect)
+			{
+				if (Math::collideLines(p1, p2, v1, v2, inter2))
+				{
+					Vector2 midPoint = (inter1 + inter2) * 0.5f;
+					Vector2 n = Math::normalVector(inter2 - inter1);
+
+					Vector2 newInter;
+					float newInterSqrDistance = FLT_MAX;
+
+					Vector2 secondLinePoint = midPoint + n;
+
+					for (int k = 0; k < bzSize; k++)
+					{
+						Vector2 currentInter;
+						if (Math::collideLineStraightLine(blackZone[k], blackZone[(k + 1) % bzSize], midPoint, secondLinePoint, currentInter))
+						{
+							float currentSqrDistance = Vector2::sqrDistance(midPoint, currentInter);
+							if (currentSqrDistance < newInterSqrDistance)
+							{
+								newInterSqrDistance = currentSqrDistance;
+								newInter.x = currentInter.x;
+								newInter.y = currentInter.y;
+							}
+						}
+					}
+
+					Vector2 offsetDir(newInter - midPoint);
+					offsetDir.normalize();
+					newInter = newInter + (offsetDir * avoidingBlackZoneOffset);
+					origines.insert(origines.begin() + (i + 1), newInter);
+					haveInsectedOrigin = true;
+					break;
+				}
+			}
+			else
+			{
+				if (Math::collideLines(p1, p2, v1, v2, inter1))
+				{
+					haveIntersect = true;
+				}
+			}
+		}
+
+		if (!haveInsectedOrigin)
+		{
+			i++;
+		}
+	}
+}
+
 void FractalUpdater::generateFirstTarget()
 {
 	 //// code to precompute startJuliaOrigins
@@ -1349,7 +1425,7 @@ void FractalUpdater::generateFirstTarget()
 	 //exit(1);
 
 
-	 // code to precompute startJuliaOriginsAndZoomPoint
+	 //// code to precompute startJuliaOriginsAndZoomPoint
 	 //int nbOrigins = 500;
 	 //ofstream outfile("initOriginsAndZoom.txt");
 	 //outfile << "[";
@@ -1404,6 +1480,7 @@ void FractalUpdater::generateFirstTarget()
 	sortOrigin2(startOrigin, endOrigin, origines);
 	origines.insert(origines.begin(), startOrigin);
 	origines.push_back(endOrigin);
+	completeOriginToAvoidBlackZone(origines);
 
 	vector<Vector2> zoomPoints(3);
 	zoomPoints[1] = { 0.0f, 0.0f };
@@ -1448,6 +1525,7 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 		sortOrigin2(startOrigin, endOrigin, origines);
 		origines.insert(origines.begin(), startOrigin);
 		origines.push_back(endOrigin);
+		completeOriginToAvoidBlackZone(origines);
 
 		vector<Vector2> zoomPoints(3);
 		zoomPoints[0] = startZoom;

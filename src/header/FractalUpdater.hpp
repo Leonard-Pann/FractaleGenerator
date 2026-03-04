@@ -99,6 +99,32 @@ private:
 	float changeFractalStartOffset;
 	int minNbOrigines, maxNbOrigines;
 	bool isNewTargetReady;
+	float avoidingBlackZoneOffset;
+	const std::vector<Vector2> blackZone = 
+	{
+		{ 0.0f, 0.63f },
+		{ 0.1f, 0.59f },
+		{ 0.2f, 0.53f },
+		{ 0.3f, 0.43f },
+		{ 0.3f, -0.43f },
+		{ 0.2f, -0.53f },
+		{ 0.1f, -0.59f },
+		{ 0.0f, -0.63f },
+		{ -0.1f, -0.64f },
+		{ -0.2f, -0.64f },
+		{ -0.3f, -0.62f },
+		{ -0.4f, -0.57f },
+		{ -0.5f, -0.50f },
+		{ -0.6f, -0.40f },
+		{ -0.7f, -0.22f },
+		{ -0.7f, 0.22f },
+		{ -0.6f, 0.40f },
+		{ -0.5f, 0.50f },
+		{ -0.4f, 0.57f },
+		{ -0.3f, 0.62f },
+		{ -0.2f, 0.64f },
+		{ -0.1f, 0.64f }
+	};
 
 	//multi thread
 	std::mutex mutexName;
@@ -131,6 +157,7 @@ private:
 	void zoom(float dt);
 	void dezoom(float dt);
 	void changeFractal(float dt);
+	void completeOriginToAvoidBlackZone(std::vector<Vector2> origins);
 
 public:
 	FractalUpdater();
