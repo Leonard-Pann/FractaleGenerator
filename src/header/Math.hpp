@@ -123,12 +123,12 @@ public:
 
 	static Vector2 normalVector(const Vector2& v)
 	{
-		if (abs(v.x) < 1e-3f)
+		if (abs(v.x) > 1e-3f)
 		{
 			float y = sqrtf(1.0f / (((v.y * v.y) / (v.x * v.x)) + 1.0f));
 			return { -v.y * y / v.x, y };
 		}
-		else if (abs(v.x) < 1e-3f)
+		else if (abs(v.x) > 1e-3f)
 		{
 			float x = sqrtf(1.0f / (1.0f + ((v.x * v.x) / (v.y * v.y))));
 			return { x, -v.x * x / v.y };

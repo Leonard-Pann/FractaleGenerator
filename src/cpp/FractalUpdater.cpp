@@ -1354,11 +1354,10 @@ void FractalUpdater::completeOriginToAvoidBlackZone(vector<Vector2> origines)
 				{
 					Vector2 midPoint = (inter1 + inter2) * 0.5f;
 					Vector2 n = Math::normalVector(inter2 - inter1);
+					Vector2 secondLinePoint = midPoint + n;
 
 					Vector2 newInter;
 					float newInterSqrDistance = FLT_MAX;
-
-					Vector2 secondLinePoint = midPoint + n;
 
 					for (int k = 0; k < bzSize; k++)
 					{
@@ -1458,18 +1457,22 @@ void FractalUpdater::generateFirstTarget()
 	{
 		vector<int> alreadyPickIndex;
 		alreadyPickIndex.reserve(nbOrigines + 1);
-		Vector4 window(xMin, xMax, yMin, yMax);
+
+		int randIndex = Random::rand(0, (FractalOrigin::startJuliaOriginsSize >> 1) - 1) * 2;
+		startOrigin = { FractalOrigin::startJuliaOrigins[randIndex], FractalOrigin::startJuliaOrigins[randIndex + 1] };
+		alreadyPickIndex.push_back(randIndex);
+
 		for (int i = 0; i < nbOrigines; i++)
 		{
-			int randIndex = Random::rand(0, (FractalOrigin::startJuliaOriginsSize >> 1) - 1) * 2;
+			randIndex = Random::rand(0, (FractalOrigin::startJuliaOriginsSize >> 1) - 1) * 2;
 			while (find(alreadyPickIndex.begin(), alreadyPickIndex.end(), randIndex) != alreadyPickIndex.end())
 			{
 				randIndex = Random::rand(0, (FractalOrigin::startJuliaOriginsSize >> 1) - 1) * 2;
 			}
 
 			Vector2 origin(FractalOrigin::startJuliaOrigins[randIndex], FractalOrigin::startJuliaOrigins[randIndex + 1]);
-			vector<float>* texture = juliaGreyShader.computeTexture(greyMaxIter, origin, window, greyTextureWidth, greyTextureHeight);
 			origines.push_back(origin);
+			alreadyPickIndex.push_back(randIndex);
 		}
 	}
 
