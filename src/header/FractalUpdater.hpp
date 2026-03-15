@@ -11,7 +11,6 @@
 #include "Vector.hpp"
 #include "shader/JuliaGreyComputeShader.hpp"
 #include "bezierCurve/CatmulRomSpline.hpp"
-#include "bezierCurve/HermiteSpline2D.hpp"
 #include "Number.hpp"
 
 class FractalUpdater
@@ -23,9 +22,8 @@ private:
 	class StateTarget
 	{
 	private:
-		HermiteSpline2D spline; // seed / c component of the julia fractal
-		//HermiteSpline<Vector2> zoomSpline;
-		HermiteSpline2D zoomSpline;
+		HermiteSpline<Vector2> spline; // seed / c component of the julia fractal
+		HermiteSpline<Vector2> zoomSpline;
 
 	public:
 		float zoomDuration;
@@ -45,9 +43,9 @@ private:
 			return zoomSpline.getEnd();
 		}
 
-		Vector2 getZoomPoint(float t) const
+		Vector2 getZoomPoint(float x) const
 		{
-			return zoomSpline.evaluate(t);
+			return zoomSpline.evaluateDistance(x);
 		}
 
 		Vector2 finalOrigin() const
@@ -55,9 +53,9 @@ private:
 			return spline.getEnd();
 		}
 
-		Vector2 getOrigin(float t) const
+		Vector2 getOrigin(float x) const
 		{
-			return spline.evaluate(t);
+			return spline.evaluateDistance(x);
 		}
 	};
 
@@ -67,6 +65,7 @@ private:
 	Vector2 minSize, maxSize;
 	float juliaOriginThreshold;
 	int zoomJuliaOriginCostThreshold;
+	bool useZoomJuliaOriginCostThreshold;
 
 	float zoomMinDuration, zoomMaxDuration;
 	float minZoom, maxZoom; // 0 => display julia of size maxSize, 1 => display of size minSize
@@ -97,6 +96,7 @@ private:
 	float changeFractalTimer;
 	float changeFractalDuration;
 	float changeFractalStartOffset;
+	float changeFractaleOriginTweenIntensity;
 	int minNbOrigines, maxNbOrigines;
 	bool isNewTargetReady;
 	float avoidingBlackZoneOffset;
@@ -157,7 +157,7 @@ private:
 	void zoom(float dt);
 	void dezoom(float dt);
 	void changeFractal(float dt);
-	void completeOriginToAvoidBlackZone(std::vector<Vector2> origins);
+	void completeOriginToAvoidBlackZone(std::vector<Vector2>& origins);
 
 public:
 	FractalUpdater();

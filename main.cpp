@@ -81,21 +81,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     glfwMakeContextCurrent(window);
-    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     glewInit();
 
     glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
     //glfwSetScrollCallback(window, onMouseScroll);
-    glfwSetCursorPosCallback(window, onMouseMove);
+    //glfwSetCursorPosCallback(window, onMouseMove);
     //glfwSwapInterval(0); // disable VSync
 
     JuliaFractal juliaFractal;
     FractalUpdater fractalUpdater(windowWidth, windowHeight);
 
-    //float yMin = -1.4f;
-    //float yMax = 1.4f;
+    //float yMin = -1.25f;
+    //float yMax = 1.25f;
     //float horizontalSize = ((yMax - yMin) * (float)windowWidth) / (float)windowHeight;
     //float xMin = -horizontalSize * 0.5f;
     //float xMax = horizontalSize * 0.5f;

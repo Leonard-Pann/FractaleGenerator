@@ -86,8 +86,14 @@
     <ClInclude Include="src\header\FractalOrigins.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="src\header\bezierCurve\HermiteSpline2D.hpp">
+    <ClInclude Include="src\header\shader\JuliaGreyComputeShader.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\julia.shader" />
+    <None Include="shaders\juliaGrey.shader" />
+    <None Include="shaders\juliaGreyCompute.shader" />
+    <None Include="shaders\squareTextureVariation.shader" />
   </ItemGroup>
 </Project>
