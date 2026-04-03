@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #include <thread>
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
