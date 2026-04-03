@@ -59,9 +59,9 @@ int main()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 #endif
 {
-    uint32_t seed = (uint32_t)time(NULL);
-    cout << "seed: " << seed << endl;
-    Random::setSeed(seed);
+    //uint32_t seed = (uint32_t)time(NULL);
+    //cout << "seed: " << seed << endl;
+    //Random::setSeed(seed);
     Random::setSeed(42);
 
     if (glfwInit() == 0)

@@ -2,8 +2,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <sstream>
-#include <fstream>
 #include <thread>
 #include "FractalUpdater.hpp"
 #include "Random.hpp"
@@ -81,27 +79,27 @@ FractalUpdater::FractalUpdater()
 FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreyShader()
 {
 	//params
-	yMin = -1.25f;
-	yMax = 1.25f;
+	yMin = -1.1f;
+	yMax = 1.1f;
 	float horizontalSize = ((yMax - yMin) * (float)screenWidth) / (float)screenHeight;
 	xMin = -horizontalSize * 0.5f;
 	xMax = horizontalSize * 0.5f;
 
-	float zoomLevel(25000.0f);
+	float zoomLevel(15000.0f);
 	maxSize = Vector2(xMax - xMin, yMax - yMin);
 	minSize = Vector2(maxSize.x / zoomLevel, maxSize.y / zoomLevel);
 
 	// Zoom
-	zoomStartOffset = -10.0f;
-	zoomMinDuration = 40.0f;
-	zoomMaxDuration = 40.0f;
+	zoomStartOffset = -11.0f;
+	zoomMinDuration = 60.0f;
+	zoomMaxDuration = 60.0f;
 	minZoom = 1.0f;
 	maxZoom = 1.0f;
 	zoomTweenIntensity = 0.000007f;
 
 	// Dezoom
-	dezoomMinDuration =  30.0f;
-	dezoomMaxDuration =  30.0f;
+	dezoomMinDuration =  50.0f;
+	dezoomMaxDuration =  50.0f;
 
 	// For findJuliaOrigin method
 	juliaGreyShader.load();
@@ -116,8 +114,8 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	refiningPointToZoomIter = max(1, Math::floor(log2f(zoomLevel)) - 5);
 
 	// Change Fractal
-	changeFractalDuration = 150.0f;
-	changeFractalStartOffset =  -7.0f;
+	changeFractalDuration = 200.0f;
+	changeFractalStartOffset =  -9.0f;
 	minNbOrigines = 8; // min 3
 	maxNbOrigines = 8;
 	avoidingBlackZoneOffset = 0.05f;
@@ -153,14 +151,13 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	int yMin = startZoomPoint.y - (maxSize.y * 0.5f);
 	int yMax = startZoomPoint.y + (maxSize.y * 0.5f);
 
-	float a = colorRangeSpline.getStart();
 	params = FractaleParam(target->getOrigin(0.0f), xMin, xMax, yMin, yMax, colorIn, *currentPallet, 1000, colorRangeSpline.getStart().value());
 	delete currentPallet;
 
 	isChangingFractal = true;
 	isZooming = false;
 	isDezooming = false;
-	changeFractalTimer = 130.0f;
+	changeFractalTimer = 0.0f;
 	zoomTime = 0.0f;
 	changeFractalSize = maxSize;
 }
