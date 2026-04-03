@@ -153,7 +153,7 @@ FractalUpdater::FractalUpdater(int screenWidth, int screenHeight) : juliaGreySha
 	int yMin = startZoomPoint.y - (maxSize.y * 0.5f);
 	int yMax = startZoomPoint.y + (maxSize.y * 0.5f);
 
-	params = FractaleParam(target->getOrigin(0.0f), xMin, xMax, yMin, yMax, colorIn, *currentPallet, 1000, colorRangeSpline.getStart().value());
+	params = FractaleParam(target->getOrigin(0.0f), xMin, xMax, yMin, yMax, colorIn, *currentPallet, colorRangeSpline.getStart().value());
 	delete currentPallet;
 
 	isChangingFractal = true;

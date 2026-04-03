@@ -1,6 +1,8 @@
 #include <EGL/egl.h>
 #include <GLES3/gl32.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xatom.h>
 #include <iostream>
 #include <chrono>
 #include <fstream>
@@ -28,8 +30,10 @@ float getDeltaTime()
 
 int main() 
 {
-    Random::setRandomSeed();
-    Random::setSeed(42);
+    uint32_t seed = time(0);
+    cout << "seed: " << seed << endl;
+    Random::setSeed(seed);
+    // Random::setSeed(42);
 
     Display* xdisp = XOpenDisplay(nullptr);
     if (xdisp == nullptr) 
@@ -40,11 +44,25 @@ int main()
 
     int windowWidth = 1600;
     int windowHeight = 900;
+    bool fullScreen = true;
+    int screen = DefaultScreen(xdisp);
+    int nativeWindowsWidth = DisplayWidth(xdisp, screen);
+    int nativeWindowsHeight = DisplayHeight(xdisp, screen);
+
     Window root = DefaultRootWindow(xdisp);
     Window win = XCreateSimpleWindow(
         xdisp, root, 0, 0, windowWidth, windowHeight, 0,
         BlackPixel(xdisp, 0), WhitePixel(xdisp, 0)
     );
+
+    if(fullScreen)
+    {
+        Atom wm_state = XInternAtom(xdisp, "_NET_WM_STATE", False);
+        Atom wm_fullscreen = XInternAtom(xdisp, "_NET_WM_STATE_FULLSCREEN", False);
+
+        XChangeProperty(xdisp, win, wm_state, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wm_fullscreen, 1);
+        XMapWindow(xdisp, win);
+    }
 
     XStoreName(xdisp, win, "Fractal Generator");
     XMapWindow(xdisp, win);
@@ -104,12 +122,22 @@ int main()
     // // Bench
     // float totalTime(0.0);
     // int nbFrame(0);
+
+    XSelectInput(xdisp, win, KeyPressMask | StructureNotifyMask);
     while (running) 
     {
         //Don't remove this loop, mandatory for EGL event
         while (XPending(xdisp)) 
         {
-
+            XNextEvent(xdisp, &event);
+            if(event.type == KeyPress)
+            {
+                KeySym key = XLookupKeysym(&event.xkey, 0);
+                if(key == XK_Escape)
+                {
+                    running = false;
+                }
+            }
         }
 
         glViewport(0, 0, windowWidth, windowHeight);

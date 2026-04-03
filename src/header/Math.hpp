@@ -9,7 +9,7 @@ class Math
 {
 public:
 
-	#define M_PI 3.14159265358979323846f
+	// #define M_PI 3.14159265358979323846f
 
 	static inline float lerp(float start, float end, float t)
 	{
@@ -169,7 +169,7 @@ public:
 		center.x = center.x / vertices.size();
 		center.y = center.y / vertices.size();
 
-		float radius = FLT_MAX;
+		float radius = 3.40282347e+38F;
 		for (const Vector2& p : vertices)
 		{
 			float currentDist = Vector2::sqrDistance(p, center);

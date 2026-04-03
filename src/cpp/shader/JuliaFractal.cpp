@@ -28,6 +28,8 @@ JuliaFractal::JuliaFractal() : shader("shaders/julia.shader")
     glEnableVertexAttribArray(0);
 }
 
+#include <iostream>
+
 void JuliaFractal::setGenerationParam(const FractaleParam& params)
 {
     glUseProgram(shader.shaderId());
