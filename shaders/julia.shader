@@ -13,7 +13,7 @@ uniform vec3 inColor;
 uniform vec3 colorPalette[6];
 uniform float colorRange;
 
-vec4 getJuliaColor(float currentx, float currenty)
+vec4 getJuliaColor(float currentx, float currenty, float cx, float cy)
 {
     float xSquare = currentx * currentx;
     float ySquare = currenty * currenty;
@@ -21,13 +21,13 @@ vec4 getJuliaColor(float currentx, float currenty)
 
     for(nbIter = 0; nbIter < MAX_ITER; nbIter++)
     {
-        if(xSquare + ySquare >= 32.0)
+        if(xSquare + ySquare >= 16.0)
         {
             break;
         }
 
-        currenty = 2.0 * currentx * currenty + seed.y;
-        currentx = xSquare - ySquare + seed.x;
+        currenty = 2.0 * currentx * currenty + cy;
+        currentx = xSquare - ySquare + cx;
         xSquare = currentx * currentx;
         ySquare = currenty * currenty;
     }
@@ -38,12 +38,11 @@ vec4 getJuliaColor(float currentx, float currenty)
     }
 
     float smoothIter = float(nbIter) + 2.52876637294 - log2(log2(xSquare + ySquare)); // 2.52876637294 = 2 - log2(ln(2.0))
-    xSquare = fract(smoothIter * colorRange);
-    ySquare = xSquare * 5.0;
-    int index = int(floor(ySquare));
+    float t = fract(smoothIter * colorRange);
+    int index = int(floor(t * 5.0));
 
-    smoothIter = ySquare - float(index);
-    vec3 color = mix(colorPalette[index], colorPalette[index + 1], smoothIter);
+    float t2 = 5.0 * t - float(index);
+    vec3 color = mix(colorPalette[index], colorPalette[index + 1], t2);
     return vec4(color.xyz, 1.0);
 }
 
@@ -52,7 +51,7 @@ void main()
     float posX = 0.5 * (vert_pos.x + 1.0) * (window.y - window.x) + window.x;
     float posY = 0.5 * (vert_pos.y + 1.0) * (window.w - window.z) + window.z;
 
-    color = getJuliaColor(posX, posY);
+    color = getJuliaColor(posX, posY, seed.x, seed.y);
 }
 
 #shader vertex        

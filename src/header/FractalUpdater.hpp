@@ -43,9 +43,9 @@ private:
 			return zoomSpline.getEnd();
 		}
 
-		Vector2 getZoomPoint(float t) const
+		Vector2 getZoomPoint(float x) const
 		{
-			return zoomSpline.evaluate(t);
+			return zoomSpline.evaluateDistance(x);
 		}
 
 		Vector2 finalOrigin() const
@@ -53,9 +53,9 @@ private:
 			return spline.getEnd();
 		}
 
-		Vector2 getOrigin(float t) const
+		Vector2 getOrigin(float x) const
 		{
-			return spline.evaluate(t);
+			return spline.evaluateDistance(x);
 		}
 	};
 
@@ -64,7 +64,8 @@ private:
 	float xMin, xMax, yMin, yMax;
 	Vector2 minSize, maxSize;
 	float juliaOriginThreshold;
-	int juliaOriginCostThreshold;
+	int zoomJuliaOriginCostThreshold;
+	bool useZoomJuliaOriginCostThreshold;
 
 	float zoomMinDuration, zoomMaxDuration;
 	float minZoom, maxZoom; // 0 => display julia of size maxSize, 1 => display of size minSize
@@ -73,7 +74,7 @@ private:
 	//internal members
 	int greyTextureWidth, greyTextureHeight, greyMaxIter;
 	int refiningPointToZoomIter;
-	JuliaGreyShader juliaGreyShader;
+	JuliaGreyComputeShader juliaGreyShader;
 
 	StateTarget* target;
 	StateTarget* newTarget;
@@ -95,8 +96,35 @@ private:
 	float changeFractalTimer;
 	float changeFractalDuration;
 	float changeFractalStartOffset;
+	float changeFractaleOriginTweenIntensity;
 	int minNbOrigines, maxNbOrigines;
 	bool isNewTargetReady;
+	float avoidingBlackZoneOffset;
+	const std::vector<Vector2> blackZone = 
+	{
+		{ 0.0f, 0.63f },
+		{ 0.1f, 0.59f },
+		{ 0.2f, 0.53f },
+		{ 0.3f, 0.43f },
+		{ 0.3f, -0.43f },
+		{ 0.2f, -0.53f },
+		{ 0.1f, -0.59f },
+		{ 0.0f, -0.63f },
+		{ -0.1f, -0.64f },
+		{ -0.2f, -0.64f },
+		{ -0.3f, -0.62f },
+		{ -0.4f, -0.57f },
+		{ -0.5f, -0.50f },
+		{ -0.6f, -0.40f },
+		{ -0.7f, -0.22f },
+		{ -0.7f, 0.22f },
+		{ -0.6f, 0.40f },
+		{ -0.5f, 0.50f },
+		{ -0.4f, 0.57f },
+		{ -0.3f, 0.62f },
+		{ -0.2f, 0.64f },
+		{ -0.1f, 0.64f }
+	};
 
 	//multi thread
 	std::mutex mutexName;
@@ -129,6 +157,7 @@ private:
 	void zoom(float dt);
 	void dezoom(float dt);
 	void changeFractal(float dt);
+	void completeOriginToAvoidBlackZone(std::vector<Vector2>& origins);
 
 public:
 	FractalUpdater();
