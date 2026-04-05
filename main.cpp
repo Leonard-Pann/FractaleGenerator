@@ -42,8 +42,8 @@ int main()
         return -1;
     }
 
-    int windowWidth = 1600;
-    int windowHeight = 900;
+    int windowWidth = 1920;
+    int windowHeight = 1080;
     bool fullScreen = true;
     int screen = DefaultScreen(xdisp);
     int nativeWindowsWidth = DisplayWidth(xdisp, screen);
@@ -61,11 +61,19 @@ int main()
         Atom wm_fullscreen = XInternAtom(xdisp, "_NET_WM_STATE_FULLSCREEN", False);
 
         XChangeProperty(xdisp, win, wm_state, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wm_fullscreen, 1);
-        XMapWindow(xdisp, win);
     }
 
     XStoreName(xdisp, win, "Fractal Generator");
     XMapWindow(xdisp, win);
+
+    Pixmap blank;
+    XColor dummy;
+    char data[1] = { 0 };
+    blank = XCreateBitmapFromData(xdisp, win, data, 1, 1);
+    Cursor invisibleCursor = XCreatePixmapCursor(xdisp, blank, blank, &dummy, &dummy, 0, 0);
+    XDefineCursor(xdisp, win, invisibleCursor);
+    XFreePixmap(xdisp, blank);
+
 
     EGLDisplay eglDpy = eglGetDisplay((EGLNativeDisplayType)xdisp);
     eglInitialize(eglDpy, nullptr, nullptr);
@@ -178,6 +186,7 @@ int main()
         // }
     }
 
+    XFreeCursor(xdisp, invisibleCursor);
     eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroySurface(eglDpy, surf);
     eglDestroyContext(eglDpy, ctx);
