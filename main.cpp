@@ -17,7 +17,7 @@ using namespace std;
 
 int windowWidth = 1600;
 int windowHeight = 900;
-const bool fullscreen = false;
+const bool fullscreen = true;
 
 double getDeltaTime()
 {
@@ -59,10 +59,10 @@ int main()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 #endif
 {
-    //uint32_t seed = (uint32_t)time(NULL);
-    //cout << "seed: " << seed << endl;
-    //Random::setSeed(seed);
-    Random::setSeed(42);
+    uint32_t seed = (uint32_t)time(NULL);
+    cout << "seed: " << seed << endl;
+    Random::setSeed(seed);
+    //Random::setSeed(42);
 
     if (glfwInit() == 0)
         return -1;
