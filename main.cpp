@@ -3,9 +3,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#ifndef _DEBUG
-#include <windows.h>
-#endif
 #include "FractaleParam.hpp"
 #include "Vector.hpp"
 #include "FractalUpdater.hpp"
@@ -53,11 +50,7 @@ void onMouseMove(GLFWwindow* window, double x, double y)
 //     //nothing yet
 //}
 
-#ifdef _DEBUG
 int main()
-#else
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-#endif
 {
     uint32_t seed = (uint32_t)time(NULL);
     cout << "seed: " << seed << endl;
