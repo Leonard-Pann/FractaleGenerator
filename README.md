@@ -5,19 +5,15 @@ The program offers dynamic animation of Julia fractals by interpolating them usi
 
 ![Fractal Generator](https://github.com/user-attachments/assets/3d70dc13-39cd-4115-ad18-476f0f5a8939)
 
-The projet is compatible with OpenGL 4.6 on Windows and Linux but also compatible with OpenGL ES 3.1 device (linux only).
+The projet is compatible with OpenGL 4.6 and OpenGL ES 3.2 device.
 
 Installation process : 
 
 Using OpenGL 4.6 (recommended):
 
-Windows :
-
-Clone the main branch and open the solution with visual studio 2026 and build the projet (require Desktop developement with C++ module).
-
 Linux :
 
-Clone the main branch (you can remove windows/visual studio specific files: External_lib, FractalGenerator.sln, FractalGenerator.vcxproj,  FractalGenerator.user)
+Clone the Linux branch
 
 Then make sure all dependancy are install on your system:
 
@@ -35,12 +31,6 @@ sudo apt install clang
 
 And finally run the make command (or run the task.json on visual studio code).
 
-OpenGL SE 3.1:
+OpenGL SE:
 
-Clone the OpenGL ES branch and make sure all dependancy are install on your system:
-
-sudo apt install clang
-
-sudo apt install make
-
-And finally run the make command (or run the task.json on visual studio code).
+See the OpenGL-ES-Ubuntu or OpenGL-ES-RadxaOS branch.
