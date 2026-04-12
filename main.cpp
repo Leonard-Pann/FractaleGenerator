@@ -1,10 +1,6 @@
-#include <EGL/egl.h>
-#include <GLES3/gl32.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
-#include <chrono>
 #include <fstream>
 #include <string>
 #include "FractaleParam.hpp"
@@ -16,162 +12,104 @@
 
 using namespace std;
 
-using std_clock = chrono::high_resolution_clock;
-auto lastTime = std_clock::now();
+int windowWidth = 1600;
+int windowHeight = 900;
+const bool fullscreen = false;
 
-float getDeltaTime()
+double getDeltaTime()
 {
-    auto now = std_clock::now();
-    chrono::duration<float> delta = now - lastTime;
-    float dt = delta.count();
-    lastTime = now;
+    static double previousSeconds = 0.0f;
+    double currentSeconds = glfwGetTime(); // seconds pass from the app start
+    double dt = currentSeconds - previousSeconds;
+    previousSeconds = currentSeconds;
     return dt;
 }
 
-int main() 
+void processInput(GLFWwindow* window)
 {
-    uint32_t seed = time(0);
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
+void onFrameBufferResize(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+Vector2 mousePosition, normalizeMousePosition;
+void onMouseMove(GLFWwindow* window, double x, double y)
+{
+    mousePosition.x = x;
+    mousePosition.y = y;
+    normalizeMousePosition.x = (mousePosition.x / (windowWidth - 1.0f)) * 2.0f - 1.0f; //between -1 and 1
+    normalizeMousePosition.y = ((mousePosition.y / (windowHeight - 1.0f)) * -2.0f + 1.0f); //between -1 and 1
+}
+
+//void onMouseScroll(GLFWwindow* window, double deltaX, double deltaY)
+//{
+//     //nothing yet
+//}
+
+int main()
+{
+    uint32_t seed = (uint32_t)time(NULL);
     cout << "seed: " << seed << endl;
     Random::setSeed(seed);
-    // Random::setSeed(42);
+    Random::setSeed(42);
 
-    Display* xdisp = XOpenDisplay(nullptr);
-    if (xdisp == nullptr) 
+    if (glfwInit() == 0)
+        return -1;
+
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+
+    windowWidth = fullscreen ? mode->width : windowWidth;
+    windowHeight = fullscreen ? mode->height : windowHeight;
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "FractalGenerator", fullscreen ? primaryMonitor : nullptr, nullptr);
+
+    if (window == nullptr)
     {
-        cout << "Cannot open X11 display" << endl;
+        glfwTerminate();
         return -1;
     }
 
-    int windowWidth = 1920;
-    int windowHeight = 1080;
-    bool fullScreen = true;
-    int screen = DefaultScreen(xdisp);
-    int nativeWindowsWidth = DisplayWidth(xdisp, screen);
-    int nativeWindowsHeight = DisplayHeight(xdisp, screen);
+    glfwMakeContextCurrent(window);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-    Window root = DefaultRootWindow(xdisp);
-    Window win = XCreateSimpleWindow(
-        xdisp, root, 0, 0, windowWidth, windowHeight, 0,
-        BlackPixel(xdisp, 0), WhitePixel(xdisp, 0)
-    );
+    glewInit();
 
-    if(fullScreen)
-    {
-        Atom wm_state = XInternAtom(xdisp, "_NET_WM_STATE", False);
-        Atom wm_fullscreen = XInternAtom(xdisp, "_NET_WM_STATE_FULLSCREEN", False);
+    glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
+    //glfwSetScrollCallback(window, onMouseScroll);
+    //glfwSetCursorPosCallback(window, onMouseMove);
+    //glfwSwapInterval(0); // disable VSync
 
-        XChangeProperty(xdisp, win, wm_state, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wm_fullscreen, 1);
-    }
-
-    XStoreName(xdisp, win, "Fractal Generator");
-    XMapWindow(xdisp, win);
-
-    Pixmap blank;
-    XColor dummy;
-    char data[1] = { 0 };
-    blank = XCreateBitmapFromData(xdisp, win, data, 1, 1);
-    Cursor invisibleCursor = XCreatePixmapCursor(xdisp, blank, blank, &dummy, &dummy, 0, 0);
-    XDefineCursor(xdisp, win, invisibleCursor);
-    XFreePixmap(xdisp, blank);
-
-
-    EGLDisplay eglDpy = eglGetDisplay((EGLNativeDisplayType)xdisp);
-    eglInitialize(eglDpy, nullptr, nullptr);
-
-    EGLint cfg_attribs[] = 
-    {
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
-        EGL_SURFACE_TYPE,    EGL_WINDOW_BIT,
-        EGL_RED_SIZE,        8,
-        EGL_GREEN_SIZE,      8,
-        EGL_BLUE_SIZE,       8,
-        EGL_DEPTH_SIZE,      24,
-        EGL_NONE
-    };
-
-    EGLConfig cfg;
-    EGLint num_cfg;
-    eglChooseConfig(eglDpy, cfg_attribs, &cfg, 1, &num_cfg);
-
-    EGLSurface surf = eglCreateWindowSurface(eglDpy, cfg, win, nullptr);
-    if(surf == nullptr)
-    {
-        cout << "Error during window surface creation" << endl;
-    }
-
-    eglBindAPI(EGL_OPENGL_ES_API);
-
-    EGLint ctx_attribs[] = {
-        EGL_CONTEXT_CLIENT_VERSION, 3,
-		EGL_CONTEXT_MINOR_VERSION, 1,
-        EGL_NONE
-    };
-    EGLContext ctx = eglCreateContext(eglDpy, cfg, EGL_NO_CONTEXT, ctx_attribs);
-
-    eglMakeCurrent(eglDpy, surf, surf, ctx);
-
-    cout << (const char*)glGetString(GL_VERSION) << endl;
-
-    bool running = true;
-    XEvent event;
     JuliaFractal juliaFractal;
     FractalUpdater fractalUpdater(windowWidth, windowHeight);
-    lastTime = std_clock::now();
-
-    // Compute juliaCostThreshold
-    // float juliaFractalTestDuration(5.0f);
-    // float timer(0.0f);
-    // int nbFrame(0);
-    // Vector2 origin(Random::rand(-2.5f, 2.5f), Random::rand(-1.4f, 1.4f));
-    // int64_t cost(fractalUpdater.getJuliaFractalCost(origin));
-    // FractaleParam fp = fractalUpdater.getFractaleParam();
-    // fp.origin = origin;
 
     // // Bench
     // float totalTime(0.0);
     // int nbFrame(0);
 
-    XSelectInput(xdisp, win, KeyPressMask | StructureNotifyMask);
-    while (running) 
+    while (!glfwWindowShouldClose(window))
     {
-        //Don't remove this loop, mandatory for EGL event
-        while (XPending(xdisp)) 
-        {
-            XNextEvent(xdisp, &event);
-            if(event.type == KeyPress)
-            {
-                KeySym key = XLookupKeysym(&event.xkey, 0);
-                if(key == XK_Escape)
-                {
-                    running = false;
-                }
-            }
-        }
+        processInput(window);
 
-        glViewport(0, 0, windowWidth, windowHeight);
         glClear(GL_COLOR_BUFFER_BIT);
 
         float dt = getDeltaTime();
         fractalUpdater.update(dt);
-
         juliaFractal.setGenerationParam(fractalUpdater.getFractaleParam());
-        // juliaFractal.setGenerationParam(fp);
-        // nbFrame++;
 
         juliaFractal.draw();
 
-        eglSwapBuffers(eglDpy, surf);
+        glfwSwapBuffers(window);
 
-        // timer += dt;
-        // if(timer > juliaFractalTestDuration)
-        // {
-        //     cout << "Cost: " << cost << ", mean fps: " << static_cast<double>(nbFrame) / static_cast<double>(timer) << endl;
-        //     timer = 0.0f;
-        //     origin.x = Random::rand(-2.5f, 2.5f);
-        //     origin.y = Random::rand(-1.4f, 1.4f);
-        //     cost = fractalUpdater.getJuliaFractalCost(origin);
-        //     fp.origin = origin;
-        // }
+        glfwPollEvents();
 
         // // Bench
         // nbFrame++;
@@ -186,14 +124,7 @@ int main()
         // }
     }
 
-    XFreeCursor(xdisp, invisibleCursor);
-    eglMakeCurrent(eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    eglDestroySurface(eglDpy, surf);
-    eglDestroyContext(eglDpy, ctx);
-    eglTerminate(eglDpy);
-
-    XDestroyWindow(xdisp, win);
-    XCloseDisplay(xdisp);
-
+    glfwDestroyWindow(window);
+    glfwTerminate();
     return 0;
 }

@@ -1,7 +1,7 @@
 #ifndef JULIA_FRACTAL_HPP
 #define JULIA_FRACTAL_HPP
 
-#include <GLES3/gl3.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <string>
 #include "FragmentShader.hpp"

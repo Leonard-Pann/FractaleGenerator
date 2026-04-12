@@ -1563,7 +1563,7 @@ void FractalUpdater::generateNewTargetOtherThread(FractalUpdater::StateTarget* o
 		}
 	};
 
-	int randSeed = Random::rand(0, 2147483648);
+	int randSeed = Random::rand(0, 2147483646);
 	thread thread(lambda, finalOrigin, startZoom, randSeed);
 	thread.detach();
 }
