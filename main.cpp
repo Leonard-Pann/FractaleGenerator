@@ -81,8 +81,6 @@ int main()
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-    glewInit();
-
     glfwSetFramebufferSizeCallback(window, onFrameBufferResize);
     //glfwSetScrollCallback(window, onMouseScroll);
     //glfwSetCursorPosCallback(window, onMouseMove);
