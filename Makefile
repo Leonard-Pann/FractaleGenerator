@@ -6,13 +6,13 @@ TARGET:=$(BIN_DIR)/fractales_generator
 # Compilation stuff
 CXX=clang++
 #Debug
-CXXFLAGS:=-std=c++20 -g -O0
+#CXXFLAGS:=-std=c++20 -g -O0
 #Release
-#CXXFLAGS:=-std=c++20 -O3
+CXXFLAGS:=-std=c++20 -O3
 INCLUDES:=-Isrc/header
 LDFLAGS:=
-LIBS:=-lGL -lGLEW -lglfw
-#LIBS:=-lEGL -lGLESv2 -lX11
+#LIBS:=-lGL -lGLEW -lglfw
+LIBS:=-lglfw -lGLESv2 -lEGL
 
 SOURCES_CPP:=$(shell find src -name '*.cpp' -print)
 OBJECTS_CPP:=$(patsubst src/%.cpp,$(BUILD_DIR)/%.o,$(SOURCES_CPP))

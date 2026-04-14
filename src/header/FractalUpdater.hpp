@@ -1,8 +1,6 @@
 #ifndef FRACTAL_UPDATER_HPP
 #define FRACTAL_UPDATER_HPP
 
-// #include <GL/glew.h>
-// #include <GLFW/glfw3.h>
 #include <vector>
 #include <tuple>
 #include <functional>
